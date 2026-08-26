@@ -3,6 +3,10 @@ import { memo } from 'react';
 import ShopLayout from '@/layouts/shop-layout';
 import { detail } from '@/routes';
 
+const images = {
+    hero: 'https://images.unsplash.com/photo-1515442261605-65987783cb6a?auto=format&fit=crop&w=1500&q=90',
+};
+
 type ProductCard = {
     id: number;
     slug: string;
@@ -32,6 +36,34 @@ const formatPrice = (value: number) =>
 export default function ListProduct({ products }: Props) {
     return (
         <ShopLayout>
+              <section className="grid min-h-[560px] grid-cols-1 border-b border-hairline lg:grid-cols-[.95fr_1.05fr]">
+                                <div className="flex min-h-[480px] flex-col justify-between bg-sand p-8 sm:p-12 lg:min-h-0 lg:p-16">
+                                    <p className="text-sm leading-5">
+                                        Roasted slowly. Made deliberately.
+                                        <br />
+                                        Coffee for everyday rituals.
+                                    </p>
+                                    <h1 className="font-condensed text-[clamp(64px,8vw,138px)] leading-[0.81] font-semibold tracking-[-0.055em] uppercase">
+                                        Coffee
+                                        <br />
+                                        without
+                                        <br />
+                                        the routine.
+                                    </h1>
+                                </div>
+                                <img
+                                    src={images.hero}
+                                    alt="Hand holding a Declasse coffee can"
+                                    fetchPriority="high"
+                                    className="h-full min-h-[320px] w-full object-cover contrast-95 saturate-75"
+                                />
+                            </section>
+            <div className="flex min-h-8 items-center justify-center gap-4 overflow-hidden bg-surface-dark px-4 text-[10px] tracking-[0.12em] whitespace-nowrap text-canvas uppercase">
+                Slow roasted <i className="h-px w-4 bg-oat" /> Daily rituals{' '}
+                <i className="h-px w-4 bg-oat" /> Specialty coffee{' '}
+                <i className="h-px w-4 bg-oat" /> Good mornings{' '}
+                <i className="h-px w-4 bg-oat" /> Brew different
+            </div>
             <ProductGrid products={products.data} />
         </ShopLayout>
     );
