@@ -23,6 +23,16 @@ class UserSeeder extends Seeder
             ],
         );
         User::query()->updateOrCreate(
+            ['email' => 'customer@declassecoffee.test'],
+            [
+                'name' => 'Declasse Customer',
+                'password' => 'password',
+                'role' => 'customer',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ],
+        );
+        User::query()->updateOrCreate(
             ['email' => 'i.alehansyah@gmail.com'],
             [
                 'name' => 'Ian A',

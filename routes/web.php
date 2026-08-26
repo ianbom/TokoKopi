@@ -7,7 +7,6 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BlogArticleController;
 use App\Http\Controllers\Admin\BiteshipWebhookLogController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\GalleryImageController;
 use App\Http\Controllers\Admin\CustomerAddressController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -136,12 +135,6 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
     Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-    Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
-    Route::get('collections/create', [CollectionController::class, 'create'])->name('collections.create');
-    Route::post('collections', [CollectionController::class, 'store'])->name('collections.store');
-    Route::get('collections/{collection}/edit', [CollectionController::class, 'edit'])->name('collections.edit');
-    Route::put('collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
-    Route::delete('collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
 
     Route::get('stock', [StockController::class, 'index'])->name('stock.index');
     Route::get('stock/logs', [StockController::class, 'logs'])->name('stock.logs');
@@ -240,4 +233,3 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
 // Route::post('/payments/midtrans/notification', MidtransWebhookController::class)->name('payments.midtrans.notification');
 
 require __DIR__.'/settings.php';
-

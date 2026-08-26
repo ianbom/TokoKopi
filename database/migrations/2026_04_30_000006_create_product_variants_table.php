@@ -12,30 +12,20 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('sku', 100)->unique();
-            $table->string('barcode', 100)->nullable();
-            $table->string('variant_name', 180)->default('Default Title');
-            $table->string('color_name', 100)->nullable();
-            $table->string('color_hex', 20)->nullable();
-            $table->string('size', 100)->nullable();
-            $table->string('package_type', 150)->nullable();
-            $table->decimal('regular_price', 15, 2)->nullable();
+            $table->string('net_weight', 100)->nullable();
+            $table->string('grind_type', 50)->nullable();
+            $table->decimal('regular_price', 15, 2);
             $table->decimal('sale_price', 15, 2)->nullable();
-            $table->integer('stock')->default(0);
-            $table->integer('reserved_stock')->default(0);
-            $table->integer('weight')->nullable();
-            $table->integer('length')->nullable();
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
-            $table->text('image_url')->nullable();
+            $table->integer('shipping_weight_gram')->default(0);
+            $table->string('image_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();
 
             $table->index('product_id');
             $table->index('sku');
-            $table->index('color_name');
-            $table->index('size');
-            $table->index('package_type');
+            $table->index('net_weight');
+            $table->index('grind_type');
             $table->index('is_active');
         });
     }

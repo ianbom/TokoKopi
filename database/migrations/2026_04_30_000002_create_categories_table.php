@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->string('name', 150);
             $table->string('slug', 180)->unique();
             $table->text('description')->nullable();
@@ -20,7 +19,6 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('parent_id');
             $table->index('slug');
             $table->index('is_active');
         });

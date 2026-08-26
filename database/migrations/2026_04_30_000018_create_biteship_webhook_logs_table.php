@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('biteship_order_id', 150)->nullable();
             $table->string('biteship_tracking_id', 150)->nullable();
             $table->string('waybill_id', 150)->nullable();
+            $table->string('payload_hash', 64)->unique();
             $table->json('payload');
             $table->timestamp('processed_at')->nullable();
             $table->timestamps();

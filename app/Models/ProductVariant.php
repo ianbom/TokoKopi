@@ -6,24 +6,17 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'product_id',
     'sku',
-    'variant_name',
-    'color_name',
-    'color_hex',
-    'size',
-    'package_type',
+    'net_weight',
+    'grind_type',
     'regular_price',
     'sale_price',
-    'stock',
-    'reserved_stock',
-    'weight',
-    'length',
-    'width',
-    'height',
+    'shipping_weight_gram',
     'image_url',
     'is_active',
 ])]
@@ -46,23 +39,18 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function stockLogs(): HasMany
+    public function stock(): HasOne
     {
-        return $this->hasMany(StockLog::class);
+        return $this->hasOne(Stock::class);
     }
 
     protected function casts(): array
     {
         return [
-            'height' => 'integer',
             'is_active' => 'boolean',
-            'length' => 'integer',
             'regular_price' => 'decimal:2',
-            'reserved_stock' => 'integer',
             'sale_price' => 'decimal:2',
-            'stock' => 'integer',
-            'weight' => 'integer',
-            'width' => 'integer',
+            'shipping_weight_gram' => 'integer',
         ];
     }
 }

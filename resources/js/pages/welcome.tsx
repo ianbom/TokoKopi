@@ -1,290 +1,235 @@
 import { Head, Link } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import ShopLayout from '@/layouts/shop-layout';
 import { list } from '@/routes';
 
-type ProductCard = {
+type Product = {
     id: number;
-    slug: string;
     name: string;
     price: number;
-    sale_price: number | null;
-    label: string | null;
-    image: string | null;
-    category: string | null;
-    collection: string | null;
-    colors: Array<{ name: string | null; hex: string }>;
+    image: string;
+    label: string;
 };
 
-type BannerCard = {
-    id: number;
-    title: string;
-    subtitle: string | null;
-    image_desktop_url: string;
-    image_mobile_url: string | null;
-    button_text: string | null;
-    button_url: string | null;
-} | null;
-
-type CollectionCard = {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    banner_desktop_url: string | null;
-    banner_mobile_url: string | null;
-    image_url: string | null;
-    sort_order: number;
-    is_featured: boolean;
-    is_active: boolean;
-    created_at: string | null;
-    updated_at: string | null;
+const images = {
+    hero: 'https://images.unsplash.com/photo-1515442261605-65987783cb6a?auto=format&fit=crop&w=1500&q=90',
+    ritual: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=90',
+    bean: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&q=90',
+    can: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=90',
+    bag: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=90',
+    morning:
+        'https://images.unsplash.com/photo-1521302080334-4bebac2763a6?auto=format&fit=crop&w=1400&q=90',
 };
 
-type Props = {
-    heroBanners: BannerCard[];
-    ctaBanner: BannerCard;
-    collectionBanners: BannerCard[];
-    collections?: CollectionCard[];
-    hajjSeries: ProductCard[];
-    wePresent: ProductCard[];
-    recentAdditions: ProductCard[];
-    mostLoved: ProductCard[];
-};
+const featuredProducts: Product[] = [
+    {
+        id: 1,
+        name: 'Espresso No. 01',
+        price: 16,
+        image: images.bag,
+        label: 'Chocolate · Hazelnut',
+    },
+    {
+        id: 2,
+        name: 'Latte No. 02',
+        price: 18,
+        image: images.bean,
+        label: 'Brown sugar · Vanilla',
+    },
+    {
+        id: 3,
+        name: 'Filter No. 03',
+        price: 17,
+        image: images.can,
+        label: 'Citrus · Peach',
+    },
+    {
+        id: 4,
+        name: 'Decaf No. 04',
+        price: 16,
+        image: images.ritual,
+        label: 'Cocoa · Almond',
+    },
+];
 
-const fallbackImage =
-    'https://orcapowergear.com/_next/image?url=%2Fasset%2Fbanner%2Fwebbanner-orca.webp&w=3840&q=75';
+const ritualProducts: Product[] = [
+    {
+        id: 11,
+        name: 'Ethiopia',
+        price: 22,
+        image: images.bag,
+        label: 'Floral · Peach',
+    },
+    {
+        id: 12,
+        name: 'Colombia',
+        price: 20,
+        image: images.bean,
+        label: 'Caramel · Citrus',
+    },
+    {
+        id: 13,
+        name: 'Brazil',
+        price: 19,
+        image: images.can,
+        label: 'Chocolate · Almond',
+    },
+    {
+        id: 14,
+        name: 'Kenya',
+        price: 23,
+        image: images.ritual,
+        label: 'Berry · Black tea',
+    },
+];
 
-const fallbackSlide: NonNullable<BannerCard> = {
-    id: 0,
-    title: 'AxeGear performance banner',
-    subtitle: null,
-    image_desktop_url: fallbackImage,
-    image_mobile_url: null,
-    button_text: null,
-    button_url: null,
-};
-
-function SectionSeparator({
-    accent = 'red',
-    label,
-}: {
-    accent?: 'red' | 'blue';
-    label?: string;
-}) {
-    const accentLine = accent === 'red' ? 'bg-[#ff1a00]' : 'bg-[#1d9cff]';
-    const accentText = accent === 'red' ? 'text-[#ff1a00]' : 'text-[#69bcff]';
-
+function OutlineLink({ children }: { children: ReactNode }) {
     return (
-        <div className="border-y-2 border-[#101010] bg-[#050505] px-4 py-3 sm:px-6 lg:px-10">
-            <div className="flex items-center gap-3 text-white">
-                <div className={`h-px flex-1 ${accentLine}`} />
-                {label ? (
-                    <span
-                        className={`shrink-0 text-[11px] font-semibold tracking-[0.45em] uppercase ${accentText}`}
-                    >
-                        {label}
-                    </span>
-                ) : (
-                    <div className={`h-[22px] w-[2px] ${accentLine}`} />
-                )}
-                <div className={`h-px flex-1 ${accentLine}`} />
-            </div>
-            <div className="mt-2 flex items-center justify-center gap-3">
-                <div className={`h-[2px] w-12 ${accentLine}`} />
-                <div className="h-[10px] w-[2px] bg-white/70" />
-                <div className={`h-[2px] w-12 ${accentLine}`} />
-            </div>
-        </div>
+        <span className="inline-flex w-max items-center gap-5 rounded-full border border-current px-4 py-2 text-[11px] tracking-[0.04em] uppercase">
+            {children}
+            <span className="text-base leading-none">→</span>
+        </span>
     );
 }
 
-export default function Welcome({
-    heroBanners = [],
-    collectionBanners = [],
-    collections = [],
-}: Props) {
-    const heroSlides = useMemo(
-        () =>
-            heroBanners.filter(
-                (banner): banner is NonNullable<BannerCard> => banner !== null,
-            ),
-        [heroBanners],
+function ProductGrid({ products }: { products: Product[] }) {
+    return (
+        <section className="grid grid-cols-2 border-b border-hairline lg:grid-cols-4">
+            {products.map((product, index) => (
+                <Link
+                    key={product.id}
+                    href={list.url({ query: { search: product.name } })}
+                    className="group relative isolate aspect-[4/5] overflow-hidden border-r border-b border-canvas/70 text-canvas even:border-r-0 sm:aspect-square lg:last:border-r-0 lg:even:border-r"
+                >
+                    <img
+                        src={product.image}
+                        alt={product.name}
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/50" />
+                    <span className="absolute top-5 left-5 z-10 text-sm font-medium sm:top-6 sm:left-6">
+                        {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <div className="absolute right-5 bottom-6 left-5 z-10 sm:right-7 sm:bottom-7 sm:left-7">
+                        <h3 className="font-serif text-xl leading-none font-normal sm:text-2xl lg:text-[28px]">
+                            {product.name}
+                        </h3>
+                        <p className="mt-2 text-xs text-canvas/90 sm:text-sm">
+                            {product.label}
+                        </p>
+                        <strong className="mt-3 block text-sm font-medium">
+                            {'$'}
+                            {product.price}
+                        </strong>
+                    </div>
+                </Link>
+            ))}
+        </section>
     );
-    const performanceBanner =
-        collectionBanners.find(
-            (banner): banner is NonNullable<BannerCard> => banner !== null,
-        ) ?? null;
-    const tiles = collections.slice(0, 4);
-    const slides = heroSlides.length > 0 ? heroSlides : [fallbackSlide];
-    const [activeSlide, setActiveSlide] = useState(0);
+}
 
-    useEffect(() => {
-        if (slides.length <= 1) {
-            return;
-        }
-
-        const timer = window.setInterval(() => {
-            setActiveSlide((current) => (current + 1) % slides.length);
-        }, 5000);
-
-        return () => window.clearInterval(timer);
-    }, [slides.length]);
-
-    const goToSlide = (index: number) => {
-        setActiveSlide((index + slides.length) % slides.length);
-    };
-
+export default function Welcome() {
     return (
         <ShopLayout>
-            <Head title="AxeGear" />
-
-            <main className="bg-white text-[#1A1A1A]">
-                {/* Hero Section */}
-                <section className="relative h-[100svh] overflow-hidden border-b-2 border-[#101010] bg-black sm:h-[105svh] lg:h-[110svh]">
-                    <div
-                        className="flex h-full transition-transform duration-700 ease-out"
-                        style={{
-                            transform: `translateX(-${activeSlide * 100}%)`,
-                        }}
-                    >
-                        {slides.map((slide, index) => {
-                            const slideContent = (
-                                <picture className="block h-full w-full">
-                                    <source
-                                        media="(max-width: 767px)"
-                                        srcSet={
-                                            slide.image_mobile_url ??
-                                            slide.image_desktop_url
-                                        }
-                                    />
-                                    <img
-                                        src={
-                                            slide.image_desktop_url ??
-                                            slide.image_mobile_url ??
-                                            fallbackImage
-                                        }
-                                        alt={slide.title}
-                                        className="h-full w-full object-cover object-center"
-                                        loading={index === 0 ? 'eager' : 'lazy'}
-                                        decoding="async"
-                                    />
-                                </picture>
-                            );
-                            const className = `relative block h-full min-w-full ${slide.button_url ? 'cursor-pointer' : ''}`;
-
-                            return slide.button_url ? (
-                                /^https?:\/\//.test(slide.button_url) ? (
-                                    <a
-                                        key={`${slide.id}-${index}`}
-                                        href={slide.button_url}
-                                        className={className}
-                                    >
-                                        {slideContent}
-                                    </a>
-                                ) : (
-                                    <Link
-                                        key={`${slide.id}-${index}`}
-                                        href={slide.button_url}
-                                        className={className}
-                                    >
-                                        {slideContent}
-                                    </Link>
-                                )
-                            ) : (
-                                <div
-                                    key={`${slide.id}-${index}`}
-                                    className={className}
-                                >
-                                    {slideContent}
-                                </div>
-                            );
-                        })}
+            <Head title="Declasse Coffee" />
+            <div className="overflow-x-clip bg-canvas text-ink">
+                <section className="grid min-h-[560px] grid-cols-1 border-b border-hairline lg:grid-cols-[.95fr_1.05fr]">
+                    <div className="flex min-h-[480px] flex-col justify-between bg-sand p-8 sm:p-12 lg:min-h-0 lg:p-16">
+                        <p className="text-sm leading-5">
+                            Roasted slowly. Made deliberately.
+                            <br />
+                            Coffee for everyday rituals.
+                        </p>
+                        <Link href={list.url()} className="w-max">
+                            <OutlineLink>Shop coffee</OutlineLink>
+                        </Link>
+                        <h1 className="font-condensed text-[clamp(64px,8vw,138px)] leading-[0.81] font-semibold tracking-[-0.055em] uppercase">
+                            Coffee
+                            <br />
+                            without
+                            <br />
+                            the routine.
+                        </h1>
                     </div>
-
-                    {slides.length > 1 && (
-                        <>
-                            <button
-                                type="button"
-                                aria-label="Previous slide"
-                                onClick={() => goToSlide(activeSlide - 1)}
-                                className="absolute top-1/2 left-3 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-[8px] border border-white/70 bg-black/55 text-xl font-semibold text-white transition-colors hover:bg-white hover:text-black sm:left-5"
-                            >
-                                «
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="Next slide"
-                                onClick={() => goToSlide(activeSlide + 1)}
-                                className="absolute top-1/2 right-3 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-[8px] border border-white/70 bg-black/55 text-xl font-semibold text-white transition-colors hover:bg-white hover:text-black sm:right-5"
-                            >
-                                »
-                            </button>
-                        </>
-                    )}
+                    <img
+                        src={images.hero}
+                        alt="Hand holding a Declasse coffee can"
+                        fetchPriority="high"
+                        className="h-full min-h-[320px] w-full object-cover contrast-95 saturate-75"
+                    />
                 </section>
-
-                {/* <SectionSeparator accent="red" label="RACE READY PERFORMANCE" /> */}
-
-                {/* Performance Section */}
-                <section className="h-[100svh] overflow-hidden border-b-2 border-[#101010] bg-[#8fd6ff] sm:h-[105svh] lg:h-[110svh]">
-                    <picture className="block h-full w-full">
-                        <source
-                            media="(max-width: 767px)"
-                            srcSet={
-                                performanceBanner?.image_mobile_url ??
-                                performanceBanner?.image_desktop_url ??
-                                fallbackImage
-                            }
-                        />
-                        <img
-                            src={
-                                performanceBanner?.image_desktop_url ??
-                                performanceBanner?.image_mobile_url ??
-                                fallbackImage
-                            }
-                            alt="AxeGear performance campaign"
-                            className="h-full w-full object-cover object-center"
-                        />
-                    </picture>
-                </section>
-
-                {/* <SectionSeparator accent="blue" label="SHOP BY CATEGORY" /> */}
-
-                <section className="border-b-2 border-[#1A1A1A] bg-white px-5 py-6 sm:px-8 lg:px-12 xl:px-16">
-                    <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-6 lg:grid-cols-4 lg:gap-8 xl:gap-10">
-                        {tiles.length > 0 &&
-                            tiles.map((tile) => (
-                                <Link
-                                    key={tile.slug}
-                                    href={list.url({
-                                        query: { collection: tile.slug },
-                                    })}
-                                    aria-label={tile.name}
-                                    className="group relative block h-[78svh] overflow-hidden bg-white lg:h-[100svh]"
-                                >
-                                    <img
-                                        src={
-                                            tile.banner_mobile_url ??
-                                            fallbackImage
-                                        }
-                                        alt={tile.name}
-                                        className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
-                                    <div className="absolute top-5 right-6 z-10 text-right text-[28px] leading-none font-semibold tracking-[-0.02em] text-white italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] lg:top-6 lg:right-7 lg:text-[20px]">
-                                        {tile.name}
-                                    </div>
-                                </Link>
-                            ))}
+                <div className="flex min-h-8 items-center justify-center gap-4 overflow-hidden bg-surface-dark px-4 text-[10px] tracking-[0.12em] whitespace-nowrap text-canvas uppercase">
+                    Slow roasted <i className="h-px w-4 bg-oat" /> Daily rituals{' '}
+                    <i className="h-px w-4 bg-oat" /> Specialty coffee{' '}
+                    <i className="h-px w-4 bg-oat" /> Good mornings{' '}
+                    <i className="h-px w-4 bg-oat" /> Brew different
+                </div>
+                <ProductGrid products={featuredProducts} />
+                <section
+                    id="story"
+                    className="grid border-b border-hairline lg:min-h-[380px] lg:grid-cols-2"
+                >
+                    <img
+                        src={images.ritual}
+                        alt="Pour-over coffee ritual"
+                        loading="lazy"
+                        className="h-full min-h-[300px] w-full object-cover saturate-75"
+                    />
+                    <div className="bg-surface-dark p-9 text-canvas sm:p-12 lg:p-16">
+                        <span className="text-[11px] tracking-[0.08em] text-oat uppercase">
+                            Our approach
+                        </span>
+                        <h2 className="mt-5 font-condensed text-[clamp(56px,5.8vw,95px)] leading-[0.81] font-semibold tracking-[-0.055em] uppercase">
+                            Better coffee
+                            <br />
+                            starts with
+                            <br />
+                            better details.
+                        </h2>
+                        <p className="mt-5 max-w-sm text-sm leading-5">
+                            We work with carefully selected beans, thoughtful
+                            roasting profiles and uncomplicated brewing —
+                            because great coffee doesn’t need to be complicated.
+                        </p>
+                        <a
+                            href="#story"
+                            className="mt-6 inline-block text-xs font-medium tracking-[0.06em] text-primary uppercase"
+                        >
+                            Read our story ↗
+                        </a>
                     </div>
                 </section>
-            </main>
+                <ProductGrid products={ritualProducts} />
+                <section className="grid min-h-[220px] border-b border-hairline lg:min-h-[250px] lg:grid-cols-[.9fr_1.1fr]">
+                    <div className="flex min-h-[220px] flex-col justify-between p-8 sm:p-12">
+                        <p className="text-sm leading-5">
+                            Good coffee doesn’t need
+                            <br />
+                            an occasion. Sometimes the
+                            <br />
+                            ritual is enough.
+                        </p>
+                        <h2 className="font-condensed text-[clamp(56px,5.7vw,100px)] leading-[0.81] font-semibold tracking-[-0.055em] uppercase">
+                            Make
+                            <br />
+                            mornings
+                            <br />
+                            matter.
+                        </h2>
+                        <Link href={list.url()} className="w-max">
+                            <OutlineLink>Shop coffee</OutlineLink>
+                        </Link>
+                    </div>
+                    <img
+                        src={images.morning}
+                        alt="Coffee to go in the morning"
+                        loading="lazy"
+                        className="h-full min-h-[220px] w-full object-cover saturate-75 lg:min-h-[250px]"
+                    />
+                </section>
+            </div>
         </ShopLayout>
     );
 }
-
-Welcome.layout = (page: ReactNode) => page;

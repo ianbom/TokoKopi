@@ -15,10 +15,14 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('location')->nullable();
             $table->timestamp('happened_at')->nullable();
+            $table->timestamp('provider_happened_at')->nullable();
+            $table->string('payload_hash', 64)->nullable()->unique();
             $table->json('raw_payload')->nullable();
             $table->timestamps();
 
-            $table->index(['shipment_id', 'happened_at']);
+            $table->index('shipment_id');
+            $table->index('status');
+            $table->index('happened_at');
         });
     }
 

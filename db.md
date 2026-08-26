@@ -1,18 +1,25 @@
-Project axegear_ecommerce_final {
+Project declasse_coffee_ecommerce {
   database_type: "MySQL"
 }
 
 /*
-  AXEGEAR E-COMMERCE DATABASE FINAL
+  DECLASSE COFFEE E-COMMERCE DATABASE — SIMPLE STOCK
 
-  Prinsip:
-  - Product dibuat sederhana.
-  - Description memakai longtext untuk Tiptap.js.
-  - Product detail seperti fitur, spesifikasi, best for, isi paket masuk ke description.
-  - Collections tetap dipakai untuk campaign / grouping produk.
-  - Product bisa masuk banyak collection lewat product_collections.
-  - Stock utama mengikuti Desty Omni.
-  - Website hanya menyimpan cache stok dan reserved stock.
+  Fokus:
+  - Database disederhanakan untuk toko kopi.
+  - Catalog dibuat sederhana untuk produk coffee roastery.
+  - Product dan category menggunakan relasi many-to-many.
+  - Collections dan product_collections dihapus.
+  - Product reviews dihapus.
+  - Semua produk menggunakan product_variants, termasuk produk tanpa pilihan khusus.
+    Untuk produk tanpa pilihan, tetap buat satu variant dengan SKU, harga, dan stock.
+  - Variant kopi fokus pada:
+    net_weight fleksibel, grind type, harga, dan stok.
+  - Detail produk dibuat minimal; origin dan process dapat disimpan di products.
+  - Description memakai longtext untuk konten rich text dari Tiptap.js.
+  - Stok dikelola langsung oleh website melalui tabel stocks.
+  - Tidak menggunakan Desty Omni atau sistem inventory/reservation yang kompleks.
+  - Setiap product variant memiliki satu data stock sederhana.
 */
 
 
@@ -26,7 +33,7 @@ Table users {
   email varchar(255) [not null, unique]
   google_id varchar(255) [unique]
   phone varchar(255)
-  role varchar(255) [not null, default: 'customer', note: 'customer, admin, super_admin']
+  role varchar(255) [not null, default: 'customer', note: 'customer, admin']
   avatar_url varchar(255)
   is_active boolean [not null, default: true]
   email_verified_at timestamp
@@ -75,12 +82,11 @@ Table customer_addresses {
 
 
 // =========================
-// PRODUCT CATALOG
+// COFFEE CATALOG
 // =========================
 
 Table categories {
   id bigint [pk, increment]
-  parent_id bigint
   name varchar(150) [not null]
   slug varchar(180) [not null, unique]
   description text
@@ -92,80 +98,54 @@ Table categories {
   deleted_at timestamp
 
   indexes {
-    parent_id
     slug
     is_active
   }
 }
 
-Table collections {
-  id bigint [pk, increment]
-  name varchar(150) [not null]
-  slug varchar(180) [not null, unique]
-  description text
-  banner_desktop_url varchar(255)
-  banner_mobile_url varchar(255)
-  sort_order int [not null, default: 0]
-  is_featured boolean [not null, default: false]
-  is_active boolean [not null, default: true]
-  starts_at timestamp
-  ends_at timestamp
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
+/*
+  PRODUCT
 
-  indexes {
-    slug
-    is_featured
-    is_active
-    starts_at
-    ends_at
-  }
-}
+  Product dibuat sederhana.
+
+  Category menggunakan relasi many-to-many melalui product_categories.
+  Satu product dapat memiliki banyak category dan satu category dapat
+  digunakan oleh banyak product.
+
+  Contoh category:
+  - Coffee Beans
+  - Espresso
+  - Filter Coffee
+  - Single Origin
+  - Blend
+  - Ready to Drink
+  - Best Seller
+*/
 
 Table products {
   id bigint [pk, increment]
-  category_id bigint
 
   name varchar(200) [not null]
   slug varchar(220) [not null, unique]
-
   sku varchar(100) [unique, note: 'SKU induk / kode produk utama']
-  brand_name varchar(150) [not null, default: 'Axegear']
-  product_line varchar(150) [note: 'Contoh: Hydropack, Tank Bag, Running Belt, Helmet Bag']
-  style_name varchar(180) [note: 'Contoh: Black 8L, Navy Blue, With Bladder']
 
-  regular_price decimal(15,2) [not null]
-  sale_price decimal(15,2)
+  origin varchar(180) [note: 'Contoh: Sumatera Karo, Ijen, Gayo, Toraja, Ethiopia']
+  process varchar(100) [note: 'Contoh: natural, washed, anaerobic, wet hulled']
 
-  short_description text
-  description longtext [note: 'Konten rich text dari Tiptap.js. Berisi deskripsi, fitur, spesifikasi, best for, isi paket, dll']
+  description longtext [note: 'Konten rich text Tiptap.js: deskripsi produk, origin, karakter kopi, brewing recommendation, storage, dll']
 
-  stock_status varchar(50) [not null, default: 'in_stock', note: 'in_stock, out_of_stock, preorder']
   status varchar(30) [not null, default: 'draft', note: 'draft, active, inactive, archived']
-
-  weight int [not null, default: 0, note: 'gram']
-  length int [note: 'cm']
-  width int [note: 'cm']
-  height int [note: 'cm']
 
   is_featured boolean [not null, default: false]
   is_new_arrival boolean [not null, default: false]
   is_best_seller boolean [not null, default: false]
 
-  meta_title varchar(255)
-  meta_description text
-
   created_at timestamp
   updated_at timestamp
   deleted_at timestamp
 
   indexes {
-    category_id
     sku
-    brand_name
-    product_line
-    stock_status
     status
     is_featured
     is_new_arrival
@@ -173,18 +153,17 @@ Table products {
   }
 }
 
-Table product_collections {
+Table product_categories {
   id bigint [pk, increment]
   product_id bigint [not null]
-  collection_id bigint [not null]
-  sort_order int [not null, default: 0]
+  category_id bigint [not null]
   created_at timestamp
   updated_at timestamp
 
   indexes {
-    (product_id, collection_id) [unique]
+    (product_id, category_id) [unique]
     product_id
-    collection_id
+    category_id
   }
 }
 
@@ -205,36 +184,37 @@ Table product_images {
   }
 }
 
+/*
+  PRODUCT VARIANT
+
+  Variant dibuat sederhana untuk kebutuhan produk kopi.
+
+  Contoh:
+  - net_weight = "100gram", grind_type = "whole_bean"
+  - net_weight = "200gram", grind_type = "fine"
+  - net_weight = "1kg", grind_type = "whole_bean"
+  - net_weight = "100ml", grind_type = null
+  - net_weight = "2pcs", grind_type = null
+
+  net_weight menggunakan varchar agar fleksibel dan tidak terbatas
+  hanya pada satuan gram.
+
+  Setiap product minimal memiliki satu product_variant.
+*/
+
 Table product_variants {
   id bigint [pk, increment]
   product_id bigint [not null]
 
-  sku varchar(100) [not null, unique, note: 'SKU varian, wajib cocok / termapping dengan SKU Desty']
-  barcode varchar(100)
+  sku varchar(100) [not null, unique, note: 'SKU unik untuk setiap varian produk']
 
-  variant_name varchar(180) [not null, default: 'Default Title']
-  color_name varchar(100)
-  color_hex varchar(20)
-  size varchar(100)
-  package_type varchar(150) [note: 'Contoh: With Bladder, Tanpa Bladder, Bundle']
+  net_weight varchar(100) [note: 'Label isi/berat fleksibel. Contoh: 100gram, 250gram, 1kg, 100ml, 2pcs']
+  grind_type varchar(50) [note: 'whole_bean, fine, medium_fine, medium, medium_coarse, coarse, tubruk; boleh null']
 
-  regular_price decimal(15,2)
+  regular_price decimal(15,2) [not null]
   sale_price decimal(15,2)
 
-  stock int [not null, default: 0, note: 'Cache stok website dari Desty']
-  reserved_stock int [not null, default: 0, note: 'Stok yang sedang di-reserve saat checkout website']
-  desty_available_stock int [not null, default: 0]
-  desty_on_hand_stock int [not null, default: 0]
-  desty_reserved_stock int [not null, default: 0]
-  desty_last_synced_at timestamp
-
-  stock_source varchar(50) [not null, default: 'desty', note: 'desty, manual, migration']
-  allow_manual_stock_edit boolean [not null, default: false]
-
-  weight int
-  length int
-  width int
-  height int
+  shipping_weight_gram int [not null, default: 0, note: 'Berat paket dalam gram untuk perhitungan ongkir']
 
   image_url varchar(255)
   is_active boolean [not null, default: true]
@@ -246,246 +226,48 @@ Table product_variants {
   indexes {
     product_id
     sku
-    color_name
-    size
-    package_type
+    net_weight
+    grind_type
     is_active
-    stock_source
   }
 }
 
-Table product_marketplace_links {
-  id bigint [pk, increment]
-  product_id bigint [not null]
-  marketplace_name varchar(100) [not null, note: 'shopee, tokopedia, tiktok_shop, lazada']
-  external_product_id varchar(150)
-  external_sku varchar(150)
-  product_url varchar(255) [not null]
-  price_snapshot decimal(15,2)
-  stock_snapshot int
-  last_synced_at timestamp
-  is_active boolean [not null, default: true]
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    product_id
-    marketplace_name
-    (product_id, marketplace_name) [unique]
-  }
-}
 
 
 // =========================
-// DESTY OMNI INTEGRATION
+// STOCKS
 // =========================
 
-Table desty_connections {
+/*
+  STOCKS
+
+  Stok dibuat sederhana dan dikelola langsung oleh website.
+
+  Aturan:
+  - Satu product_variant memiliki satu baris stock.
+  - quantity adalah jumlah stok yang tersedia untuk dijual.
+  - Tidak menggunakan stock reservation.
+  - Tidak menggunakan Desty Omni atau sinkronisasi inventory pihak ketiga.
+  - Pengurangan / pengembalian stok ditangani oleh business logic aplikasi
+    ketika order dibayar, dibatalkan, atau direfund sesuai kebutuhan.
+
+  Contoh:
+  - Espresso No.01 200g Whole Bean -> quantity 25
+  - Espresso No.01 200g Fine       -> quantity 12
+  - Espresso Liquid 1000ml         -> quantity 8
+*/
+
+Table stocks {
   id bigint [pk, increment]
-  name varchar(150) [not null]
-  vendor_id varchar(150)
-  api_key_encrypted text
-  access_token_encrypted text
-  refresh_token_encrypted text
-  base_url varchar(255)
-  sync_mode varchar(50) [not null, default: 'desty_master', note: 'desty_master, website_master, two_way']
-  is_active boolean [not null, default: true]
-  last_connected_at timestamp
-  last_sync_at timestamp
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    is_active
-  }
-}
-
-Table desty_warehouses {
-  id bigint [pk, increment]
-  desty_connection_id bigint [not null]
-  desty_warehouse_id varchar(150) [not null]
-  name varchar(150) [not null]
-  code varchar(100)
-  address text
-  is_default boolean [not null, default: false]
-  is_active boolean [not null, default: true]
-  last_synced_at timestamp
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    (desty_connection_id, desty_warehouse_id) [unique]
-    is_default
-    is_active
-  }
-}
-
-Table desty_product_mappings {
-  id bigint [pk, increment]
-  product_id bigint [not null]
-  desty_connection_id bigint [not null]
-  desty_product_id varchar(150) [not null]
-  desty_product_code varchar(150)
-  desty_product_name varchar(255)
-  sync_status varchar(50) [not null, default: 'mapped', note: 'mapped, unmapped, conflict, inactive']
-  last_synced_at timestamp
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    product_id
-    desty_product_id
-    sync_status
-    (product_id, desty_connection_id) [unique]
-  }
-}
-
-Table desty_variant_mappings {
-  id bigint [pk, increment]
-  product_variant_id bigint [not null]
-  desty_product_mapping_id bigint [not null]
-  desty_variant_id varchar(150)
-  desty_sku varchar(150) [not null]
-  desty_barcode varchar(150)
-  desty_warehouse_id varchar(150)
-  sync_status varchar(50) [not null, default: 'mapped', note: 'mapped, unmapped, conflict, inactive']
-  last_stock_synced_at timestamp
+  product_variant_id bigint [not null, unique]
+  quantity int [not null, default: 0, note: 'Jumlah stok tersedia']
+  low_stock_threshold int [not null, default: 5, note: 'Batas peringatan stok menipis']
   created_at timestamp
   updated_at timestamp
 
   indexes {
     product_variant_id
-    desty_sku
-    sync_status
-    (product_variant_id, desty_product_mapping_id) [unique]
-  }
-}
-
-Table desty_order_mappings {
-  id bigint [pk, increment]
-  order_id bigint [not null]
-  desty_connection_id bigint [not null]
-  desty_order_id varchar(150)
-  desty_order_number varchar(150)
-  desty_order_status varchar(100)
-  sync_status varchar(50) [not null, default: 'pending', note: 'pending, synced, failed, cancelled']
-  last_synced_at timestamp
-  raw_payload json
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    order_id
-    desty_order_id
-    sync_status
-    (order_id, desty_connection_id) [unique]
-  }
-}
-
-Table desty_sync_jobs {
-  id bigint [pk, increment]
-  desty_connection_id bigint [not null]
-  job_type varchar(100) [not null, note: 'pull_products, pull_stock, push_order, push_stock_adjustment, sync_order_status']
-  direction varchar(30) [not null, note: 'pull, push']
-  status varchar(50) [not null, default: 'pending', note: 'pending, processing, success, failed, retrying']
-  reference_type varchar(100)
-  reference_id bigint
-  attempt_count int [not null, default: 0]
-  max_attempts int [not null, default: 3]
-  request_payload json
-  response_payload json
-  error_message text
-  started_at timestamp
-  finished_at timestamp
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    desty_connection_id
-    job_type
-    status
-    reference_type
-    reference_id
-  }
-}
-
-Table desty_webhook_logs {
-  id bigint [pk, increment]
-  desty_connection_id bigint
-  event_type varchar(150)
-  event_id varchar(150)
-  payload_hash varchar(64) [unique]
-  payload json [not null]
-  processed_status varchar(50) [not null, default: 'pending', note: 'pending, processed, failed, ignored']
-  processed_at timestamp
-  error_message text
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    desty_connection_id
-    event_type
-    event_id
-    processed_status
-  }
-}
-
-
-// =========================
-// STOCK & RESERVATION
-// =========================
-
-Table stock_logs {
-  id bigint [pk, increment]
-  product_variant_id bigint [not null]
-  user_id bigint
-
-  source varchar(50) [not null, default: 'website', note: 'website, desty, shopee, tokopedia, manual, system']
-  desty_sync_job_id bigint
-  desty_event_id varchar(150)
-
-  type varchar(50) [not null, note: 'in, out, reserved, released, adjustment, returned, sync']
-  quantity int [not null]
-  stock_before int [not null]
-  stock_after int [not null]
-
-  reference_type varchar(100)
-  reference_id bigint
-  note text
-  raw_payload json
-
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    product_variant_id
-    user_id
-    source
-    type
-    reference_type
-    reference_id
-  }
-}
-
-Table inventory_reservations {
-  id bigint [pk, increment]
-  order_id bigint [not null]
-  order_item_id bigint
-  product_variant_id bigint [not null]
-  quantity int [not null]
-  status varchar(50) [not null, default: 'reserved', note: 'reserved, released, finalized, expired']
-  reserved_at timestamp [not null]
-  released_at timestamp
-  finalized_at timestamp
-  expired_at timestamp
-  created_at timestamp
-  updated_at timestamp
-
-  indexes {
-    order_id
-    order_item_id
-    product_variant_id
-    status
+    quantity
   }
 }
 
@@ -602,15 +384,9 @@ Table orders {
   voucher_code varchar(50)
 
   payment_status varchar(50) [not null, default: 'pending', note: 'pending, paid, failed, expired, refunded']
-  order_status varchar(50) [not null, default: 'pending_payment', note: 'pending_payment, paid, paid_pending_desty_sync, processing, shipped, completed, cancelled, sync_failed']
+  order_status varchar(50) [not null, default: 'pending_payment', note: 'pending_payment, paid, processing, shipped, completed, cancelled']
   shipping_status varchar(50) [not null, default: 'not_created', note: 'not_created, created, picked_up, in_transit, delivered, failed, returned']
 
-  source_channel varchar(50) [not null, default: 'website', note: 'website, shopee, tokopedia, manual']
-  desty_sync_status varchar(50) [not null, default: 'not_synced', note: 'not_synced, pending, synced, failed, ignored']
-  desty_synced_at timestamp
-
-  no_return_refund_agreed boolean [not null, default: false]
-  no_return_refund_agreed_at timestamp
 
   notes text
   paid_at timestamp
@@ -618,9 +394,6 @@ Table orders {
   expired_at timestamp
   completed_at timestamp
 
-  stock_reserved_at timestamp
-  stock_released_at timestamp
-  stock_finalized_at timestamp
   voucher_released_at timestamp
 
   created_at timestamp
@@ -632,8 +405,6 @@ Table orders {
     payment_status
     order_status
     shipping_status
-    source_channel
-    desty_sync_status
   }
 }
 
@@ -646,20 +417,15 @@ Table order_items {
   product_name varchar(200) [not null]
   product_sku varchar(100)
   variant_sku varchar(100)
-  variant_name varchar(180)
-  color_name varchar(100)
-  size varchar(100)
-  package_type varchar(150)
+
+  net_weight varchar(100) [note: 'Snapshot variant. Contoh: 100gram, 100ml, 2pcs']
+  grind_type varchar(50)
 
   price decimal(15,2) [not null]
   quantity int [not null]
   subtotal decimal(15,2) [not null]
 
-  weight int [not null, default: 0]
-  length int
-  width int
-  height int
-
+  shipping_weight_gram int [not null, default: 0]
   product_image_url varchar(255)
 
   created_at timestamp
@@ -670,6 +436,7 @@ Table order_items {
     product_id
     product_variant_id
     variant_sku
+    grind_type
   }
 }
 
@@ -839,32 +606,6 @@ Table biteship_webhook_logs {
 
 
 // =========================
-// REVIEWS
-// =========================
-
-Table product_reviews {
-  id bigint [pk, increment]
-  user_id bigint [not null]
-  order_item_id bigint
-  product_id bigint [not null]
-  rating int [not null, note: '1 sampai 5']
-  title varchar(150)
-  comment text
-  is_visible boolean [not null, default: true]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  indexes {
-    product_id
-    user_id
-    order_item_id
-    is_visible
-  }
-}
-
-
-// =========================
 // WISHLIST & NOTIFICATIONS
 // =========================
 
@@ -990,41 +731,20 @@ Table admin_activity_logs {
 
 Ref: customer_addresses.user_id > users.id [delete: cascade]
 
-Ref: categories.parent_id > categories.id [delete: set null]
 
-Ref: products.category_id > categories.id [delete: set null]
-
-Ref: product_collections.product_id > products.id [delete: cascade]
-Ref: product_collections.collection_id > collections.id [delete: cascade]
+Ref: product_categories.product_id > products.id [delete: cascade]
+Ref: product_categories.category_id > categories.id [delete: cascade]
 
 Ref: product_images.product_id > products.id [delete: cascade]
-
 Ref: product_variants.product_id > products.id [delete: cascade]
+Ref: stocks.product_variant_id > product_variants.id [delete: cascade]
 
-Ref: product_marketplace_links.product_id > products.id [delete: cascade]
 
-Ref: desty_warehouses.desty_connection_id > desty_connections.id [delete: cascade]
 
-Ref: desty_product_mappings.product_id > products.id [delete: cascade]
-Ref: desty_product_mappings.desty_connection_id > desty_connections.id [delete: cascade]
 
-Ref: desty_variant_mappings.product_variant_id > product_variants.id [delete: cascade]
-Ref: desty_variant_mappings.desty_product_mapping_id > desty_product_mappings.id [delete: cascade]
 
-Ref: desty_order_mappings.order_id > orders.id [delete: cascade]
-Ref: desty_order_mappings.desty_connection_id > desty_connections.id [delete: cascade]
 
-Ref: desty_sync_jobs.desty_connection_id > desty_connections.id [delete: cascade]
 
-Ref: desty_webhook_logs.desty_connection_id > desty_connections.id [delete: set null]
-
-Ref: stock_logs.product_variant_id > product_variants.id [delete: cascade]
-Ref: stock_logs.user_id > users.id [delete: set null]
-Ref: stock_logs.desty_sync_job_id > desty_sync_jobs.id [delete: set null]
-
-Ref: inventory_reservations.order_id > orders.id [delete: cascade]
-Ref: inventory_reservations.order_item_id > order_items.id [delete: set null]
-Ref: inventory_reservations.product_variant_id > product_variants.id [delete: cascade]
 
 Ref: carts.user_id > users.id [delete: cascade]
 
@@ -1054,12 +774,7 @@ Ref: payment_logs.payment_id > payments.id [delete: set null]
 Ref: payment_logs.order_id > orders.id [delete: set null]
 
 Ref: shipments.order_id > orders.id [delete: cascade]
-
 Ref: shipment_trackings.shipment_id > shipments.id [delete: cascade]
-
-Ref: product_reviews.user_id > users.id [delete: cascade]
-Ref: product_reviews.order_item_id > order_items.id [delete: set null]
-Ref: product_reviews.product_id > products.id [delete: cascade]
 
 Ref: wishlists.user_id > users.id [delete: cascade]
 Ref: wishlists.product_id > products.id [delete: cascade]

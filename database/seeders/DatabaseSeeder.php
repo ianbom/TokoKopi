@@ -16,16 +16,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             UserSeeder::class,
-            CategorySeeder::class,
-            CollectionSeeder::class,
-            AxeGearSeeder::class,
+            CoffeeCatalogSeeder::class,
             BannerSeeder::class,
             PageSeeder::class,
-            NewProductPageSeeder::class,
-            BlogArticleSeeder::class,
-            GallerySeeder::class,
             SiteSettingSeeder::class,
         ]);
     }
 }
-

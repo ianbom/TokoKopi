@@ -36,9 +36,6 @@ return new class extends Migration
             $table->timestamp('cancelled_at')->nullable();
             $table->timestamp('expired_at')->nullable();
             $table->timestamp('completed_at')->nullable();
-            $table->timestamp('stock_reserved_at')->nullable();
-            $table->timestamp('stock_released_at')->nullable();
-            $table->timestamp('stock_finalized_at')->nullable();
             $table->timestamp('voucher_released_at')->nullable();
             $table->timestamps();
 

@@ -4,28 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['parent_id', 'name', 'slug', 'description', 'image_url', 'sort_order', 'is_active'])]
+#[Fillable(['name', 'slug', 'description', 'image_url', 'sort_order', 'is_active'])]
 class Category extends Model
 {
     use SoftDeletes;
 
-    public function parent(): BelongsTo
+    public function products(): BelongsToMany
     {
-        return $this->belongsTo(self::class, 'parent_id');
-    }
-
-    public function children(): HasMany
-    {
-        return $this->hasMany(self::class, 'parent_id');
-    }
-
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class);
+        return $this->belongsToMany(Product::class, 'product_categories')->withTimestamps();
     }
 
     protected function casts(): array

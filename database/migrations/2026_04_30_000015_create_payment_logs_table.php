@@ -15,12 +15,15 @@ return new class extends Migration
             $table->string('provider', 50)->default('midtrans');
             $table->string('event_type', 100)->nullable();
             $table->string('transaction_status', 50)->nullable();
+            $table->string('payload_hash', 64)->unique();
             $table->json('payload');
             $table->timestamp('processed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['provider', 'event_type']);
-            $table->index(['order_id', 'created_at']);
+            $table->index('payment_id');
+            $table->index('order_id');
+            $table->index('event_type');
+            $table->index('transaction_status');
         });
     }
 

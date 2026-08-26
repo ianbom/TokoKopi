@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'avatar_url', 'google_id'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'avatar_url', 'google_id', 'role', 'is_active', 'email_verified_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -39,16 +39,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
-    }
-
-    public function productReviews(): HasMany
-    {
-        return $this->hasMany(ProductReview::class);
-    }
-
-    public function stockLogs(): HasMany
-    {
-        return $this->hasMany(StockLog::class);
     }
 
     public function wishlists(): HasMany
