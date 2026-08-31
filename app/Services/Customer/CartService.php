@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Stock;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -45,7 +46,11 @@ class CartService
                 ->firstOrFail();
 
             $product = $variant->product;
-            $availableStock = (int) ($variant->stock?->quantity ?? 0);
+            $stock = Stock::query()
+                ->where('product_variant_id', $variant->id)
+                ->lockForUpdate()
+                ->first();
+            $availableStock = (int) ($stock?->quantity ?? 0);
 
             if (! $product || $product->status !== 'active' || ! $variant->is_active || $availableStock < 1) {
                 throw ValidationException::withMessages([
@@ -67,7 +72,7 @@ class CartService
                 ]);
             }
 
-            $priceSnapshot = $variant->sale_price ?? $variant->regular_price ?? $product->sale_price ?? $product->regular_price;
+            $priceSnapshot = $variant->sale_price ?? $variant->regular_price;
 
             return CartItem::query()->updateOrCreate(
                 [
@@ -78,6 +83,7 @@ class CartService
                     'product_id' => $product->id,
                     'quantity' => $nextQuantity,
                     'price_snapshot' => $priceSnapshot,
+                    'variant_name_snapshot' => $this->variantName($variant),
                 ],
             );
         });
@@ -94,7 +100,11 @@ class CartService
                 ->firstOrFail();
 
             $product = $variant->product;
-            $availableStock = (int) ($variant->stock?->quantity ?? 0);
+            $stock = Stock::query()
+                ->where('product_variant_id', $variant->id)
+                ->lockForUpdate()
+                ->first();
+            $availableStock = (int) ($stock?->quantity ?? 0);
 
             if (! $product || $product->status !== 'active' || ! $variant->is_active || $availableStock < 1) {
                 throw ValidationException::withMessages([
@@ -111,7 +121,8 @@ class CartService
             $item->forceFill([
                 'product_id' => $product->id,
                 'quantity' => $quantity,
-                'price_snapshot' => $variant->sale_price ?? $variant->regular_price ?? $product->sale_price ?? $product->regular_price,
+                'price_snapshot' => $variant->sale_price ?? $variant->regular_price,
+                'variant_name_snapshot' => $this->variantName($variant),
             ])->save();
 
             return $item->refresh();
@@ -129,9 +140,10 @@ class CartService
             ->with([
                 'items' => fn ($query) => $query
                     ->with([
-                        'product:id,name,slug,status,sale_price,regular_price',
+                        'product:id,name,slug,status',
                         'product.primaryImage:id,product_id,image_url,alt_text',
-                        'variant:id,product_id,sku,color_name,color_hex,size,stock,reserved_stock,regular_price,sale_price,image_url,is_active',
+                        'variant:id,product_id,sku,net_weight,grind_type,regular_price,sale_price,shipping_weight_gram,image_url,is_active',
+                        'variant.stock:id,product_variant_id,quantity',
                     ])
                     ->latest('id'),
             ])
@@ -144,8 +156,8 @@ class CartService
         return $cart->items->map(function (CartItem $item): array {
             $product = $item->product;
             $variant = $item->variant;
-            $availableStock = $variant ? max(0, $variant->stock - $variant->reserved_stock) : 0;
-            $isAvailable = $product?->status === 'published'
+            $availableStock = max(0, (int) ($variant?->stock?->quantity ?? 0));
+            $isAvailable = $product?->status === 'active'
                 && (bool) $variant?->is_active
                 && $availableStock >= $item->quantity;
 
@@ -154,9 +166,8 @@ class CartService
                 'product_id' => $item->product_id,
                 'product_slug' => $product?->slug,
                 'title' => $product?->name ?? 'Produk tidak tersedia',
-                'color' => $variant?->color_name,
-                'color_hex' => $variant?->color_hex,
-                'size' => $variant?->size,
+                'net_weight' => $variant?->net_weight,
+                'grind_type' => $variant?->grind_type,
                 'image' => $variant?->image_url ?? $product?->primaryImage?->image_url,
                 'price' => (float) $item->price_snapshot,
                 'quantity' => $item->quantity,
@@ -192,10 +203,11 @@ class CartService
             ->with([
                 'primaryImage:id,product_id,image_url,alt_text',
                 'variants' => fn ($query) => $query
-                    ->select('id', 'product_id', 'stock', 'reserved_stock')
+                    ->select('id', 'product_id', 'regular_price', 'sale_price', 'is_active')
+                    ->with('stock:id,product_variant_id,quantity')
                     ->where('is_active', true),
             ])
-            ->where('status', 'published')
+            ->where('status', 'active')
             ->when($excludedProductIds !== [], fn ($query) => $query->whereNotIn('id', $excludedProductIds))
             ->orderByDesc('is_featured')
             ->orderByDesc('is_new_arrival')
@@ -206,14 +218,22 @@ class CartService
                 'id' => $product->id,
                 'slug' => $product->slug,
                 'title' => $product->name,
-                'price' => (float) ($product->sale_price ?? $product->regular_price),
+                'price' => (float) ($product->variants->first()?->sale_price ?? $product->variants->first()?->regular_price ?? 0),
                 'image' => $product->primaryImage?->image_url,
                 'available_stock' => $product->variants->sum(
-                    fn (ProductVariant $variant) => max(0, $variant->stock - $variant->reserved_stock),
+                    fn (ProductVariant $variant) => max(0, (int) ($variant->stock?->quantity ?? 0)),
                 ),
             ])
             ->values()
             ->all();
+    }
+
+    private function variantName(ProductVariant $variant): string
+    {
+        return collect([$variant->net_weight, $variant->grind_type])
+            ->filter()
+            ->map(fn (string $value): string => str($value)->replace('_', ' ')->title()->toString())
+            ->implode(' / ');
     }
 
     private function ownedCartItem(CartItem $cartItem, User $user): CartItem

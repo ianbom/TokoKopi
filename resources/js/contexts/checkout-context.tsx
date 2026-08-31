@@ -21,8 +21,8 @@ export type CheckoutItem = {
     title: string;
     sku: string | null;
     variant_sku: string | null;
-    color: string | null;
-    size: string | null;
+    net_weight: string | null;
+    grind_type: string | null;
     image: string | null;
     price: number;
     quantity: number;

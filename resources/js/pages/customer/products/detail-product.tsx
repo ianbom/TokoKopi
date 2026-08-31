@@ -301,9 +301,7 @@ function DetailProductPage({ product, relatedProducts }: Props) {
                     </section>
                 )}
 
-                {relatedProducts.length > 0 && (
-                    <RelatedProducts products={relatedProducts} />
-                )}
+         
             </main>
         </ShopLayout>
     );

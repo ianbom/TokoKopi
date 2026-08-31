@@ -512,7 +512,13 @@ function CheckoutScreen() {
                                                     {item.title}
                                                 </p>
                                                 <p className="mt-1 text-[11px] font-medium text-[#707070]">
-                                                    {[item.color, item.size]
+                                                    {[
+                                                        item.net_weight,
+                                                        item.grind_type?.replaceAll(
+                                                            '_',
+                                                            ' ',
+                                                        ),
+                                                    ]
                                                         .filter(Boolean)
                                                         .join(' / ') || '-'}
                                                 </p>

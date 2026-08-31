@@ -14,17 +14,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'product_name',
     'product_sku',
     'variant_sku',
-    'variant_name',
-    'color_name',
-    'size',
-    'package_type',
+    'net_weight',
+    'grind_type',
     'price',
     'quantity',
     'subtotal',
-    'weight',
-    'length',
-    'width',
-    'height',
+    'shipping_weight_gram',
     'product_image_url',
 ])]
 class OrderItem extends Model
@@ -52,13 +47,10 @@ class OrderItem extends Model
     protected function casts(): array
     {
         return [
-            'height' => 'integer',
-            'length' => 'integer',
             'price' => 'decimal:2',
             'quantity' => 'integer',
             'subtotal' => 'decimal:2',
-            'weight' => 'integer',
-            'width' => 'integer',
+            'shipping_weight_gram' => 'integer',
         ];
     }
 }

@@ -1,16 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    BadgeCheck,
-    ChevronLeft,
-    FileText,
-    Info,
-    Minus,
-    Plus,
-    RotateCcw,
-    ShieldCheck,
-    Trash2,
-    Truck,
-} from 'lucide-react';
+import { ArrowRight, Minus, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -26,18 +15,14 @@ type CartItem = {
     product_id: number | null;
     product_slug: string | null;
     title: string;
-    color: string | null;
-    color_hex: string | null;
-    size: string | null;
+    net_weight: string | null;
+    grind_type: string | null;
     image: string | null;
     price: number;
     quantity: number;
     available_stock: number;
     is_available: boolean;
-    variant: {
-        id: number | null;
-        sku: string | null;
-    };
+    variant: { id: number | null; sku: string | null };
     subtotal: number;
 };
 
@@ -58,39 +43,43 @@ type SuggestedProduct = {
     available_stock: number;
 };
 
-type PageProps = {
+type Props = {
     cartItems: CartItem[];
     summary: CartSummary;
     suggestedProducts: SuggestedProduct[];
 };
 
-const fallbackImages = [
-    'https://www.100percent.com/cdn/shop/files/59057-00001-P_1.jpg?v=1764788225&width=1100',
-    'https://www.100percent.com/cdn/shop/files/SP26_SPEEDCRAFT_SL_60008-00025_3Q.jpg?v=1772487312&width=500',
-    'https://www.100percent.com/cdn/shop/files/2000x2000-eComm_20PDP-Casual_Staple_20Tee_0010_Layer_2015.jpg?v=1764633157&width=1200',
-    'https://www.100percent.com/cdn/shop/files/2000x2000-eComm_20PDP-Casual_Region_20Tee_0001_Layer_2030.jpg?v=1764633177&width=1200',
-    'https://www.100percent.com/cdn/shop/files/FA25_LS_OS_TEE_REGION__2020142-10002_F-002.jpg?v=1764633155&width=1100',
-];
-
 const formatPrice = (price: number) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
-        minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     })
         .format(price)
         .replace('Rp', 'Rp ');
 
-const itemMeta = (item: CartItem) =>
-    [item.color, item.size].filter(Boolean).join(' / ') ||
-    'AxeGear Performance';
+const productMeta = (item: Pick<CartItem, 'net_weight' | 'grind_type'>) =>
+    [item.net_weight, item.grind_type?.replaceAll('_', ' ')]
+        .filter(Boolean)
+        .join(' / ');
+
+const stockIssueMessage = (item: CartItem) => {
+    if (item.available_stock <= 0) {
+        return 'Stok habis. Hapus produk ini atau tunggu stok tersedia.';
+    }
+
+    if (item.available_stock < item.quantity) {
+        return `Stok tersedia ${item.available_stock}. Sesuaikan jumlah sebelum checkout.`;
+    }
+
+    return 'Produk ini tidak lagi tersedia.';
+};
 
 export default function MyCart({
     cartItems,
     summary,
     suggestedProducts,
-}: PageProps) {
+}: Props) {
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
     const [processingItemId, setProcessingItemId] = useState<number | null>(
         null,
@@ -98,55 +87,26 @@ export default function MyCart({
     const [processingAction, setProcessingAction] = useState<
         'update' | 'remove' | null
     >(null);
-
-    const isEmpty = cartItems.length === 0;
-    const errorMessage =
-        errors.quantity || errors.cart_item || errors.product_variant_id;
-    const checkoutHref = useMemo(() => checkout.url(), []);
-    const stockIssueItems = useMemo(
-        () => cartItems.filter((item) => !item.is_available),
+    const hasStockIssues = useMemo(
+        () => cartItems.some((item) => !item.is_available),
         [cartItems],
     );
-    const hasStockIssues = stockIssueItems.length > 0;
 
-    const stockIssueMessage = (item: CartItem) => {
-        if (item.available_stock <= 0) {
-            return 'Product is out of stock. Checkout is unavailable.';
-        }
-
-        if (item.available_stock < item.quantity) {
-            return `Only ${item.available_stock} left in stock. Update quantity before checkout.`;
-        }
-
-        return 'Product is unavailable. Checkout is unavailable.';
-    };
-
-    const continueToCheckout = () => {
-        if (hasStockIssues) {
-            toast.error('Update unavailable cart items before checkout.');
-
-            return;
-        }
-
-        router.visit(checkoutHref);
-    };
-
-    const updateQuantity = (item: CartItem, nextQuantity: number) => {
+    const updateQuantity = (item: CartItem, quantity: number) => {
         if (
             processingItemId !== null ||
-            nextQuantity < 1 ||
-            nextQuantity === item.quantity ||
-            nextQuantity > Math.max(1, item.available_stock)
+            quantity < 1 ||
+            quantity === item.quantity ||
+            quantity > item.available_stock
         ) {
             return;
         }
 
         setProcessingItemId(item.id);
         setProcessingAction('update');
-
         router.patch(
             updateCartItemQuantity(item.id),
-            { quantity: nextQuantity },
+            { quantity },
             {
                 preserveScroll: true,
                 preserveState: true,
@@ -165,7 +125,6 @@ export default function MyCart({
 
         setProcessingItemId(item.id);
         setProcessingAction('remove');
-
         router.delete(removeCartItem(item.id), {
             preserveScroll: true,
             preserveState: true,
@@ -176,351 +135,259 @@ export default function MyCart({
         });
     };
 
+    const continueToCheckout = () => {
+        if (hasStockIssues) {
+            toast.error('Sesuaikan produk yang stoknya tidak tersedia.');
+
+            return;
+        }
+
+        router.visit(checkout.url());
+    };
+
     return (
         <ShopLayout>
-            <Head title="My Cart - AxeGear" />
+            <Head title="Keranjang | Declasse" />
 
-            <main className="bg-white px-4 py-5 text-[#1A1A1A] md:px-9 md:py-7">
-                <div className="mx-auto max-w-[1760px]">
-                    <div className="mb-8 flex items-center gap-2 text-sm font-medium">
-                        <Link href="/" className="hover:text-[#F58220]">
-                            Home
-                        </Link>
-                        <span className="text-[#707070]">/</span>
-                        <span className="font-extrabold">My Cart</span>
+            <section className="border-t border-b border-hairline bg-sand">
+                <div className="grid min-h-[190px] lg:grid-cols-[1.25fr_.75fr]">
+                    <div className="flex flex-col justify-between border-b border-hairline px-7 py-8 sm:px-12 lg:border-r lg:border-b-0 lg:px-16 lg:py-10">
+                        <p className="text-[9px] font-semibold tracking-[0.1em] uppercase">
+                            Your selection
+                        </p>
+                        <h1 className="mt-8 font-condensed text-[clamp(50px,6vw,86px)] leading-[0.8] font-semibold tracking-[-0.05em] uppercase">
+                            Your cart.
+                        </h1>
                     </div>
-
-                    {!isEmpty ? (
-                        <>
-                            <div className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:items-end">
-                                <div>
-                                    <h1 className="text-[36px] leading-none font-black tracking-normal md:text-[46px]">
-                                        My Cart
-                                    </h1>
-                                    <p className="mt-3 text-base font-medium text-[#2E2E2E]">
-                                        Review your items before checkout.
-                                    </p>
-                                    <Link
-                                        href={list.url()}
-                                        className="mt-2 inline-flex items-center gap-1 text-sm font-extrabold hover:text-[#F58220]"
-                                    >
-                                        <ChevronLeft
-                                            size={18}
-                                            className="text-[#F58220]"
-                                        />
-                                        Continue Shopping
-                                    </Link>
-                                </div>
-                            </div>
-
-                            {(errorMessage || hasStockIssues) && (
-                                <div className="mb-8 border border-[#F7B06A] bg-[#FFF3E8] px-4 py-3 text-sm font-bold text-[#1A1A1A]">
-                                    {errorMessage ||
-                                        'Some items are out of stock or unavailable. Update your cart before checkout.'}
-                                </div>
-                            )}
-
-                            <div className="mb-12 grid gap-9 lg:grid-cols-[minmax(0,1fr)_minmax(320px,430px)] lg:items-start">
-                                <section className="min-w-0">
-                                    <div className="overflow-hidden border border-[#CFCFCF]">
-                                        <div className="hidden grid-cols-[1fr_170px_190px_170px_50px] border-b border-[#CFCFCF] bg-white px-6 py-4 text-xs font-black tracking-[0.04em] uppercase lg:grid">
-                                            <span>Product</span>
-                                            <span>Price</span>
-                                            <span>Quantity</span>
-                                            <span>Subtotal</span>
-                                            <span />
-                                        </div>
-
-                                        {cartItems.map((item, index) => {
-                                            const isUpdating =
-                                                processingItemId === item.id &&
-                                                processingAction === 'update';
-                                            const isRemoving =
-                                                processingItemId === item.id &&
-                                                processingAction === 'remove';
-                                            const itemDisabled =
-                                                isUpdating || isRemoving;
-                                            const productHref =
-                                                item.product_slug
-                                                    ? detail.url({
-                                                          query: {
-                                                              product:
-                                                                  item.product_slug,
-                                                          },
-                                                      })
-                                                    : undefined;
-                                            const canIncrease =
-                                                item.is_available &&
-                                                item.quantity <
-                                                    Math.max(
-                                                        1,
-                                                        item.available_stock,
-                                                    );
-                                            const image =
-                                                item.image ??
-                                                fallbackImages[
-                                                    index %
-                                                        fallbackImages.length
-                                                ];
-
-                                            return (
-                                                <article
-                                                    key={item.id}
-                                                    className="grid gap-4 border-b border-[#D8D8D8] bg-white p-4 last:border-b-0 lg:grid-cols-[1fr_170px_190px_170px_50px] lg:items-center lg:px-6 lg:py-3"
-                                                >
-                                                    <div className="grid grid-cols-[118px_1fr] items-center gap-4 md:grid-cols-[260px_1fr]">
-                                                        {productHref ? (
-                                                            <Link
-                                                                href={
-                                                                    productHref
-                                                                }
-                                                                className="block h-[110px] bg-[#F8F8F8] p-2 md:h-[118px]"
-                                                            >
-                                                                <img
-                                                                    src={image}
-                                                                    alt={
-                                                                        item.title
-                                                                    }
-                                                                    className="h-full w-full object-contain"
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                />
-                                                            </Link>
-                                                        ) : (
-                                                            <div className="h-[110px] bg-[#F8F8F8] p-2 md:h-[118px]">
-                                                                <img
-                                                                    src={image}
-                                                                    alt={
-                                                                        item.title
-                                                                    }
-                                                                    className="h-full w-full object-contain"
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            {productHref ? (
-                                                                <Link
-                                                                    href={
-                                                                        productHref
-                                                                    }
-                                                                    className="text-base font-black tracking-normal uppercase hover:text-[#F58220]"
-                                                                >
-                                                                    {item.title}
-                                                                </Link>
-                                                            ) : (
-                                                                <h2 className="text-base font-black tracking-normal uppercase">
-                                                                    {item.title}
-                                                                </h2>
-                                                            )}
-                                                            <p className="mt-2 text-sm font-medium text-[#2E2E2E]">
-                                                                {itemMeta(item)}
-                                                            </p>
-                                                            <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
-                                                                {item.variant
-                                                                    .sku ??
-                                                                    'AxeGear'}
-                                                            </p>
-                                                            {!item.is_available && (
-                                                                <p className="mt-2 text-xs font-extrabold text-[#C81E1E]">
-                                                                    {stockIssueMessage(
-                                                                        item,
-                                                                    )}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between lg:block">
-                                                        <span className="text-xs font-black text-[#707070] uppercase lg:hidden">
-                                                            Price
-                                                        </span>
-                                                        <span className="font-black tabular-nums">
-                                                            {formatPrice(
-                                                                item.price,
-                                                            )}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between lg:block">
-                                                        <span className="text-xs font-black text-[#707070] uppercase lg:hidden">
-                                                            Quantity
-                                                        </span>
-                                                        <QuantityControl
-                                                            quantity={
-                                                                item.quantity
-                                                            }
-                                                            disabled={
-                                                                itemDisabled
-                                                            }
-                                                            canIncrease={
-                                                                canIncrease
-                                                            }
-                                                            onDecrease={() =>
-                                                                updateQuantity(
-                                                                    item,
-                                                                    item.quantity -
-                                                                        1,
-                                                                )
-                                                            }
-                                                            onIncrease={() =>
-                                                                updateQuantity(
-                                                                    item,
-                                                                    item.quantity +
-                                                                        1,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between lg:block">
-                                                        <span className="text-xs font-black text-[#707070] uppercase lg:hidden">
-                                                            Subtotal
-                                                        </span>
-                                                        <span className="font-black tabular-nums">
-                                                            {formatPrice(
-                                                                item.subtotal,
-                                                            )}
-                                                        </span>
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            removeItem(item)
-                                                        }
-                                                        disabled={itemDisabled}
-                                                        className="flex h-10 w-10 items-center justify-center justify-self-end text-[#1A1A1A] transition-colors hover:text-[#F58220] disabled:opacity-40"
-                                                        aria-label="Remove item"
-                                                    >
-                                                        <Trash2
-                                                            size={18}
-                                                            strokeWidth={1.8}
-                                                        />
-                                                    </button>
-                                                </article>
-                                            );
-                                        })}
-                                    </div>
-                                </section>
-
-                                <OrderSummary
-                                    summary={summary}
-                                    hasStockIssues={hasStockIssues}
-                                    onCheckout={continueToCheckout}
-                                />
-                            </div>
-
-                            {suggestedProducts.length > 0 && (
-                                <SuggestedProducts
-                                    products={suggestedProducts}
-                                />
-                            )}
-                        </>
-                    ) : (
-                        <EmptyCart />
-                    )}
+                    <div className="flex items-end px-7 py-8 sm:px-12 lg:px-10 lg:py-10">
+                        <p className="max-w-xs text-[12px] leading-[1.45] text-ink/80">
+                            Kopi pilihan Anda, siap dikirim untuk ritual seduh
+                            berikutnya.
+                        </p>
+                    </div>
                 </div>
-            </main>
+            </section>
+
+            {cartItems.length === 0 ? (
+                <EmptyCart />
+            ) : (
+                <main className="border-b border-hairline">
+                    <div className="grid lg:grid-cols-[minmax(0,1fr)_370px]">
+                        <section className="min-w-0 border-b border-hairline lg:border-r lg:border-b-0">
+                            <div className="flex items-center justify-between border-b border-hairline px-7 py-3 text-[9px] font-semibold tracking-[0.08em] uppercase sm:px-10">
+                                <span>{summary.item_count} items selected</span>
+                                <Link
+                                    href={list.url()}
+                                    className="underline underline-offset-4 hover:text-primary"
+                                >
+                                    Continue shopping
+                                </Link>
+                            </div>
+                            {errors.quantity && (
+                                <p className="border-b border-hairline bg-primary/10 px-7 py-3 text-[11px] text-ink sm:px-10">
+                                    {errors.quantity}
+                                </p>
+                            )}
+                            <div className="divide-y divide-hairline">
+                                {cartItems.map((item, index) => (
+                                    <CartLine
+                                        key={item.id}
+                                        item={item}
+                                        index={index}
+                                        processing={
+                                            processingItemId === item.id
+                                        }
+                                        processingAction={processingAction}
+                                        onDecrease={() =>
+                                            updateQuantity(
+                                                item,
+                                                item.quantity - 1,
+                                            )
+                                        }
+                                        onIncrease={() =>
+                                            updateQuantity(
+                                                item,
+                                                item.quantity + 1,
+                                            )
+                                        }
+                                        onRemove={() => removeItem(item)}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                        <OrderSummary
+                            summary={summary}
+                            disabled={hasStockIssues}
+                            onCheckout={continueToCheckout}
+                        />
+                    </div>
+                </main>
+            )}
+
         </ShopLayout>
     );
 }
 
-function QuantityControl({
-    quantity,
-    disabled,
-    canIncrease,
+function CartLine({
+    item,
+    index,
+    processing,
+    processingAction,
     onDecrease,
     onIncrease,
+    onRemove,
 }: {
-    quantity: number;
-    disabled: boolean;
-    canIncrease: boolean;
+    item: CartItem;
+    index: number;
+    processing: boolean;
+    processingAction: 'update' | 'remove' | null;
     onDecrease: () => void;
     onIncrease: () => void;
+    onRemove: () => void;
 }) {
+    const disabled = processing || !item.is_available;
+
     return (
-        <div className="inline-grid h-10 grid-cols-3 border border-[#CFCFCF] bg-white text-sm font-black">
-            <button
-                type="button"
-                onClick={onDecrease}
-                disabled={disabled || quantity <= 1}
-                className="flex w-10 items-center justify-center transition-colors hover:bg-[#F8F8F8] disabled:opacity-35"
-                aria-label="Decrease quantity"
-            >
-                <Minus size={16} strokeWidth={2} />
-            </button>
-            <span className="flex w-10 items-center justify-center tabular-nums">
-                {quantity}
-            </span>
-            <button
-                type="button"
-                onClick={onIncrease}
-                disabled={disabled || !canIncrease}
-                className="flex w-10 items-center justify-center text-[#F58220] transition-colors hover:bg-[#FFF3E8] disabled:opacity-35"
-                aria-label="Increase quantity"
-            >
-                <Plus size={17} strokeWidth={2.4} />
-            </button>
-        </div>
+        <article className="grid gap-5 px-7 py-6 sm:grid-cols-[150px_minmax(0,1fr)] sm:px-10 sm:py-8">
+            <div className="relative aspect-[1.05] overflow-hidden bg-oat">
+                <span className="absolute top-3 left-3 z-10 text-[8px] font-semibold tracking-[0.08em] uppercase">
+                    {String(index + 1).padStart(2, '0')}
+                </span>
+                {item.image ? (
+                    <img
+                        src={item.image}
+                        alt={item.title}
+                        className="h-full w-full object-cover"
+                    />
+                ) : (
+                    <span className="flex h-full items-center justify-center px-4 text-center text-[9px] font-semibold tracking-[0.08em] text-ink/60 uppercase">
+                        Image unavailable
+                    </span>
+                )}
+            </div>
+            <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-8">
+                <div>
+                    {item.product_slug ? (
+                        <Link
+                            href={detail.url({
+                                query: { product: item.product_slug },
+                            })}
+                            className="font-condensed text-[clamp(28px,3vw,40px)] leading-[0.86] font-semibold tracking-[-0.035em] uppercase hover:text-primary"
+                        >
+                            {item.title}
+                        </Link>
+                    ) : (
+                        <h2 className="font-condensed text-[clamp(28px,3vw,40px)] leading-[0.86] font-semibold tracking-[-0.035em] uppercase">
+                            {item.title}
+                        </h2>
+                    )}
+                    <p className="mt-3 text-[10px] tracking-[0.05em] text-ink/70 uppercase">
+                        {productMeta(item) || 'Coffee variant'}
+                    </p>
+                    {item.variant.sku && (
+                        <p className="mt-1 text-[9px] tracking-[0.04em] text-ink/55 uppercase">
+                            SKU {item.variant.sku}
+                        </p>
+                    )}
+                    {!item.is_available && (
+                        <p className="mt-4 max-w-sm border-l-2 border-primary pl-3 text-[10px] leading-4 text-ink/80">
+                            {stockIssueMessage(item)}
+                        </p>
+                    )}
+                </div>
+                <div className="flex items-start justify-between gap-6 sm:flex-col sm:items-end">
+                    <p className="text-[12px] font-semibold tabular-nums">
+                        {formatPrice(item.subtotal)}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onRemove}
+                        disabled={processing}
+                        className="flex items-center gap-2 text-[9px] font-semibold tracking-[0.08em] uppercase hover:text-primary disabled:opacity-50"
+                    >
+                        <Trash2 size={14} />{' '}
+                        {processingAction === 'remove' ? 'Removing' : 'Remove'}
+                    </button>
+                </div>
+                <div className="flex items-center justify-between border-t border-hairline pt-4 sm:col-span-2">
+                    <p className="text-[10px] text-ink/65">
+                        {item.is_available
+                            ? `${item.available_stock} tersedia`
+                            : 'Tidak tersedia untuk checkout'}
+                    </p>
+                    <div className="flex h-9 border border-hairline">
+                        <button
+                            type="button"
+                            onClick={onDecrease}
+                            disabled={disabled || item.quantity <= 1}
+                            className="grid w-9 place-items-center hover:bg-oat disabled:opacity-35"
+                            aria-label={`Kurangi ${item.title}`}
+                        >
+                            <Minus size={14} />
+                        </button>
+                        <span className="grid w-10 place-items-center border-x border-hairline text-[11px] font-semibold tabular-nums">
+                            {item.quantity}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={onIncrease}
+                            disabled={
+                                disabled ||
+                                item.quantity >= item.available_stock
+                            }
+                            className="grid w-9 place-items-center hover:bg-oat disabled:opacity-35"
+                            aria-label={`Tambah ${item.title}`}
+                        >
+                            <Plus size={14} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
     );
 }
 
-
 function OrderSummary({
     summary,
-    hasStockIssues,
+    disabled,
     onCheckout,
 }: {
     summary: CartSummary;
-    hasStockIssues: boolean;
+    disabled: boolean;
     onCheckout: () => void;
 }) {
     return (
-        <aside className="min-w-0 border border-[#CFCFCF] bg-white p-6 lg:p-7">
-            <h2 className="mb-5 text-2xl font-black tracking-normal uppercase">
-                Order Summary
+        <aside className="bg-surface-dark px-7 py-8 text-canvas sm:px-10 lg:sticky lg:top-0 lg:h-fit">
+            <p className="text-[9px] font-semibold tracking-[0.1em] text-oat uppercase">
+                Order summary
+            </p>
+            <h2 className="mt-3 font-condensed text-[42px] leading-[0.82] font-semibold tracking-[-0.04em] uppercase">
+                Ready to brew.
             </h2>
-            <div className="space-y-4 text-base font-medium">
+            <dl className="mt-8 border-t border-oat/35 text-[11px]">
                 <SummaryRow
-                    label={`Subtotal (${summary.item_count} items)`}
+                    label="Subtotal"
                     value={formatPrice(summary.subtotal)}
                 />
+                <SummaryRow label="Shipping" value="Calculated at checkout" />
                 <SummaryRow
-                    label="Estimated Shipping"
-                    value={formatPrice(summary.shipping)}
-                    icon={<Info size={17} strokeWidth={1.8} />}
+                    label="Total"
+                    value={formatPrice(summary.total)}
+                    emphasis
                 />
-                <SummaryRow
-                    label="Discount"
-                    value={`-${formatPrice(summary.discount)}`}
-                    accent
-                />
-            </div>
-            <div className="my-6 border-t border-[#CFCFCF]" />
-            <div className="mb-3 flex items-end justify-between gap-4">
-                <span className="text-2xl font-black uppercase">Total</span>
-                <span className="text-[30px] leading-none font-black text-[#F58220] tabular-nums">
-                    {formatPrice(summary.total)}
-                </span>
-            </div>
-            <p className="mb-7 text-sm font-medium text-[#2E2E2E]">
-                Taxes and shipping calculated at checkout.
-            </p>
+            </dl>
             <button
                 type="button"
                 onClick={onCheckout}
-                disabled={hasStockIssues}
-                className="h-12 w-full bg-[#F58220] text-sm font-black tracking-[0.06em] text-white uppercase transition-colors hover:bg-[#E67312] disabled:bg-[#CFCFCF] disabled:text-[#707070]"
+                disabled={disabled}
+                className="mt-8 flex w-full items-center justify-between rounded-full bg-primary px-5 py-4 text-[10px] font-semibold tracking-[0.1em] text-white uppercase transition hover:bg-[#9e4d30] disabled:cursor-not-allowed disabled:opacity-45"
             >
-                Proceed to Checkout
+                Checkout <ArrowRight size={16} />
             </button>
-            <div className="mt-8 grid grid-cols-3 gap-3 text-center text-xs font-medium">
-                <TrustItem icon={ShieldCheck} label="Secure Checkout" />
-                <TrustItem icon={RotateCcw} label="30-Day Returns" />
-                <TrustItem icon={BadgeCheck} label="1-Year Warranty" />
-            </div>
+            <p className="mt-4 text-[10px] leading-4 text-oat/80">
+                Ongkir dan metode pembayaran dikonfirmasi pada langkah
+                berikutnya.
+            </p>
         </aside>
     );
 }
@@ -528,83 +395,71 @@ function OrderSummary({
 function SummaryRow({
     label,
     value,
-    accent = false,
-    icon,
+    emphasis = false,
 }: {
     label: string;
     value: string;
-    accent?: boolean;
-    icon?: React.ReactNode;
+    emphasis?: boolean;
 }) {
     return (
-        <div
-            className={`flex items-start justify-between gap-4 ${accent ? 'font-black text-[#F58220]' : ''}`}
-        >
-            <span className="flex min-w-0 items-center gap-2">
+        <div className="flex items-center justify-between border-b border-oat/35 py-4">
+            <dt
+                className={emphasis ? 'font-semibold uppercase' : 'text-oat/80'}
+            >
                 {label}
-                {icon}
-            </span>
-            <span className="shrink-0 font-black tabular-nums">{value}</span>
-        </div>
-    );
-}
-
-function TrustItem({
-    icon: Icon,
-    label,
-}: {
-    icon: typeof ShieldCheck;
-    label: string;
-}) {
-    return (
-        <div className="flex flex-col items-center gap-2">
-            <Icon className="h-8 w-8" strokeWidth={1.7} />
-            <span>{label}</span>
+            </dt>
+            <dd
+                className={
+                    emphasis ? 'font-semibold tabular-nums' : 'text-oat/85'
+                }
+            >
+                {value}
+            </dd>
         </div>
     );
 }
 
 function SuggestedProducts({ products }: { products: SuggestedProduct[] }) {
     return (
-        <section className="mt-8 pb-3">
-            <h2 className="mb-2 text-2xl font-black tracking-normal uppercase">
-                You May Also Like
-            </h2>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section className="border-b border-hairline bg-canvas">
+            <div className="border-b border-hairline px-7 py-7 sm:px-10 lg:px-16">
+                <p className="text-[9px] font-semibold tracking-[0.1em] uppercase">
+                    Continue exploring
+                </p>
+                <h2 className="mt-2 font-condensed text-[clamp(36px,4.5vw,64px)] leading-[0.82] font-semibold tracking-[-0.045em] uppercase">
+                    Add another ritual.
+                </h2>
+            </div>
+            <div className="grid grid-cols-2 border-l border-hairline md:grid-cols-4">
                 {products.slice(0, 4).map((product, index) => (
                     <Link
                         key={product.id}
                         href={detail.url({ query: { product: product.slug } })}
-                        className="grid min-h-[132px] grid-cols-[180px_1fr] border border-[#E5E5E5] bg-white p-4 transition-colors hover:border-[#1A1A1A]"
+                        className="group border-r border-b border-hairline p-3 sm:p-4"
                     >
-                        <div className="bg-[#F8F8F8] p-2">
-                            <img
-                                src={
-                                    product.image ??
-                                    fallbackImages[
-                                        index % fallbackImages.length
-                                    ]
-                                }
-                                alt={product.title}
-                                className="h-full w-full object-contain"
-                                loading="lazy"
-                                decoding="async"
-                            />
+                        <span className="text-[8px] font-semibold tracking-[0.08em] uppercase">
+                            {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <div className="mt-3 aspect-[.85] overflow-hidden bg-oat">
+                            {product.image ? (
+                                <img
+                                    src={product.image}
+                                    alt={product.title}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                                />
+                            ) : (
+                                <span className="flex h-full items-center justify-center px-3 text-center text-[8px] font-semibold tracking-[0.08em] text-ink/55 uppercase">
+                                    Image unavailable
+                                </span>
+                            )}
                         </div>
-                        <div className="flex flex-col pl-4">
-                            <h3 className="text-base leading-tight font-black uppercase">
-                                {product.title}
-                            </h3>
-                            <p className="mt-1 text-sm font-medium text-[#2E2E2E]">
-                                AxeGear Performance
-                            </p>
-                            <p className="mt-1 text-sm font-black">
-                                {formatPrice(product.price)}
-                            </p>
-                            <span className="mt-auto flex h-8 items-center justify-center border border-[#F58220] text-xs font-black tracking-[0.05em] text-[#F58220] uppercase hover:bg-[#F58220] hover:text-white">
-                                {index === 2 ? 'View Product' : 'Quick Add'}
-                            </span>
-                        </div>
+                        <h3 className="mt-3 text-[10px] font-semibold tracking-[0.04em] uppercase">
+                            {product.title}
+                        </h3>
+                        <p className="mt-1 text-[10px] text-ink/70">
+                            {formatPrice(product.price)}
+                        </p>
                     </Link>
                 ))}
             </div>
@@ -614,20 +469,24 @@ function SuggestedProducts({ products }: { products: SuggestedProduct[] }) {
 
 function EmptyCart() {
     return (
-        <section className="flex min-h-[520px] flex-col items-center justify-center border border-[#CFCFCF] bg-white px-6 py-20 text-center">
-            <h1 className="text-[40px] leading-none font-black uppercase md:text-[56px]">
-                Your cart is empty
-            </h1>
-            <p className="mt-4 max-w-md text-base font-medium text-[#707070]">
-                Add performance eyewear, goggles, and race-day essentials before
-                checkout.
-            </p>
-            <Link
-                href={list.url()}
-                className="mt-8 inline-flex h-12 items-center justify-center bg-[#F58220] px-8 text-sm font-black tracking-[0.06em] text-white uppercase hover:bg-[#E67312]"
-            >
-                Continue Shopping
-            </Link>
+        <section className="grid min-h-[360px] place-items-center border-b border-hairline bg-canvas px-7 py-16 text-center">
+            <div>
+                <p className="text-[9px] font-semibold tracking-[0.1em] uppercase">
+                    Nothing here yet
+                </p>
+                <h2 className="mt-3 font-condensed text-[clamp(48px,6vw,82px)] leading-[0.8] font-semibold tracking-[-0.05em] uppercase">
+                    Find your coffee.
+                </h2>
+                <p className="mx-auto mt-5 max-w-sm text-[12px] leading-[1.45] text-ink/75">
+                    Pilih kopi dari koleksi kami untuk memulai keranjang Anda.
+                </p>
+                <Link
+                    href={list.url()}
+                    className="mt-7 inline-flex items-center gap-3 rounded-full bg-ink px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-canvas uppercase hover:bg-primary"
+                >
+                    Shop coffee <ArrowRight size={15} />
+                </Link>
+            </div>
         </section>
     );
 }

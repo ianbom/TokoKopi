@@ -10,6 +10,7 @@ use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\ProductVariant;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\Integrations\BiteshipService;
@@ -192,14 +193,20 @@ class CheckoutService
             $subtotal = 0.0;
             foreach ($items as $item) {
                 $variant = ProductVariant::query()
-                    ->with('product.primaryImage:id,product_id,image_url')
+                    ->with(['product.primaryImage:id,product_id,image_url', 'stock'])
                     ->whereKey($item->product_variant_id)
                     ->lockForUpdate()
                     ->first();
                 $product = $variant?->product;
-                $available = $variant ? max(0, $variant->stock - $variant->reserved_stock) : 0;
+                $stock = $variant
+                    ? Stock::query()
+                        ->where('product_variant_id', $variant->id)
+                        ->lockForUpdate()
+                        ->first()
+                    : null;
+                $available = max(0, (int) ($stock?->quantity ?? 0));
 
-                if (! $variant || ! $product || $product->status !== 'published' || ! $variant->is_active || $available < $item->quantity) {
+                if (! $variant || ! $product || $product->status !== 'active' || ! $variant->is_active || $available < $item->quantity) {
                     throw ValidationException::withMessages(['cart' => "Stok {$product?->name} tidak mencukupi."]);
                 }
 
@@ -277,19 +284,18 @@ class CheckoutService
                     'product_name' => $product->name,
                     'product_sku' => $product->sku,
                     'variant_sku' => $variant->sku,
-                    'color_name' => $variant->color_name,
-                    'size' => $variant->size,
+                    'net_weight' => $variant->net_weight,
+                    'grind_type' => $variant->grind_type,
                     'price' => $item->price_snapshot,
                     'quantity' => $item->quantity,
                     'subtotal' => (float) $item->price_snapshot * $item->quantity,
-                    'weight' => max(1, (int) $product->weight) * $item->quantity,
-                    'length' => $product->length,
-                    'width' => $product->width,
-                    'height' => $product->height,
+                    'shipping_weight_gram' => max(1, $variant->shipping_weight_gram) * $item->quantity,
                     'product_image_url' => $variant->image_url ?? $product->primaryImage?->image_url,
                 ]);
-                $variant->increment('reserved_stock', $item->quantity);
+                $stock?->decrement('quantity', $item->quantity);
             }
+
+            $order->forceFill(['stock_reserved_at' => now()])->save();
 
             $order->shipment()->create([
                 'shipping_provider' => 'biteship',
@@ -356,7 +362,7 @@ class CheckoutService
             ->map(function (CartItem $item): array {
                 $product = $item->product;
                 $variant = $item->variant;
-                $availableStock = $variant ? max(0, $variant->stock - $variant->reserved_stock) : 0;
+                $availableStock = max(0, (int) ($variant?->stock?->quantity ?? 0));
 
                 return [
                     'id' => $item->id,
@@ -365,14 +371,14 @@ class CheckoutService
                     'title' => $product?->name ?? 'Produk tidak tersedia',
                     'sku' => $product?->sku,
                     'variant_sku' => $variant?->sku,
-                    'color' => $variant?->color_name,
-                    'size' => $variant?->size,
+                    'net_weight' => $variant?->net_weight,
+                    'grind_type' => $variant?->grind_type,
                     'image' => $variant?->image_url ?? $product?->primaryImage?->image_url,
                     'price' => (float) $item->price_snapshot,
                     'quantity' => $item->quantity,
-                    'weight' => max(1, (int) ($product?->weight ?? 1)) * $item->quantity,
+                    'weight' => max(1, (int) ($variant?->shipping_weight_gram ?? 1)) * $item->quantity,
                     'available_stock' => $availableStock,
-                    'is_available' => $product?->status === 'published' && (bool) $variant?->is_active && $availableStock >= $item->quantity,
+                    'is_available' => $product?->status === 'active' && (bool) $variant?->is_active && $availableStock >= $item->quantity,
                     'subtotal' => (float) $item->price_snapshot * $item->quantity,
                 ];
             });
@@ -390,7 +396,7 @@ class CheckoutService
         return CartItem::query()
             ->with([
                 'product.primaryImage:id,product_id,image_url',
-                'variant',
+                'variant.stock:id,product_variant_id,quantity',
             ])
             ->whereHas('cart', fn ($query) => $query->where('user_id', $user->id))
             ->latest('id');

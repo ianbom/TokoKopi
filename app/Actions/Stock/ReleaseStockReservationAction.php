@@ -3,8 +3,7 @@
 namespace App\Actions\Stock;
 
 use App\Models\Order;
-use App\Models\ProductVariant;
-use Illuminate\Support\Facades\Log;
+use App\Models\Stock;
 
 class ReleaseStockReservationAction
 {
@@ -21,22 +20,13 @@ class ReleaseStockReservationAction
                 continue;
             }
 
-            $variant = ProductVariant::query()->whereKey($item->product_variant_id)->lockForUpdate()->first();
+            $stock = Stock::query()->where('product_variant_id', $item->product_variant_id)->lockForUpdate()->first();
 
-            if (! $variant) {
+            if (! $stock) {
                 continue;
             }
 
-            if ($variant->reserved_stock < $item->quantity) {
-                Log::error('stock_release_invariant_failed', [
-                    'order_id' => $order->id,
-                    'variant_id' => $variant->id,
-                    'reserved_stock' => $variant->reserved_stock,
-                    'quantity' => $item->quantity,
-                ]);
-            }
-
-            $variant->update(['reserved_stock' => max(0, $variant->reserved_stock - $item->quantity)]);
+            $stock->increment('quantity', $item->quantity);
         }
 
         $order->forceFill(['stock_released_at' => now()])->save();
