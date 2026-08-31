@@ -39,15 +39,15 @@ class CartService
     {
         return DB::transaction(function () use ($productVariant, $user, $quantity): CartItem {
             $variant = ProductVariant::query()
-                ->with('product')
+                ->with(['product', 'stock'])
                 ->whereKey($productVariant->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             $product = $variant->product;
-            $availableStock = max(0, $variant->stock - $variant->reserved_stock);
+            $availableStock = (int) ($variant->stock?->quantity ?? 0);
 
-            if (! $product || $product->status !== 'published' || ! $variant->is_active || $availableStock < 1) {
+            if (! $product || $product->status !== 'active' || ! $variant->is_active || $availableStock < 1) {
                 throw ValidationException::withMessages([
                     'product_variant_id' => 'Varian produk ini belum tersedia untuk dibeli.',
                 ]);
@@ -88,15 +88,15 @@ class CartService
         return DB::transaction(function () use ($cartItem, $user, $quantity): CartItem {
             $item = $this->ownedCartItem($cartItem, $user);
             $variant = ProductVariant::query()
-                ->with('product')
+                ->with(['product', 'stock'])
                 ->whereKey($item->product_variant_id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             $product = $variant->product;
-            $availableStock = max(0, $variant->stock - $variant->reserved_stock);
+            $availableStock = (int) ($variant->stock?->quantity ?? 0);
 
-            if (! $product || $product->status !== 'published' || ! $variant->is_active || $availableStock < 1) {
+            if (! $product || $product->status !== 'active' || ! $variant->is_active || $availableStock < 1) {
                 throw ValidationException::withMessages([
                     'quantity' => 'Produk ini sudah tidak tersedia untuk diperbarui di keranjang.',
                 ]);

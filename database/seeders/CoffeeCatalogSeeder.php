@@ -76,15 +76,39 @@ class CoffeeCatalogSeeder extends Seeder
 
     private function coffee(string $slug, string $name, string $origin, string $process, array $categories, string $photo, int $price, bool $ground = true): array
     {
-        $image = $this->image($photo);
+        $images = $this->images($photo);
         $variants = $ground
             ? [
-                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'grind_type' => 'whole_bean', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $image, 'is_active' => true, 'stock' => 24],
-                ['sku' => strtoupper($slug).'-200-MF', 'net_weight' => '200gram', 'grind_type' => 'medium_fine', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $image, 'is_active' => true, 'stock' => 16],
+                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'grind_type' => 'whole_bean', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 24],
+                ['sku' => strtoupper($slug).'-200-MF', 'net_weight' => '200gram', 'grind_type' => 'medium_fine', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 16],
             ]
-            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'grind_type' => null, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $image, 'is_active' => true, 'stock' => 12]];
+            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'grind_type' => null, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
 
-        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'description' => "<p>{$name} dengan karakter manis, bersih, dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => [$image], 'variants' => $variants];
+        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'description' => "<p>{$name} dengan karakter manis, bersih, dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
+    }
+
+    private function images(string $primary): array
+    {
+        $gallery = [
+            'photo-1495474472287-4d71bcdd2085',
+            'photo-1514432324607-a09f9b9f1f4a',
+            'photo-1509042239860-f550ce710b93',
+            'photo-1498804103079-a6351b050096',
+            'photo-1512568400610-62da28bc8f6c',
+            'photo-1442512595331-e89e73853f31',
+            'photo-1459755486867-b55449bb39ff',
+            'photo-1461023058943-07fcbe16d735',
+        ];
+        $start = array_search($primary, $gallery, true);
+
+        if ($start === false) {
+            array_unshift($gallery, $primary);
+            $start = 0;
+        }
+
+        return collect(range(0, 2))
+            ->map(fn (int $offset) => $this->image($gallery[($start + $offset) % count($gallery)]))
+            ->all();
     }
 
     private function image(string $id): string

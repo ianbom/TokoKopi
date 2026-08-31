@@ -1,77 +1,134 @@
 <?php
 
-use App\Models\Cart;
-use App\Models\CartItem;
+use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use App\Models\Stock;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
-it('includes existing cart quantity for each product detail variant', function () {
-    $user = User::factory()->create();
-    $product = createDetailProduct();
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'SKU-'.Str::upper(Str::random(8)),
-        'color_name' => 'Black',
-        'size' => 'M',
-        'stock' => 5,
-        'reserved_stock' => 0,
+it('returns coffee detail data from the catalog relations', function () {
+    $category = Category::query()->create([
+        'name' => 'Espresso',
+        'slug' => 'espresso',
         'is_active' => true,
     ]);
-    $cart = Cart::query()->create(['user_id' => $user->id]);
-    CartItem::query()->create([
-        'cart_id' => $cart->id,
+    $product = Product::query()->create([
+        'name' => 'Espresso No. 01',
+        'slug' => 'espresso-no-01',
+        'sku' => 'ESPRESSO-01',
+        'origin' => 'Dataran Tinggi Gayo',
+        'process' => 'washed',
+        'description' => '<p>Manis, bersih, dan seimbang.</p>',
+        'status' => 'active',
+    ]);
+    $product->categories()->attach($category);
+
+    ProductImage::query()->create([
         'product_id' => $product->id,
-        'product_variant_id' => $variant->id,
-        'quantity' => 5,
-        'price_snapshot' => 100000,
+        'image_url' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085',
+        'alt_text' => 'Espresso No. 01 packshot',
+        'sort_order' => 0,
+        'is_primary' => true,
+    ]);
+    ProductImage::query()->create([
+        'product_id' => $product->id,
+        'image_url' => 'https://images.unsplash.com/photo-1514432324607-a09f9b9f1f4a',
+        'alt_text' => 'Espresso No. 01 brewing',
+        'sort_order' => 1,
+        'is_primary' => false,
+    ]);
+    $activeVariant = ProductVariant::query()->create([
+        'product_id' => $product->id,
+        'sku' => 'ESPRESSO-01-200-WB',
+        'net_weight' => '200gram',
+        'grind_type' => 'whole_bean',
+        'regular_price' => 85000,
+        'shipping_weight_gram' => 250,
+        'is_active' => true,
+    ]);
+    Stock::query()->create([
+        'product_variant_id' => $activeVariant->id,
+        'quantity' => 12,
+    ]);
+    ProductVariant::query()->create([
+        'product_id' => $product->id,
+        'sku' => 'ESPRESSO-01-INACTIVE',
+        'net_weight' => '200gram',
+        'grind_type' => 'medium_fine',
+        'regular_price' => 85000,
+        'shipping_weight_gram' => 250,
+        'is_active' => false,
     ]);
 
-    $this->actingAs($user)
-        ->get(route('detail', ['product' => $product->slug]))
+    $related = Product::query()->create([
+        'name' => 'Toraja Midnight',
+        'slug' => 'toraja-midnight',
+        'sku' => 'TORAJA-01',
+        'status' => 'active',
+    ]);
+    $related->categories()->attach($category);
+    $unrelated = Product::query()->create([
+        'name' => 'Cold Brew Black',
+        'slug' => 'cold-brew-black',
+        'sku' => 'COLD-BREW-01',
+        'status' => 'active',
+    ]);
+
+    $this->get(route('detail', ['product' => $product->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('customer/products/detail-product')
-            ->where('product.product_line', 'Trail Series')
-            ->where('product.style_name', 'Everyday Carry')
-            ->where('product.short_description', 'Built for daily movement.')
-            ->where('product.description', '<p>Functional gear for every journey.</p>')
-            ->where('product.weight', 500)
-            ->where('product.dimensions.length', 30)
-            ->where('product.dimensions.width', 20)
-            ->where('product.dimensions.height', 10)
-            ->where('product.variants.0.id', $variant->id)
-            ->where('product.variants.0.available_stock', 5)
-            ->where('product.variants.0.cart_quantity', 5));
+            ->where('product.id', $product->id)
+            ->where('product.origin', 'Dataran Tinggi Gayo')
+            ->where('product.process', 'washed')
+            ->where('product.images.0.url', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085')
+            ->where('product.images.1.alt', 'Espresso No. 01 brewing')
+            ->has('product.variants', 1)
+            ->where('product.variants.0.id', $activeVariant->id)
+            ->where('product.variants.0.available_stock', 12)
+            ->has('relatedProducts', 1)
+            ->where('relatedProducts.0.id', $related->id)
+            ->missing('relatedProducts.1')
+            ->where('recentProducts', []));
+
+    expect($unrelated->id)->not->toBe($related->id);
 });
 
-/**
- * @param  array<string, mixed>  $overrides
- */
-function createDetailProduct(array $overrides = []): Product
-{
-    $name = (string) ($overrides['name'] ?? 'Detail Product '.Str::random(8));
-
-    return Product::query()->create([
-        ...[
-            'name' => $name,
-            'slug' => Str::slug($name).'-'.Str::lower(Str::random(6)),
-            'regular_price' => 100000,
-            'status' => 'published',
-            'product_line' => 'Trail Series',
-            'style_name' => 'Everyday Carry',
-            'short_description' => 'Built for daily movement.',
-            'description' => '<p>Functional gear for every journey.</p>',
-            'weight' => 500,
-            'length' => 30,
-            'width' => 20,
-            'height' => 10,
-        ],
-        ...$overrides,
+it('adds an active coffee variant to the cart using stock relation data', function () {
+    $user = User::factory()->create();
+    $product = Product::query()->create([
+        'name' => 'Kintamani Bloom',
+        'slug' => 'kintamani-bloom',
+        'sku' => 'KINTAMANI-01',
+        'status' => 'active',
     ]);
-}
+    $variant = ProductVariant::query()->create([
+        'product_id' => $product->id,
+        'sku' => 'KINTAMANI-01-200-WB',
+        'net_weight' => '200gram',
+        'grind_type' => 'whole_bean',
+        'regular_price' => 90000,
+        'shipping_weight_gram' => 250,
+        'is_active' => true,
+    ]);
+    Stock::query()->create([
+        'product_variant_id' => $variant->id,
+        'quantity' => 8,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('cart.add-product-variant', $variant), ['quantity' => 2])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('cart_items', [
+        'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 2,
+        'price_snapshot' => 90000,
+    ]);
+});

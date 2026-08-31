@@ -5,6 +5,7 @@ namespace App\Services\Customer;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -34,32 +35,42 @@ class ProductBrowsingService
     {
         $search = (string) $request->query('search', '');
         $category = (string) $request->query('category', '');
-        $availability = (string) $request->query('availability', 'all');
+        $grindType = (string) $request->query('grind_type', '');
+        $process = (string) $request->query('process', '');
         $price = (string) $request->query('price', '');
         $sort = (string) $request->query('sort', 'featured');
-        $order = strtolower((string) $request->query('order', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $type = (string) $request->query('type', '');
         $products = Product::query()->with($this->relations())->where('status', 'active')
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%")))
             ->when($category !== '', fn ($query) => $query->whereHas('categories', fn ($query) => $query->where('slug', $category)))
-            ->when($availability === 'in_stock', fn ($query) => $query->whereHas('variants', fn ($query) => $query->where('is_active', true)->whereHas('stock', fn ($query) => $query->where('quantity', '>', 0))))
-            ->when($availability === 'out_of_stock', fn ($query) => $query->whereDoesntHave('variants', fn ($query) => $query->where('is_active', true)->whereHas('stock', fn ($query) => $query->where('quantity', '>', 0))))
+            ->when($grindType !== '', fn ($query) => $query->whereHas('variants', fn ($query) => $query->where('is_active', true)->where('grind_type', $grindType)))
+            ->when($process !== '', fn ($query) => $query->where('process', $process))
+            ->when($type === 'best_seller', fn ($query) => $query->where('is_best_seller', true))
             ->when($price === 'under_100000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) < ?', [100000])))
             ->when($price === '100000_250000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) between ? and ?', [100000, 250000])))
-            ->when($price === 'above_250000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) > ?', [250000])))
-            ->when($sort === 'latest', fn ($query) => $query->orderBy('created_at', $order))
-            ->when($sort === 'name', fn ($query) => $query->orderBy('name', $order))
-            ->when($sort === 'best_seller', fn ($query) => $query->orderByDesc('is_best_seller')->orderByDesc('created_at'))
-            ->when(! in_array($sort, ['latest', 'name', 'best_seller'], true), fn ($query) => $query->orderByDesc('is_featured')->orderByDesc('is_new_arrival')->orderByDesc('created_at'))
-            ->latest();
+            ->when($price === 'above_250000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) > ?', [250000])));
+
+        $priceQuery = ProductVariant::query()
+            ->selectRaw('min(coalesce(sale_price, regular_price))')
+            ->whereColumn('product_id', 'products.id')
+            ->where('is_active', true);
+
+        match ($sort) {
+            'latest' => $products->latest(),
+            'name' => $products->orderBy('name'),
+            'price_low' => $products->orderBy($priceQuery),
+            'price_high' => $products->orderByDesc($priceQuery),
+            'best_seller' => $products->orderByDesc('is_best_seller')->latest(),
+            default => $products->orderByDesc('is_featured')->orderByDesc('is_new_arrival')->latest(),
+        };
 
         return [
             'products' => Inertia::scroll($products->paginate(12)->withQueryString()->through(fn (Product $product) => $this->card($product))),
-            'filters' => ['search' => $search, 'category' => $category, 'collection' => '', 'type' => 'all', 'availability' => $availability, 'price' => $price, 'color' => '', 'size' => '', 'sort' => $sort, 'order' => $order, 'per_page' => 12],
+            'filters' => ['category' => $category, 'grind_type' => $grindType, 'process' => $process, 'price' => $price, 'sort' => $sort, 'type' => $type],
             'options' => [
                 'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']),
-                'collections' => [],
-                'colors' => [],
-                'sizes' => [],
+                'grindTypes' => ProductVariant::query()->where('is_active', true)->whereNotNull('grind_type')->distinct()->orderBy('grind_type')->pluck('grind_type'),
+                'processes' => Product::query()->where('status', 'active')->whereNotNull('process')->distinct()->orderBy('process')->pluck('process'),
                 'priceRanges' => [
                     ['value' => 'under_100000', 'label' => 'Under Rp 100.000'],
                     ['value' => '100000_250000', 'label' => 'Rp 100.000 - Rp 250.000'],
@@ -69,6 +80,8 @@ class ProductBrowsingService
                     ['value' => 'featured', 'label' => 'Featured'],
                     ['value' => 'latest', 'label' => 'Newest'],
                     ['value' => 'name', 'label' => 'Name'],
+                    ['value' => 'price_low', 'label' => 'Price: Low to High'],
+                    ['value' => 'price_high', 'label' => 'Price: High to Low'],
                     ['value' => 'best_seller', 'label' => 'Best Seller'],
                 ],
             ],
@@ -77,13 +90,28 @@ class ProductBrowsingService
 
     public function productDetailData(Request $request): array
     {
-        $product = Product::query()->with($this->relations())->where('status', 'active')->when($request->query('product'), fn ($query, $slug) => $query->where('slug', $slug))->firstOrFail();
+        $product = Product::query()
+            ->with($this->detailRelations())
+            ->where('status', 'active')
+            ->when($request->query('product'), fn ($query, $slug) => $query->where('slug', $slug))
+            ->firstOrFail();
         $data = $this->card($product);
         $data['origin'] = $product->origin;
         $data['process'] = $product->process;
-        $data['images'] = $product->images->map(fn ($image) => ['url' => $image->image_url, 'image_url' => $image->image_url, 'alt_text' => $image->alt_text])->all();
+        $data['images'] = $product->images->map(fn ($image) => ['url' => $image->image_url, 'alt' => $image->alt_text ?: $product->name])->all();
 
-        return ['product' => $data];
+        $relatedProducts = Product::query()
+            ->with($this->relations())
+            ->where('status', 'active')
+            ->whereKeyNot($product->id)
+            ->whereHas('categories', fn ($query) => $query->whereIn('categories.id', $product->categories->pluck('id')))
+            ->latest()
+            ->limit(4)
+            ->get()
+            ->map(fn (Product $relatedProduct) => $this->card($relatedProduct))
+            ->all();
+
+        return ['product' => $data, 'relatedProducts' => $relatedProducts, 'recentProducts' => []];
     }
 
     private function section(string $section, int $limit): array
@@ -100,9 +128,18 @@ class ProductBrowsingService
         return ['categories:id,name,slug', 'images', 'variants.stock'];
     }
 
+    private function detailRelations(): array
+    {
+        return [
+            'categories:id,name,slug',
+            'images',
+            'variants' => fn ($query) => $query->where('is_active', true)->with('stock'),
+        ];
+    }
+
     private function card(Product $product): array
     {
-        $variant = $product->variants->first();
+        $variant = $product->variants->firstWhere('is_active', true) ?? $product->variants->first();
         $price = $variant?->sale_price ?? $variant?->regular_price ?? 0;
 
         return [

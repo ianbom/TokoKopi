@@ -35,6 +35,42 @@ it('seeds exactly twelve active coffee products', function () {
     ])->count())->toBe(12);
 });
 
+it('filters the coffee catalog through the displayed header controls', function () {
+    $this->seed(CoffeeCatalogSeeder::class);
+
+    $this->get(route('list', ['category' => 'ready-to-drink']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.category', 'ready-to-drink')
+            ->has('products.data', 3));
+
+    $this->get(route('list', ['grind_type' => 'whole_bean']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.grind_type', 'whole_bean')
+            ->has('products.data', 9));
+
+    $this->get(route('list', ['process' => 'honey']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.process', 'honey')
+            ->has('products.data', 2));
+
+    $this->get(route('list', ['price' => 'under_100000']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.price', 'under_100000')
+            ->has('products.data', 7));
+
+    $this->get(route('list', ['sort' => 'price_high']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.sort', 'price_high')
+            ->where('products.data.0.title', 'Papua Valley')
+            ->has('options.grindTypes')
+            ->has('options.processes'));
+});
+
 it('renders active coffee products from the database for the grid', function () {
     $category = Category::query()->create([
         'name' => 'Single Origin',
