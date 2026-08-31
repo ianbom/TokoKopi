@@ -239,11 +239,11 @@ function ActionButton({
     tone?: 'default' | 'danger';
 }) {
     const base =
-        'group flex w-full items-center justify-center gap-2 rounded-[8px] border px-4 py-2.5 text-[12px] font-semibold transition-all duration-150 active:scale-[0.98]';
+        'group flex w-full items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase transition-all duration-150 active:scale-[0.98]';
     const toneClass =
         tone === 'danger'
             ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
-            : 'border-hairline-strong bg-white text-ink hover:border-primary hover:bg-primary-soft';
+            : 'border-hairline-strong bg-canvas text-ink hover:border-primary hover:bg-primary-soft';
 
     if (onClick) {
         return (
@@ -330,7 +330,7 @@ function SectionCard({
     noPad?: boolean;
 }) {
     return (
-        <div className="overflow-hidden rounded-[8px] border border-hairline-strong bg-white">
+        <div className="overflow-hidden border border-hairline-strong bg-canvas">
             <div className="border-b border-hairline-strong px-5 py-4 sm:px-6">
                 <h2 className="text-lg text-ink sm:text-xl">{title}</h2>
             </div>
@@ -529,7 +529,7 @@ export default function DetailOrder({ order }: Props) {
                 {/* Left column */}
                 <div className="space-y-5">
                     {/* Order Header */}
-                    <div className="overflow-hidden rounded-[8px] border border-hairline-strong bg-white">
+                    <div className="overflow-hidden border border-hairline-strong bg-canvas">
                         <div className="p-5 sm:p-6">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
@@ -628,7 +628,7 @@ export default function DetailOrder({ order }: Props) {
                                             className="relative flex flex-col items-center px-1 text-center"
                                         >
                                             <div
-                                                className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${step.active ? 'border-ink bg-ink text-white' : step.complete ? 'bg-primary-soft border-primary text-primary' : 'border-hairline-strong bg-white text-muted-foreground'}`}
+                                                className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${step.active ? 'border-ink bg-ink text-white' : step.complete ? 'border-primary bg-primary-soft text-primary' : 'border-hairline-strong bg-white text-muted-foreground'}`}
                                             >
                                                 <Icon
                                                     size={16}
@@ -1042,7 +1042,7 @@ export default function DetailOrder({ order }: Props) {
                                 type="button"
                                 onClick={() => setIsCancelModalOpen(false)}
                                 disabled={isCancelling}
-                                className="hover:bg-primary-soft rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-[12px] font-semibold text-ink transition disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-[12px] font-semibold text-ink transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Kembali
                             </button>

@@ -380,7 +380,7 @@ function OrderSummary({
                 type="button"
                 onClick={onCheckout}
                 disabled={disabled}
-                className="mt-8 flex w-full items-center justify-between rounded-full bg-primary px-5 py-4 text-[10px] font-semibold tracking-[0.1em] text-white uppercase transition hover:bg-[#9e4d30] disabled:cursor-not-allowed disabled:opacity-45"
+                className="mt-8 flex w-full items-center justify-between rounded-none bg-primary px-5 py-4 text-[10px] font-semibold tracking-[0.1em] text-white uppercase transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
                 Checkout <ArrowRight size={16} />
             </button>
@@ -482,7 +482,7 @@ function EmptyCart() {
                 </p>
                 <Link
                     href={list.url()}
-                    className="mt-7 inline-flex items-center gap-3 rounded-full bg-ink px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-canvas uppercase hover:bg-primary"
+                    className="mt-7 inline-flex items-center gap-3 rounded-none bg-ink px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-canvas uppercase hover:bg-primary"
                 >
                     Shop coffee <ArrowRight size={15} />
                 </Link>

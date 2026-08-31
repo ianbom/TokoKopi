@@ -53,10 +53,10 @@ export default function TwoFactorChallenge() {
         <>
             <Head title="Autentikasi dua faktor" />
 
-            <div className="space-y-6">
+            <div className="space-y-7">
                 <Form
                     {...store.form()}
-                    className="space-y-4"
+                    className="space-y-6"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
                 >
@@ -70,6 +70,7 @@ export default function TwoFactorChallenge() {
                                         placeholder="Masukkan kode pemulihan"
                                         autoFocus={showRecoveryInput}
                                         required
+                                        className="h-12 rounded-none border-hairline-strong bg-canvas text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                     />
                                     <InputError
                                         message={errors.recovery_code}
@@ -86,13 +87,14 @@ export default function TwoFactorChallenge() {
                                             disabled={processing}
                                             pattern={REGEXP_ONLY_DIGITS}
                                         >
-                                            <InputOTPGroup>
+                                            <InputOTPGroup className="gap-2">
                                                 {Array.from(
                                                     { length: OTP_MAX_LENGTH },
                                                     (_, index) => (
                                                         <InputOTPSlot
                                                             key={index}
                                                             index={index}
+                                                            className="h-12 w-12 rounded-none border-hairline-strong bg-canvas text-[14px] text-ink shadow-none first:rounded-none last:rounded-none"
                                                         />
                                                     ),
                                                 )}
@@ -105,17 +107,17 @@ export default function TwoFactorChallenge() {
 
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className="h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                                 disabled={processing}
                             >
                                 Lanjutkan
                             </Button>
 
-                            <div className="text-center text-sm text-muted-foreground">
+                            <div className="text-center text-[12px] text-ink/65">
                                 <span>atau kamu bisa </span>
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    className="cursor-pointer font-semibold text-primary underline decoration-primary/35 underline-offset-4 transition-colors hover:text-primary-hover hover:decoration-primary-hover"
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }

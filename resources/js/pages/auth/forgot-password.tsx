@@ -15,17 +15,22 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Lupa kata sandi" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-6 border border-primary/30 bg-primary-soft px-4 py-3 text-[12px] leading-5 text-primary">
                     {status}
                 </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-7">
                 <Form {...email.form()}>
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Alamat email</Label>
+                                <Label
+                                    htmlFor="email"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
+                                >
+                                    Alamat email
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -33,14 +38,15 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     autoComplete="off"
                                     autoFocus
                                     placeholder="email@example.com"
+                                    className="h-12 rounded-none border-hairline-strong bg-canvas text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 />
 
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="my-6 flex items-center justify-start">
+                            <div className="mt-7 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
@@ -54,9 +60,14 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
+                <div className="space-x-1 text-center text-[12px] text-ink/65">
                     <span>Atau, kembali ke</span>
-                    <TextLink href={login()}>masuk</TextLink>
+                    <TextLink
+                        href={login()}
+                        className="font-semibold text-primary no-underline hover:text-primary-hover"
+                    >
+                        masuk
+                    </TextLink>
                 </div>
             </div>
         </>

@@ -112,10 +112,8 @@ Borders are the main layout device.
 
 The theme radius tokens are all `0px`. The default interface is sharp.
 
-Exceptions:
-
-- Small editorial outline CTAs may use `rounded-full`.
-- Do not apply pills to product cards, content sections, form panels, or navigation containers.
+- Buttons, CTA links, and navigation controls use sharp `0px` corners.
+- Do not use pill-shaped controls in the storefront or authentication flows.
 
 ### Shadows
 
@@ -202,7 +200,7 @@ The Footer is part of every `ShopLayout` page and has three layers.
 - Desktop grid: `1fr 1.2fr 1fr`.
 - Use white dividers at 20% opacity.
 - First cell: condensed campaign statement.
-- Second cell: compact explanatory copy and an outline pill CTA.
+- Second cell: compact explanatory copy and a sharp outline CTA.
 - Third cell: quiet oat color block on medium screens and above.
 
 ### Newsletter and Link Grid
@@ -227,7 +225,7 @@ The Footer is part of every `ShopLayout` page and has three layers.
 
 - Desktop uses two balanced columns.
 - Left panel uses sand and substantial padding.
-- Left content is vertically distributed: short prose, outline pill CTA, oversized condensed statement.
+- Left content is vertically distributed: short prose, sharp outline CTA, oversized condensed statement.
 - Right panel is full-height lifestyle photography.
 - Mobile stacks content before image.
 - Images remain full-bleed and use restrained saturation or contrast adjustments.
@@ -276,7 +274,7 @@ Reuse the product-grid language instead of inventing a second card system. Conte
 ### 6. Closing Campaign Split
 
 - Use an asymmetric desktop split around `0.9fr 1.1fr`.
-- Copy panel contains compact prose, a condensed multiline statement, and outline pill CTA.
+- Copy panel contains compact prose, a condensed multiline statement, and sharp outline CTA.
 - Image remains full-bleed.
 - Mobile stacks copy before image.
 
@@ -324,7 +322,7 @@ Use for quiet editorial actions such as Shop Coffee or Start a Subscription.
 - Compact horizontal padding.
 - Include a simple arrow.
 
-Primary commerce actions may remain sharp and filled; do not turn every button into a pill.
+Primary commerce actions remain sharp and filled; buttons never use pill corners.
 
 ## Responsive Rules
 

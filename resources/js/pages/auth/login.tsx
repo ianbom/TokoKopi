@@ -33,7 +33,7 @@ export default function Login({
                 {({ processing, errors }) => (
                     <>
                         {status && (
-                            <div className="border border-[#F7B06A] bg-[#FFF3E8] px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
+                            <div className="border border-primary-border bg-primary-soft px-4 py-3 text-[11px] leading-5 text-ink">
                                 {status}
                             </div>
                         )}
@@ -42,9 +42,9 @@ export default function Login({
                             <div className="grid gap-2.5">
                                 <label
                                     htmlFor="email"
-                                    className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                 >
-                                    Email address
+                                    Alamat email
                                 </label>
                                 <input
                                     id="email"
@@ -54,8 +54,8 @@ export default function Login({
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="Enter your email"
-                                    className="h-[52px] w-full border border-[#CFCFCF] bg-white px-4 text-[15px] font-medium text-[#1A1A1A] outline-none placeholder:text-[#9A9A9A] focus:border-[#1A1A1A]"
+                                    placeholder="nama@email.com"
+                                    className="h-[48px] w-full border border-hairline-strong bg-canvas px-4 text-[13px] outline-none placeholder:text-ink/40 focus:border-ink"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -64,17 +64,17 @@ export default function Login({
                                 <div className="flex items-center justify-between gap-4">
                                     <label
                                         htmlFor="password"
-                                        className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                        className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                     >
-                                        Password
+                                        Kata sandi
                                     </label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="text-[11px] font-bold tracking-[0.12em] text-[#F58220] no-underline uppercase hover:text-[#E67312]"
+                                            className="text-[9px] font-semibold tracking-[0.08em] text-primary uppercase no-underline hover:text-primary-hover"
                                             tabIndex={5}
                                         >
-                                            Forgot password?
+                                            Lupa kata sandi?
                                         </TextLink>
                                     )}
                                 </div>
@@ -84,8 +84,8 @@ export default function Login({
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Enter your password"
-                                    className="h-[52px] rounded-none border-[#CFCFCF] bg-white pr-12 text-[15px] font-medium text-[#1A1A1A] placeholder:text-[#9A9A9A] focus-visible:border-[#1A1A1A] focus-visible:ring-0"
+                                    placeholder="Masukkan kata sandi"
+                                    className="h-[48px] rounded-none border-hairline-strong bg-canvas pr-12 text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -95,39 +95,39 @@ export default function Login({
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
-                                    className="size-4 rounded-none border-[#1A1A1A] data-[state=checked]:border-[#F58220] data-[state=checked]:bg-[#F58220]"
+                                    className="size-4 rounded-none border-ink data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                                 />
                                 <label
                                     htmlFor="remember"
-                                    className="text-sm font-medium text-[#2E2E2E]"
+                                    className="text-[12px] text-ink/75"
                                 >
-                                    Remember me
+                                    Ingat saya
                                 </label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-1 h-[52px] w-full rounded-none bg-[#F58220] text-[12px] font-extrabold tracking-[0.16em] text-white uppercase shadow-none hover:bg-[#E67312] focus-visible:ring-0"
+                                className="mt-1 h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Sign in
+                                Masuk
                             </Button>
                         </div>
 
                         <div className="relative py-1 text-center">
-                            <div className="absolute inset-x-0 top-1/2 border-t border-[#E5E5E5]" />
-                            <span className="relative bg-white px-4 text-sm font-medium text-[#707070]">
-                                or
+                            <div className="absolute inset-x-0 top-1/2 border-t border-hairline" />
+                            <span className="relative bg-canvas px-4 text-[10px] text-ink/55">
+                                atau
                             </span>
                         </div>
 
                         <Button
                             type="button"
                             variant="outline"
-                            className="h-[52px] w-full rounded-none border-[#1A1A1A] bg-white text-[12px] font-extrabold tracking-[0.12em] text-[#1A1A1A] uppercase shadow-none hover:bg-[#1A1A1A] hover:text-white"
+                            className="h-12 w-full rounded-none border-ink bg-transparent text-[10px] font-semibold tracking-[0.08em] text-ink uppercase shadow-none hover:bg-ink hover:text-canvas"
                             tabIndex={1}
                             onClick={() => {
                                 window.location.href = googleRedirect.url();
@@ -143,18 +143,18 @@ export default function Login({
                                     d="M21.35 11.1h-9.18v2.98h5.29c-.23 1.6-1.6 4.69-5.29 4.69-3.18 0-5.78-2.63-5.78-5.88S8.99 7 12.17 7c1.81 0 3.03.77 3.72 1.44l2.53-2.44c-1.62-1.51-3.72-2.44-6.25-2.44C7.01 3.56 2.82 7.74 2.82 12.9s4.19 9.34 9.35 9.34c5.39 0 8.96-3.79 8.96-9.13 0-.61-.07-1.08-.15-1.55z"
                                 />
                             </svg>
-                            Sign in with Google
+                            Masuk dengan Google
                         </Button>
 
                         {canRegister && (
-                            <p className="text-center text-sm font-medium text-[#707070]">
-                                Don't have an account?{' '}
+                            <p className="text-center text-[12px] text-ink/65">
+                                Belum punya akun?{' '}
                                 <TextLink
                                     href={register()}
                                     tabIndex={5}
-                                    className="font-bold text-[#F58220] no-underline hover:text-[#E67312]"
+                                    className="font-semibold text-primary no-underline hover:text-primary-hover"
                                 >
-                                    Create Account
+                                    Buat akun
                                 </TextLink>
                             </p>
                         )}
@@ -166,17 +166,12 @@ export default function Login({
 }
 
 Login.layout = {
-    title: 'Log In',
+    title: 'Masuk',
     description:
-        'Welcome back. Enter your details below to access your AxeGear account.',
+        'Masuk untuk menyimpan ritual kopi dan melanjutkan pesanan Anda.',
     breadcrumbs: [
-        { label: 'Home', href: home() },
-        { label: 'Account' },
-        { label: 'Login' },
+        { label: 'Beranda', href: home() },
+        { label: 'Akun' },
+        { label: 'Masuk' },
     ],
-    heroImage: {
-        src: '/img/login-image.png',
-        alt: 'AxeGear athlete wearing mirrored performance eyewear',
-    },
 };
-

@@ -55,8 +55,10 @@ export default function ListNotification({ notifications }: Props) {
         if (activeTab === 'unread') {
             return !n.isRead;
         }
+
         return true;
     });
+
     const markAllAsRead = () => {
         router.post(
             markAllAsReadRoute.url(),
@@ -66,15 +68,18 @@ export default function ListNotification({ notifications }: Props) {
     };
     const markAsRead = (id: number) => {
         const target = items.find((notification) => notification.id === id);
+
         if (!target || target.isRead) {
             return;
         }
+
         router.post(
             markAsReadRoute.url(id),
             {},
             { preserveScroll: true, preserveState: true },
         );
     };
+
     return (
         <ProfileLayout
             title="Notifications"
@@ -93,7 +98,7 @@ export default function ListNotification({ notifications }: Props) {
                 style={{ animationDelay: '100ms' }}
             >
                 {' '}
-                <div className="flex w-fit space-x-2 rounded-[6px] border border-hairline-strong bg-white p-1">
+                <div className="flex w-fit space-x-2 border border-hairline-strong bg-surface-soft p-1">
                     {' '}
                     <button
                         onClick={() => setActiveTab('all')}
@@ -130,7 +135,7 @@ export default function ListNotification({ notifications }: Props) {
             {/* --- Empty State --- */}{' '}
             {filteredNotifications.length === 0 ? (
                 <div
-                    className="animate-fade-in-up flex flex-col items-center justify-center rounded-[8px] border border-hairline-strong bg-white px-6 py-20 text-center"
+                    className="animate-fade-in-up flex flex-col items-center justify-center border border-hairline-strong bg-sand px-6 py-20 text-center"
                     style={{ animationDelay: '150ms' }}
                 >
                     {' '}
@@ -157,7 +162,7 @@ export default function ListNotification({ notifications }: Props) {
                     </p>{' '}
                     <Link href="/">
                         {' '}
-                        <button className="rounded-[6px] bg-primary px-8 py-3 text-[12px] font-bold tracking-wider text-white transition-all hover:bg-[#E67312] active:scale-[0.98]">
+                        <button className="rounded-none bg-primary px-8 py-3 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover active:scale-[0.98]">
                             {' '}
                             Continue Shopping{' '}
                         </button>{' '}
@@ -165,7 +170,7 @@ export default function ListNotification({ notifications }: Props) {
                 </div>
             ) : (
                 /* --- Notification List --- */ <div
-                    className="animate-fade-in-up overflow-hidden rounded-[8px] border border-hairline-strong bg-white"
+                    className="animate-fade-in-up overflow-hidden border border-hairline-strong bg-canvas"
                     style={{ animationDelay: '150ms' }}
                 >
                     {' '}
@@ -173,6 +178,7 @@ export default function ListNotification({ notifications }: Props) {
                         {' '}
                         {filteredNotifications.map((notification) => {
                             const IconComponent = notification.icon;
+
                             return (
                                 <button
                                     key={notification.id}

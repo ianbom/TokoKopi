@@ -4,61 +4,66 @@ import type { ReactNode } from 'react';
 import React from 'react';
 
 import ShopLayout from '@/layouts/shop-layout';
+import {
+    logout,
+    manageAddress,
+    myOrder,
+    myProfile,
+    myWishlist,
+    notifications,
+} from '@/routes';
 
-const SIDEBAR_NAV = [
+const ACCOUNT_NAV = [
     {
         id: 'my-profile',
-        href: '/my-profile',
+        href: myProfile.url(),
         label: 'Pengaturan Profil',
         mobileLabel: 'Profil',
         icon: User,
     },
     {
         id: 'list-order',
-        href: '/my-order',
+        href: myOrder.url(),
         label: 'Pesanan Saya',
         mobileLabel: 'Pesanan',
         icon: Package,
     },
     {
         id: 'address',
-        href: '/address',
+        href: manageAddress.url(),
         label: 'Buku Alamat',
         mobileLabel: 'Alamat',
         icon: MapPin,
     },
     {
         id: 'wishlist',
-        href: '/wishlist',
+        href: myWishlist.url(),
         label: 'Wishlist Saya',
         mobileLabel: 'Wishlist',
         icon: Heart,
     },
     {
         id: 'notifications',
-        href: '/notifications',
+        href: notifications.url(),
         label: 'Notifikasi',
         mobileLabel: 'Notifikasi',
         icon: Bell,
     },
 ];
 
-interface Breadcrumb {
+type Breadcrumb = {
     label: string;
     href?: string;
-}
+};
 
-interface ProfileLayoutProps {
+type ProfileLayoutProps = {
     children: ReactNode;
     title: ReactNode | string;
     pageTitle: string;
     subtitle: string;
     activePath: string;
     breadcrumbs: Breadcrumb[];
-}
-
-const heroImage =
-    'https://images.unsplash.com/photo-1541625602330-2277a4c46182?q=80&w=1800&auto=format&fit=crop';
+};
 
 export default function ProfileLayout({
     children,
@@ -70,60 +75,57 @@ export default function ProfileLayout({
 }: ProfileLayoutProps) {
     return (
         <ShopLayout>
-            <Head title={`${pageTitle} - AxeGear`} />
+            <Head title={`${pageTitle} | Declasse`} />
 
-            <section className="relative min-h-[190px] overflow-hidden border-b border-[#D8D8D8] bg-white md:min-h-[230px]">
-                <div className="absolute inset-y-0 right-0 hidden w-[48%] md:block">
-                    <img
-                        src={heroImage}
-                        alt="AxeGear cyclist performance profile banner"
-                        className="h-full w-full object-cover grayscale"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/45 to-white/10" />
-                </div>
-                <div className="relative z-10 mx-auto max-w-[1760px] px-5 py-9 md:px-12 md:py-11">
-                    <nav className="mb-5 flex flex-wrap items-center gap-3 text-sm font-medium text-[#1A1A1A]">
-                        {breadcrumbs.map((breadcrumb, index) => (
-                            <React.Fragment
-                                key={`${breadcrumb.label}-${index}`}
-                            >
-                                {breadcrumb.href ? (
-                                    <Link
-                                        href={breadcrumb.href}
-                                        className="transition-colors hover:text-[#F58220]"
-                                    >
-                                        {breadcrumb.label}
-                                    </Link>
-                                ) : (
-                                    <span className="font-black">
-                                        {breadcrumb.label}
-                                    </span>
-                                )}
-                                {index < breadcrumbs.length - 1 && (
-                                    <span className="text-[#707070]">/</span>
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </nav>
-                    <h1 className="max-w-[760px] text-[46px] leading-[0.92] font-black tracking-normal text-[#1A1A1A] uppercase italic md:text-[64px] lg:text-[76px]">
-                        {title}
-                    </h1>
-                    <p className="mt-5 max-w-[520px] text-base font-medium text-[#2E2E2E]">
-                        {subtitle}
-                    </p>
-                    <span className="mt-6 block h-1 w-11 bg-[#F58220]" />
+            <section className="border-t border-b border-hairline bg-sand">
+                <div className="grid min-h-[220px] lg:grid-cols-[1.25fr_.75fr]">
+                    <div className="flex flex-col justify-between border-b border-hairline px-7 py-8 sm:px-12 lg:border-r lg:border-b-0 lg:px-16 lg:py-10">
+                        <nav className="flex flex-wrap items-center gap-2 text-[9px] font-semibold tracking-[0.08em] uppercase">
+                            {breadcrumbs.map((breadcrumb, index) => (
+                                <React.Fragment
+                                    key={`${breadcrumb.label}-${index}`}
+                                >
+                                    {breadcrumb.href ? (
+                                        <Link
+                                            href={breadcrumb.href}
+                                            className="text-ink/65 hover:text-primary"
+                                        >
+                                            {breadcrumb.label}
+                                        </Link>
+                                    ) : (
+                                        <span>{breadcrumb.label}</span>
+                                    )}
+                                    {index < breadcrumbs.length - 1 && (
+                                        <span className="text-ink/35">/</span>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </nav>
+                        <h1 className="mt-10 max-w-4xl font-condensed text-[clamp(50px,6.5vw,92px)] leading-[0.8] font-semibold tracking-[-0.05em] uppercase">
+                            {title}
+                        </h1>
+                    </div>
+                    <div className="flex flex-col justify-end bg-canvas px-7 py-8 sm:px-12 lg:px-10 lg:py-10">
+                        <p className="text-[9px] font-semibold tracking-[0.1em] text-primary uppercase">
+                            Member space
+                        </p>
+                        <p className="mt-4 max-w-sm text-[12px] leading-[1.5] text-ink/75">
+                            {subtitle}
+                        </p>
+                    </div>
                 </div>
             </section>
 
-            <main className="bg-white text-[#1A1A1A]">
-                <div className="mx-auto grid max-w-[1760px] grid-cols-1 lg:grid-cols-[360px_1fr]">
-                    <aside className="border-b border-[#D8D8D8] px-5 py-6 md:px-12 lg:border-r lg:border-b-0 lg:px-16 lg:py-8">
-                        <h2 className="mb-5 text-2xl font-black uppercase">
-                            Akun Saya
-                        </h2>
-
-                        <div className="hide-scrollbar flex gap-4 overflow-x-auto pb-2 lg:block lg:overflow-visible lg:pb-0">
-                            {SIDEBAR_NAV.map((item) => {
+            <main className="border-b border-hairline bg-canvas">
+                <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+                    <aside className="border-b border-hairline bg-surface-soft lg:border-r lg:border-b-0">
+                        <div className="border-b border-hairline px-7 py-4 sm:px-10 lg:px-8">
+                            <p className="text-[9px] font-semibold tracking-[0.1em] uppercase">
+                                Akun Saya
+                            </p>
+                        </div>
+                        <nav className="hide-scrollbar flex overflow-x-auto lg:block">
+                            {ACCOUNT_NAV.map((item, index) => {
                                 const Icon = item.icon;
                                 const isActive = item.id === activePath;
 
@@ -131,37 +133,41 @@ export default function ProfileLayout({
                                     <Link
                                         key={item.id}
                                         href={item.href}
-                                        className={`relative flex min-w-fit items-center gap-4 border-b border-[#D8D8D8] px-2 py-4 text-base font-medium transition-colors lg:min-w-0 lg:px-0 lg:pl-7 ${
+                                        className={`group flex min-w-fit items-center gap-3 border-r border-hairline px-5 py-4 text-[10px] font-semibold tracking-[0.06em] uppercase lg:min-w-0 lg:border-r-0 lg:border-b lg:px-8 ${
                                             isActive
-                                                ? 'text-[#F58220]'
-                                                : 'text-[#1A1A1A] hover:text-[#F58220]'
+                                                ? 'bg-ink text-canvas'
+                                                : 'text-ink hover:bg-oat/55 hover:text-primary'
                                         }`}
                                     >
-                                        <span
-                                            className={`absolute top-1/2 left-0 hidden h-12 w-1 -translate-y-1/2 lg:block ${
-                                                isActive
-                                                    ? 'bg-[#F58220]'
-                                                    : 'bg-transparent'
-                                            }`}
-                                        />
-                                        <Icon size={26} strokeWidth={1.8} />
-                                        <span>{item.label}</span>
+                                        <span className="text-[8px] tabular-nums opacity-55">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </span>
+                                        <Icon size={15} strokeWidth={1.7} />
+                                        <span className="hidden sm:inline">
+                                            {item.label}
+                                        </span>
+                                        <span className="sm:hidden">
+                                            {item.mobileLabel}
+                                        </span>
                                     </Link>
                                 );
                             })}
                             <Link
-                                href="/logout"
+                                href={logout.url()}
                                 method="post"
                                 as="button"
-                                className="relative flex min-w-fit items-center gap-4 border-b border-[#D8D8D8] px-2 py-4 text-base font-medium text-[#1A1A1A] transition-colors hover:text-[#F58220] lg:min-w-0 lg:px-0 lg:pl-7"
+                                className="flex min-w-fit items-center gap-3 border-r border-hairline px-5 py-4 text-[10px] font-semibold tracking-[0.06em] uppercase hover:bg-primary-soft hover:text-primary lg:w-full lg:min-w-0 lg:border-r-0 lg:border-b lg:px-8"
                             >
-                                <LogOut size={26} strokeWidth={1.8} />
+                                <span className="text-[8px] tabular-nums opacity-55">
+                                    06
+                                </span>
+                                <LogOut size={15} strokeWidth={1.7} />
                                 <span>Keluar</span>
                             </Link>
-                        </div>
+                        </nav>
                     </aside>
 
-                    <section className="min-w-0 px-5 py-7 md:px-12 lg:px-10 lg:py-8">
+                    <section className="min-w-0 px-7 py-8 sm:px-10 sm:py-10 lg:px-12 xl:px-16">
                         {children}
                     </section>
                 </div>

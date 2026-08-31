@@ -93,7 +93,7 @@ export default function MyWishlist({ wishlistItems, summary }: Props) {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex min-h-[360px] flex-col items-center justify-center border border-hairline-strong bg-white px-6 text-center">
+                    <div className="flex min-h-[360px] flex-col items-center justify-center border border-hairline-strong bg-sand px-6 text-center">
                         <p className="text-sm font-semibold text-ink uppercase">
                             Wishlist masih kosong
                         </p>
@@ -103,7 +103,7 @@ export default function MyWishlist({ wishlistItems, summary }: Props) {
                         </p>
                         <Link
                             href={list.url()}
-                            className="mt-5 inline-flex h-10 items-center justify-center bg-primary px-5 text-[11px] font-semibold tracking-[0.16em] text-white uppercase transition hover:bg-[#E67312]"
+                            className="mt-5 inline-flex h-10 items-center justify-center rounded-none bg-primary px-5 text-[10px] font-semibold tracking-[0.1em] text-white uppercase hover:bg-primary-hover"
                         >
                             Lihat Produk
                         </Link>
@@ -128,9 +128,12 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
 
     return (
         <Link href={productHref} className="group flex h-full flex-col">
-            <div className="relative aspect-square overflow-hidden border border-hairline bg-white p-5 sm:p-6">
+            <div className="relative aspect-square overflow-hidden border border-hairline bg-oat p-5 sm:p-6">
                 <img
-                    src={item.image ?? fallbackImages[index % fallbackImages.length]}
+                    src={
+                        item.image ??
+                        fallbackImages[index % fallbackImages.length]
+                    }
                     alt={item.title}
                     loading="lazy"
                     decoding="async"
@@ -138,7 +141,7 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                 />
 
                 {item.badge && (
-                    <div className="absolute top-0 left-0 z-10 flex min-h-24 w-9 items-center justify-center bg-primary px-1 py-2 text-[10px] font-semibold tracking-[0.08em] text-white uppercase [writing-mode:vertical-rl] [text-orientation:mixed] [transform:rotate(180deg)] sm:w-10 sm:text-[11px]">
+                    <div className="absolute top-0 left-0 z-10 flex min-h-24 w-9 [transform:rotate(180deg)] items-center justify-center bg-primary px-1 py-2 text-[10px] font-semibold tracking-[0.08em] text-white uppercase [text-orientation:mixed] [writing-mode:vertical-rl] sm:w-10 sm:text-[11px]">
                         {item.badge}
                     </div>
                 )}
@@ -147,7 +150,7 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                     type="button"
                     aria-label="Hapus dari wishlist"
                     onClick={removeItem}
-                    className="absolute top-3 right-3 z-10 grid size-9 place-items-center border border-hairline-strong bg-white text-ink transition hover:border-ink hover:text-primary"
+                    className="absolute top-3 right-3 z-10 grid size-9 place-items-center border border-hairline-strong bg-canvas text-ink transition hover:border-primary hover:text-primary"
                 >
                     <Heart size={18} fill="currentColor" strokeWidth={1.8} />
                 </button>

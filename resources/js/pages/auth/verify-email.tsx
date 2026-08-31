@@ -12,20 +12,20 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Verifikasi email" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm leading-6 font-medium text-green-700">
+                <div className="mb-6 border border-primary/30 bg-primary-soft px-4 py-3 text-[12px] leading-5 text-primary">
                     Email verifikasi terkirim. Periksa kotak masuk dan klik
                     tautan untuk mengaktifkan akunmu.
                 </div>
             )}
 
-            <div className="mb-6 space-y-4 text-sm leading-6 text-muted-foreground">
+            <div className="mb-7 space-y-4 text-[12px] leading-6 text-ink/65">
                 <p>
                     Kami mengirim tautan verifikasi ke alamat email yang dipakai
                     saat registrasi. Akunmu siap digunakan setelah tautan
                     tersebut dibuka.
                 </p>
-                <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-left">
-                    <p className="font-medium text-foreground">
+                <div className="border border-hairline-strong bg-surface-soft px-4 py-3 text-left">
+                    <p className="font-semibold text-ink">
                         Tidak menerima email?
                     </p>
                     <ul className="mt-2 list-disc space-y-1 pl-4">
@@ -46,8 +46,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button
                             disabled={processing}
-                            variant="secondary"
-                            className="w-full"
+                            className="h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                         >
                             {processing && <Spinner />}
                             {processing
@@ -57,7 +56,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
                         <TextLink
                             href={logout()}
-                            className="mx-auto block text-sm"
+                            className="mx-auto block text-[12px] font-semibold text-primary no-underline hover:text-primary-hover"
                         >
                             Keluar
                         </TextLink>

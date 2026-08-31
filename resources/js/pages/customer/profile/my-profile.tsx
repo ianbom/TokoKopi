@@ -1,14 +1,5 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
-import {
-    Eye,
-    EyeOff,
-    Home,
-    Loader2,
-    Lock,
-    MapPin,
-    Upload,
-    User,
-} from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, MapPin, Upload, User } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -191,18 +182,21 @@ export default function MyProfile() {
                 { label: 'Pengaturan Profil' },
             ]}
         >
-            <div className="mb-5 flex flex-col gap-5 border-b border-[#D8D8D8] pb-5 md:flex-row md:items-center md:justify-between">
+            <div className="mb-8 flex flex-col gap-6 border-b border-hairline pb-8 md:flex-row md:items-end md:justify-between">
                 <div className="flex items-center gap-8">
                     <AvatarFrame avatarSrc={avatarSrc} name={user.name} />
                     <div>
-                        <h2 className="text-[30px] leading-none font-black tracking-normal text-[#1A1A1A]">
+                        <p className="text-[9px] font-semibold tracking-[0.1em] text-primary uppercase">
+                            Member profile
+                        </p>
+                        <h2 className="mt-2 font-condensed text-[clamp(36px,4vw,54px)] leading-[0.82] font-semibold tracking-[-0.04em] uppercase">
                             {user.name}
                         </h2>
-                        <p className="mt-2 text-base font-medium text-[#1A1A1A]">
+                        <p className="mt-3 text-[12px] text-ink/80">
                             {user.email}
                         </p>
                         {user.member_since && (
-                            <p className="mt-2 text-sm font-medium text-[#707070]">
+                            <p className="mt-2 text-[10px] tracking-[0.05em] text-ink/55 uppercase">
                                 Member sejak {user.member_since}
                             </p>
                         )}
@@ -212,18 +206,17 @@ export default function MyProfile() {
                 {isAdmin && (
                     <Link
                         href={adminDashboard()}
-                        className="inline-flex h-10 items-center justify-center border border-[#1A1A1A] px-5 text-sm font-black uppercase hover:bg-[#1A1A1A] hover:text-white"
+                        className="inline-flex h-10 items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas"
                     >
                         Dashboard
                     </Link>
                 )}
             </div>
 
-            <div className="grid gap-7 xl:grid-cols-[1fr_1fr]">
+            <div className="grid gap-0 border-t border-l border-hairline xl:grid-cols-2">
                 <ProfileInfoCard
                     profileForm={profileForm}
                     avatarInputRef={avatarInputRef}
-                    avatarSrc={avatarSrc}
                     nameError={nameError}
                     phoneError={phoneError}
                     setProfileClientErrors={setProfileClientErrors}
@@ -231,7 +224,7 @@ export default function MyProfile() {
                     submitProfile={submitProfile}
                 />
 
-                <div className="grid gap-5">
+                <div className="grid border-r border-hairline">
                     <PasswordCard
                         passwordForm={passwordForm}
                         passwordClientErrors={passwordClientErrors}
@@ -260,7 +253,7 @@ function AvatarFrame({
     name: string;
 }) {
     return (
-        <div className="flex h-24 w-24 items-center justify-center rounded-full border border-[#CFCFCF] bg-[#F8F8F8] text-[#1A1A1A]">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hairline-strong bg-oat text-ink">
             {avatarSrc ? (
                 <img
                     src={avatarSrc}
@@ -277,7 +270,6 @@ function AvatarFrame({
 function ProfileInfoCard({
     profileForm,
     avatarInputRef,
-    avatarSrc,
     nameError,
     phoneError,
     setProfileClientErrors,
@@ -293,7 +285,6 @@ function ProfileInfoCard({
         }>
     >;
     avatarInputRef: React.RefObject<HTMLInputElement | null>;
-    avatarSrc: string | null;
     nameError?: string;
     phoneError?: string;
     setProfileClientErrors: React.Dispatch<
@@ -305,7 +296,7 @@ function ProfileInfoCard({
     return (
         <form
             onSubmit={submitProfile}
-            className="border border-[#D8D8D8] bg-white px-8 py-6"
+            className="border-r border-b border-hairline bg-canvas px-6 py-7 sm:px-8"
         >
             <SectionTitle icon={User} title="Informasi Pribadi" />
 
@@ -346,18 +337,17 @@ function ProfileInfoCard({
                 />
 
                 <div>
-                    <label className="mb-2 block text-sm font-black">
+                    <label className="mb-2 block text-[10px] font-semibold tracking-[0.06em] uppercase">
                         Foto Avatar{' '}
                         <span className="font-medium">(opsional)</span>
                     </label>
-                    <div className=" sm:items-center">
-   
+                    <div className="sm:items-center">
                         <button
                             type="button"
                             onClick={() => avatarInputRef.current?.click()}
-                            className="grid min-h-[76px] place-items-center border border-dashed border-[#1A1A1A] bg-white px-5 text-center transition-colors hover:border-[#F58220] hover:text-[#F58220]"
+                            className="grid min-h-[76px] w-full place-items-center border border-dashed border-hairline-strong bg-surface-soft px-5 text-center hover:border-primary hover:bg-primary-soft hover:text-primary"
                         >
-                            <span className="flex items-center gap-3 text-sm font-black">
+                            <span className="flex items-center gap-3 text-[10px] font-semibold tracking-[0.06em] uppercase">
                                 <Upload size={24} strokeWidth={1.7} />
                                 Klik untuk mengunggah
                             </span>
@@ -373,11 +363,11 @@ function ProfileInfoCard({
                         className="sr-only"
                     />
                     {profileForm.errors.avatar_url && (
-                        <p className="mt-2 text-xs font-bold text-[#C81E1E]">
+                        <p className="mt-2 text-[10px] font-medium text-error">
                             {profileForm.errors.avatar_url}
                         </p>
                     )}
-                    <p className="mt-2 text-sm font-medium text-[#707070]">
+                    <p className="mt-2 text-[10px] text-ink/55">
                         JPG, PNG, atau WEBP. Maks 2MB.
                     </p>
                 </div>
@@ -386,7 +376,7 @@ function ProfileInfoCard({
                     <button
                         type="submit"
                         disabled={profileForm.processing}
-                        className="inline-flex h-12 items-center justify-center gap-2 bg-[#F58220] px-6 text-sm font-black text-white transition-colors hover:bg-[#E67312] disabled:bg-[#CFCFCF] disabled:text-[#707070]"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-none bg-primary px-6 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover disabled:bg-oat disabled:text-ink/45"
                     >
                         {profileForm.processing && (
                             <Loader2 size={16} className="animate-spin" />
@@ -396,7 +386,7 @@ function ProfileInfoCard({
                     <button
                         type="button"
                         onClick={() => profileForm.reset()}
-                        className="h-12 border border-[#1A1A1A] bg-white px-6 text-sm font-black hover:bg-[#1A1A1A] hover:text-white"
+                        className="h-11 rounded-none border border-ink bg-transparent px-6 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas"
                     >
                         Batal
                     </button>
@@ -448,7 +438,7 @@ function PasswordCard({
     return (
         <form
             onSubmit={submitPassword}
-            className="border border-[#D8D8D8] bg-white px-8 py-6"
+            className="border-b border-hairline bg-sand px-6 py-7 sm:px-8"
         >
             <SectionTitle icon={Lock} title="Ubah Kata Sandi" />
             <div className="mt-5 grid gap-4">
@@ -509,7 +499,7 @@ function PasswordCard({
                 <button
                     type="submit"
                     disabled={passwordForm.processing}
-                    className="mt-1 inline-flex h-12 items-center justify-center gap-2 bg-[#F58220] px-6 text-sm font-black text-white transition-colors hover:bg-[#E67312] disabled:bg-[#CFCFCF] disabled:text-[#707070]"
+                    className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-none bg-primary px-6 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover disabled:bg-oat disabled:text-ink/45"
                 >
                     {passwordForm.processing && (
                         <Loader2 size={16} className="animate-spin" />
@@ -527,14 +517,13 @@ function AddressCard({
     defaultAddress: AddressProp | null;
 }) {
     return (
-        <section className="border border-[#D8D8D8] bg-white px-8 py-6">
+        <section className="border-b border-hairline bg-canvas px-6 py-7 sm:px-8">
             <SectionTitle icon={MapPin} title="Alamat Utama" />
             <div className="mt-4 sm:items-center">
-
                 <div>
                     {defaultAddress ? (
-                        <div className="text-sm font-medium text-[#2E2E2E]">
-                            <p className="font-black text-[#1A1A1A]">
+                        <div className="text-[12px] leading-5 text-ink/75">
+                            <p className="font-semibold text-ink">
                                 {defaultAddress.recipient_name}
                             </p>
                             <p className="mt-1">
@@ -555,14 +544,14 @@ function AddressCard({
                             </p>
                         </div>
                     ) : (
-                        <p className="text-sm leading-6 font-medium text-[#707070]">
+                        <p className="text-[12px] leading-5 text-ink/60">
                             Belum ada alamat utama. Tambahkan alamat untuk
                             checkout lebih cepat.
                         </p>
                     )}
                     <Link
                         href="/address"
-                        className="mt-4 inline-flex h-10 min-w-[160px] items-center justify-center border border-[#1A1A1A] bg-white px-5 text-sm font-black transition-colors hover:bg-[#1A1A1A] hover:text-white"
+                        className="mt-5 inline-flex h-10 min-w-[160px] items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas"
                     >
                         {defaultAddress ? 'Kelola Alamat' : 'Tambah Alamat'}
                     </Link>
@@ -580,9 +569,9 @@ function SectionTitle({
     title: string;
 }) {
     return (
-        <div className="flex items-center gap-4">
-            <Icon size={27} strokeWidth={1.7} />
-            <h3 className="text-2xl font-black tracking-normal text-[#1A1A1A]">
+        <div className="flex items-center gap-3 border-b border-hairline pb-4">
+            <Icon size={18} strokeWidth={1.7} />
+            <h3 className="font-condensed text-[28px] leading-none font-semibold tracking-[-0.025em] uppercase">
                 {title}
             </h3>
         </div>
@@ -608,7 +597,9 @@ function TextField({
 }) {
     return (
         <div className="grid gap-2 sm:grid-cols-[120px_1fr] sm:items-center">
-            <label className="text-sm font-black text-[#1A1A1A]">{label}</label>
+            <label className="text-[10px] font-semibold tracking-[0.05em] uppercase">
+                {label}
+            </label>
             <div>
                 <input
                     type={type}
@@ -616,12 +607,12 @@ function TextField({
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={placeholder}
-                    className={`h-10 w-full border bg-white px-4 text-sm font-medium text-[#1A1A1A] transition-colors outline-none focus:border-[#1A1A1A] ${
-                        error ? 'border-[#C81E1E]' : 'border-[#9A9A9A]'
+                    className={`h-10 w-full border bg-canvas px-4 text-[12px] text-ink outline-none focus:border-ink ${
+                        error ? 'border-error' : 'border-hairline-strong'
                     }`}
                 />
                 {error && (
-                    <p className="mt-1 text-xs font-bold text-[#C81E1E]">
+                    <p className="mt-1 text-[10px] font-medium text-error">
                         {error}
                     </p>
                 )}
@@ -649,7 +640,9 @@ function PasswordField({
 }) {
     return (
         <div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-center">
-            <label className="text-sm font-black text-[#1A1A1A]">{label}</label>
+            <label className="text-[10px] font-semibold tracking-[0.05em] uppercase">
+                {label}
+            </label>
             <div>
                 <div className="relative">
                     <input
@@ -657,21 +650,21 @@ function PasswordField({
                         value={value}
                         onChange={(event) => onChange(event.target.value)}
                         autoComplete={autoComplete}
-                        className={`h-10 w-full border bg-white px-4 pr-11 text-sm font-medium text-[#1A1A1A] transition-colors outline-none focus:border-[#1A1A1A] ${
-                            error ? 'border-[#C81E1E]' : 'border-[#9A9A9A]'
+                        className={`h-10 w-full border bg-canvas px-4 pr-11 text-[12px] text-ink outline-none focus:border-ink ${
+                            error ? 'border-error' : 'border-hairline-strong'
                         }`}
                     />
                     <button
                         type="button"
                         onClick={onToggle}
-                        className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[#1A1A1A] transition-colors hover:text-[#F58220]"
+                        className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-ink hover:text-primary"
                         aria-label={show ? 'Hide password' : 'Show password'}
                     >
                         {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
                 {error && (
-                    <p className="mt-1 text-xs font-bold text-[#C81E1E]">
+                    <p className="mt-1 text-[10px] font-medium text-error">
                         {error}
                     </p>
                 )}

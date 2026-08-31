@@ -17,8 +17,8 @@ export default function ResetPassword({ token, email }: Props) {
         <>
             <Head title="Reset kata sandi" />
 
-            <div className="mb-6 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm leading-6 text-muted-foreground">
-                <p className="font-medium text-foreground">
+            <div className="mb-7 border border-hairline-strong bg-surface-soft px-4 py-3 text-[12px] leading-5 text-ink/65">
+                <p className="font-semibold text-ink">
                     Buat kata sandi baru untuk akun ini.
                 </p>
                 <p className="mt-1">
@@ -33,54 +33,67 @@ export default function ResetPassword({ token, email }: Props) {
                 resetOnSuccess={['password', 'password_confirmation']}
             >
                 {({ processing, errors }) => (
-                    <div className="grid gap-6">
+                    <div className="grid gap-7">
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label
+                                htmlFor="email"
+                                className="text-[10px] font-semibold tracking-[0.08em] uppercase"
+                            >
+                                Email
+                            </Label>
                             <Input
                                 id="email"
                                 type="email"
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
+                                className="h-12 rounded-none border-hairline-strong bg-oat text-[13px] text-ink/65 focus-visible:border-ink focus-visible:ring-0"
                                 readOnly
                             />
                             <InputError
                                 message={errors.email}
                                 className="mt-2"
                             />
-                            <p className="text-xs leading-5 text-muted-foreground">
+                            <p className="text-[11px] leading-5 text-ink/55">
                                 Email ini berasal dari tautan reset dan tidak
                                 bisa diubah di sini.
                             </p>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Kata sandi</Label>
+                            <Label
+                                htmlFor="password"
+                                className="text-[10px] font-semibold tracking-[0.08em] uppercase"
+                            >
+                                Kata sandi
+                            </Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
+                                className="h-12 rounded-none border-hairline-strong bg-canvas pr-12 text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 autoFocus
                                 placeholder="Kata sandi"
                             />
                             <InputError message={errors.password} />
-                            <p className="text-xs leading-5 text-muted-foreground">
+                            <p className="text-[11px] leading-5 text-ink/55">
                                 Gunakan minimal 8 karakter dengan kombinasi
                                 huruf, angka, atau simbol.
                             </p>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
+                            <Label
+                                htmlFor="password_confirmation"
+                                className="text-[10px] font-semibold tracking-[0.08em] uppercase"
+                            >
                                 Konfirmasi kata sandi
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
+                                className="h-12 rounded-none border-hairline-strong bg-canvas pr-12 text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 placeholder="Konfirmasi kata sandi"
                             />
                             <InputError
@@ -91,7 +104,7 @@ export default function ResetPassword({ token, email }: Props) {
 
                         <Button
                             type="submit"
-                            className="mt-4 w-full"
+                            className="mt-1 h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                             disabled={processing}
                             data-test="reset-password-button"
                         >

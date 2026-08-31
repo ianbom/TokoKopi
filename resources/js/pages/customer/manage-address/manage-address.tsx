@@ -415,15 +415,17 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                 style={{ animationDelay: '150ms' }}
             >
                 <div>
-                    <h2 className="text-xl text-ink">Alamat Tersimpan</h2>
-                    <p className="mt-1 text-[12px] text-muted-foreground">
+                    <h2 className="font-condensed text-[34px] leading-none font-semibold tracking-[-0.03em] uppercase">
+                        Alamat Tersimpan
+                    </h2>
+                    <p className="mt-2 text-[10px] tracking-[0.05em] text-ink/60 uppercase">
                         Kamu punya {addresses.length} alamat tersimpan
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={() => openModal()}
-                    className="flex items-center justify-center rounded-[6px] bg-primary px-6 py-2.5 text-[12px] font-bold tracking-wider text-white transition-all hover:bg-[#E67312] active:scale-[0.98]"
+                    className="flex items-center justify-center rounded-none bg-primary px-6 py-3 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover active:scale-[0.98]"
                 >
                     <Plus size={16} className="mr-2" /> Tambah Alamat Baru
                 </button>
@@ -433,7 +435,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                 <button
                     type="button"
                     onClick={() => openModal()}
-                    className="group animate-fade-in-up flex min-h-[240px] w-full flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-hairline-strong p-6 text-center transition-all duration-300 hover:border-primary hover:bg-white"
+                    className="group animate-fade-in-up flex min-h-[240px] w-full flex-col items-center justify-center border border-dashed border-hairline-strong p-6 text-center transition-all duration-300 hover:border-primary hover:bg-primary-soft"
                 >
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-soft text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
                         <Plus size={24} />
@@ -454,7 +456,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                         return (
                             <div
                                 key={address.id}
-                                className={`group relative rounded-[8px] border bg-white p-6 transition-all duration-300 hover:shadow-md md:p-8 ${
+                                className={`group relative border bg-canvas p-6 transition-all duration-300 hover:bg-surface-soft md:p-8 ${
                                     address.is_default
                                         ? 'border-primary'
                                         : 'border-hairline-strong'
@@ -465,7 +467,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                             >
                                 {address.is_default && (
                                     <div className="absolute top-0 right-8 -translate-y-1/2">
-                                        <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-white">
+                                        <span className="rounded-full bg-primary px-3 py-1 text-[9px] font-semibold tracking-[0.06em] text-white uppercase">
                                             Alamat Utama
                                         </span>
                                     </div>
@@ -474,7 +476,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                 <div className="mb-4 flex items-start justify-between">
                                     <div className="flex items-center">
                                         <div
-                                            className={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                                            className={`mr-3 flex h-10 w-10 items-center justify-center border border-hairline ${
                                                 address.is_default
                                                     ? 'bg-surface-soft text-primary'
                                                     : 'bg-white text-muted-foreground'
@@ -483,10 +485,10 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                             <MapPin size={20} />
                                         </div>
                                         <div>
-                                            <h3 className="text-[14px] font-bold text-ink">
+                                            <h3 className="font-condensed text-[25px] leading-none font-semibold tracking-[-0.02em] uppercase">
                                                 {address.label ?? 'Alamat'}
                                             </h3>
-                                            <p className="mt-0.5 text-[12px] font-semibold text-muted-foreground">
+                                            <p className="mt-1 text-[10px] tracking-[0.05em] text-ink/60 uppercase">
                                                 {address.recipient_name}
                                             </p>
                                         </div>
@@ -499,7 +501,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                             onClick={() =>
                                                 openModal(address.id)
                                             }
-                                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted-foreground transition-colors hover:bg-surface-soft hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex h-8 w-8 items-center justify-center border border-hairline text-ink/60 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Edit2 size={14} />
                                         </button>
@@ -509,7 +511,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                             onClick={() =>
                                                 setShowDeleteConfirm(address.id)
                                             }
-                                            className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex h-8 w-8 items-center justify-center border border-hairline text-primary transition-colors hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -542,7 +544,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                 )}
 
                                 {showDeleteConfirm === address.id && (
-                                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[8px] bg-white/95 p-6 text-center backdrop-blur-sm">
+                                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-canvas/95 p-6 text-center backdrop-blur-sm">
                                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
                                             <AlertCircle size={24} />
                                         </div>
@@ -592,9 +594,9 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
                             onClick={closeModal}
                         />
-                        <div className="relative z-[10001] flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[8px] border border-hairline-strong bg-white">
-                            <div className="flex items-center justify-between border-b border-hairline-strong bg-white px-6 py-4">
-                                <h3 className="text-lg text-ink">
+                        <div className="relative z-[10001] flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden border border-hairline-strong bg-canvas">
+                            <div className="flex items-center justify-between border-b border-hairline-strong bg-sand px-6 py-4">
+                                <h3 className="font-condensed text-[30px] leading-none font-semibold tracking-[-0.02em] uppercase">
                                     {editingAddress
                                         ? 'Edit Alamat'
                                         : 'Tambah Alamat Baru'}
@@ -820,18 +822,18 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                     </label>
                                 </div>
 
-                                <div className="flex justify-end gap-3 border-t border-hairline-strong bg-white px-6 py-4">
+                                <div className="flex justify-end gap-3 border-t border-hairline-strong bg-sand px-6 py-4">
                                     <button
                                         type="button"
                                         onClick={closeModal}
-                                        className="rounded-[6px] border border-hairline-strong px-6 py-2.5 text-[12px] font-bold text-muted-foreground transition-colors hover:bg-white"
+                                        className="rounded-none border border-ink px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-ink hover:text-canvas"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={form.processing}
-                                        className="rounded-[6px] bg-primary px-6 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-[#E67312] disabled:cursor-not-allowed disabled:opacity-70"
+                                        className="rounded-none bg-primary px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
                                     >
                                         {form.processing
                                             ? 'Menyimpan...'

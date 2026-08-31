@@ -24,9 +24,9 @@ export default function Register() {
                             <div className="grid gap-2.5">
                                 <label
                                     htmlFor="name"
-                                    className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                 >
-                                    Full name
+                                    Nama lengkap
                                 </label>
                                 <input
                                     id="name"
@@ -36,8 +36,8 @@ export default function Register() {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Enter your full name"
-                                    className="h-[52px] w-full border border-[#CFCFCF] bg-white px-4 text-[15px] font-medium text-[#1A1A1A] outline-none placeholder:text-[#9A9A9A] focus:border-[#1A1A1A]"
+                                    placeholder="Masukkan nama lengkap"
+                                    className="h-[48px] w-full border border-hairline-strong bg-canvas px-4 text-[13px] outline-none placeholder:text-ink/40 focus:border-ink"
                                 />
                                 <InputError
                                     message={errors.name}
@@ -48,9 +48,9 @@ export default function Register() {
                             <div className="grid gap-2.5">
                                 <label
                                     htmlFor="email"
-                                    className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                 >
-                                    Email address
+                                    Alamat email
                                 </label>
                                 <input
                                     id="email"
@@ -59,8 +59,8 @@ export default function Register() {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
-                                    placeholder="Enter your email"
-                                    className="h-[52px] w-full border border-[#CFCFCF] bg-white px-4 text-[15px] font-medium text-[#1A1A1A] outline-none placeholder:text-[#9A9A9A] focus:border-[#1A1A1A]"
+                                    placeholder="nama@email.com"
+                                    className="h-[48px] w-full border border-hairline-strong bg-canvas px-4 text-[13px] outline-none placeholder:text-ink/40 focus:border-ink"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -68,9 +68,9 @@ export default function Register() {
                             <div className="grid gap-2.5">
                                 <label
                                     htmlFor="password"
-                                    className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                 >
-                                    Password
+                                    Kata sandi
                                 </label>
                                 <PasswordInput
                                     id="password"
@@ -78,8 +78,8 @@ export default function Register() {
                                     tabIndex={3}
                                     autoComplete="new-password"
                                     name="password"
-                                    placeholder="Create your password"
-                                    className="h-[52px] rounded-none border-[#CFCFCF] bg-white pr-12 text-[15px] font-medium text-[#1A1A1A] placeholder:text-[#9A9A9A] focus-visible:border-[#1A1A1A] focus-visible:ring-0"
+                                    placeholder="Buat kata sandi"
+                                    className="h-[48px] rounded-none border-hairline-strong bg-canvas pr-12 text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -87,9 +87,9 @@ export default function Register() {
                             <div className="grid gap-2.5">
                                 <label
                                     htmlFor="password_confirmation"
-                                    className="text-[12px] font-extrabold tracking-[0.14em] text-[#1A1A1A] uppercase"
+                                    className="text-[10px] font-semibold tracking-[0.08em] uppercase"
                                 >
-                                    Confirm password
+                                    Konfirmasi kata sandi
                                 </label>
                                 <PasswordInput
                                     id="password_confirmation"
@@ -97,8 +97,8 @@ export default function Register() {
                                     tabIndex={4}
                                     autoComplete="new-password"
                                     name="password_confirmation"
-                                    placeholder="Confirm your password"
-                                    className="h-[52px] rounded-none border-[#CFCFCF] bg-white pr-12 text-[15px] font-medium text-[#1A1A1A] placeholder:text-[#9A9A9A] focus-visible:border-[#1A1A1A] focus-visible:ring-0"
+                                    placeholder="Ulangi kata sandi"
+                                    className="h-[48px] rounded-none border-hairline-strong bg-canvas pr-12 text-[13px] placeholder:text-ink/40 focus-visible:border-ink focus-visible:ring-0"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -107,24 +107,24 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-1 h-[52px] w-full rounded-none bg-[#F58220] text-[12px] font-extrabold tracking-[0.16em] text-white uppercase shadow-none hover:bg-[#E67312] focus-visible:ring-0"
+                                className="mt-1 h-12 w-full rounded-none bg-primary text-[10px] font-semibold tracking-[0.1em] text-white uppercase shadow-none hover:bg-primary-hover focus-visible:ring-0"
                                 tabIndex={5}
                                 disabled={processing}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
+                                Buat akun
                             </Button>
                         </div>
 
-                        <p className="text-center text-sm font-medium text-[#707070]">
-                            Already have an account?{' '}
+                        <p className="text-center text-[12px] text-ink/65">
+                            Sudah punya akun?{' '}
                             <TextLink
                                 href={login()}
                                 tabIndex={6}
-                                className="font-bold text-[#F58220] no-underline hover:text-[#E67312]"
+                                className="font-semibold text-primary no-underline hover:text-primary-hover"
                             >
-                                Log In
+                                Masuk
                             </TextLink>
                         </p>
                     </>
@@ -135,18 +135,12 @@ export default function Register() {
 }
 
 Register.layout = {
-    title: 'Create Account',
+    title: 'Buat Akun',
     description:
-        'Set up your AxeGear account with your details below.',
+        'Simpan preferensi kopi dan buat setiap pembelian lebih mudah.',
     breadcrumbs: [
-        { label: 'Home', href: home() },
-        { label: 'Account' },
-        { label: 'Register' },
+        { label: 'Beranda', href: home() },
+        { label: 'Akun' },
+        { label: 'Daftar' },
     ],
-    heroImage: {
-        src: '/img/login-image.png',
-        alt: 'AxeGear athlete wearing mirrored performance eyewear',
-    },
-
 };
-

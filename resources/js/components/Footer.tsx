@@ -29,7 +29,7 @@ export default function Footer() {
                     </p>
                     <a
                         href="#newsletter"
-                        className="mt-5 inline-flex rounded-full border border-current px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-canvas hover:text-primary"
+                        className="mt-5 inline-flex rounded-none border border-current px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-canvas hover:text-primary"
                     >
                         Start a subscription →
                     </a>

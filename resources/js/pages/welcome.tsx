@@ -86,7 +86,7 @@ const ritualProducts: Product[] = [
 
 function OutlineLink({ children }: { children: ReactNode }) {
     return (
-        <span className="inline-flex w-max items-center gap-5 rounded-full border border-current px-4 py-2 text-[11px] tracking-[0.04em] uppercase">
+        <span className="inline-flex w-max items-center gap-5 rounded-none border border-current px-4 py-2 text-[11px] tracking-[0.04em] uppercase">
             {children}
             <span className="text-base leading-none">→</span>
         </span>

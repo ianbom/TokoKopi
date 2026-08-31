@@ -15,6 +15,7 @@ import {
     show as orderShow,
 } from '@/actions/App/Http/Controllers/Customer/OrderController';
 import ProfileLayout from '@/layouts/profile-layout';
+import { list as productList } from '@/routes';
 
 type PaginationLink = {
     url: string | null;
@@ -70,8 +71,6 @@ type Props = {
     filters: Filters;
 };
 
-const FALLBACK_IMAGE = '/img/hasan-almasi-_X2UAmIcpko-unsplash.webp';
-
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -113,21 +112,21 @@ const getStatusTextStyle = (status: string) => {
     switch (status) {
         case 'pending':
         case 'pending_payment':
-            return 'text-orange-700';
+            return 'text-warning';
         case 'paid':
         case 'completed':
-            return 'text-green-700';
+            return 'text-success';
         case 'processing':
         case 'ready_to_ship':
-            return 'text-blue-700';
+            return 'text-ink';
         case 'shipped':
-            return 'text-purple-700';
+            return 'text-ink';
         case 'delivered':
             return 'text-emerald-700';
         case 'cancelled':
         case 'expired':
         case 'failed':
-            return 'text-red-700';
+            return 'text-error';
         default:
             return 'text-gray-700';
     }
@@ -226,7 +225,7 @@ export default function ListOrder({ orders, filters }: Props) {
                         Coba filter lain atau mulai jelajahi koleksi kami.
                     </p>
                     <Link
-                        href="/list"
+                        href={productList.url()}
                         className="border-b border-ink px-1 py-2 text-[12px] font-bold tracking-wider text-ink transition-colors hover:border-primary hover:text-primary"
                     >
                         Belanja Sekarang
@@ -237,7 +236,7 @@ export default function ListOrder({ orders, filters }: Props) {
                     {orders.data.map((order, idx) => (
                         <article
                             key={order.id}
-                            className="py-6 transition-colors duration-300 hover:bg-white/35 md:py-7"
+                            className="py-6 transition-colors duration-300 hover:bg-surface-soft md:py-7"
                             style={{ animationDelay: `${idx * 50}ms` }}
                         >
                             <div className="grid grid-cols-2 gap-4 px-1 md:grid-cols-4">
@@ -295,15 +294,18 @@ export default function ListOrder({ orders, filters }: Props) {
                                             key={item.id}
                                             className="flex min-w-[260px] gap-4 md:min-w-0"
                                         >
-                                            <div className="h-[100px] w-[80px] shrink-0 overflow-hidden rounded-[8px] bg-surface-soft">
-                                                <img
-                                                    src={
-                                                        item.image ??
-                                                        FALLBACK_IMAGE
-                                                    }
-                                                    alt={item.title}
-                                                    className="h-full w-full object-cover"
-                                                />
+                                            <div className="h-[100px] w-[80px] shrink-0 overflow-hidden bg-oat">
+                                                {item.image ? (
+                                                    <img
+                                                        src={item.image}
+                                                        alt={item.title}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className="flex h-full items-center justify-center px-2 text-center text-[8px] font-semibold tracking-[0.06em] text-ink/55 uppercase">
+                                                        Image unavailable
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="min-w-0 py-1 pr-4">
                                                 <h4 className="mb-1 line-clamp-2 max-w-[150px] text-[13px] leading-snug font-semibold text-ink md:truncate">
@@ -320,7 +322,7 @@ export default function ListOrder({ orders, filters }: Props) {
                                         </div>
                                     ))}
                                     {order.extra_items > 0 && (
-                                        <div className="flex h-[100px] w-[80px] shrink-0 flex-col items-center justify-center rounded-[8px] border border-hairline-strong text-muted-foreground">
+                                        <div className="flex h-[100px] w-[80px] shrink-0 flex-col items-center justify-center border border-hairline-strong text-muted-foreground">
                                             <span className="text-lg text-ink italic">
                                                 +{order.extra_items}
                                             </span>
@@ -352,7 +354,7 @@ export default function ListOrder({ orders, filters }: Props) {
                                                     ? 'noreferrer'
                                                     : undefined
                                             }
-                                            className="flex-1 rounded-[6px] bg-primary py-2.5 text-center text-[12px] font-bold text-white transition-colors hover:bg-[#E67312] lg:w-full"
+                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Bayar Sekarang
                                         </a>
@@ -360,21 +362,21 @@ export default function ListOrder({ orders, filters }: Props) {
                                     {order.order_status === 'shipped' && (
                                         <Link
                                             href={orderShow.url(order.id)}
-                                            className="flex-1 rounded-[6px] bg-primary py-2.5 text-center text-[12px] font-bold text-white transition-colors hover:bg-[#E67312] lg:w-full"
+                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Lacak Pesanan
                                         </Link>
                                     )}
                                     <Link
                                         href={orderShow.url(order.id)}
-                                        className="hover:bg-primary-soft flex-1 rounded-[6px] border border-hairline-strong bg-white py-2.5 text-center text-[12px] font-bold text-primary transition-colors hover:border-primary lg:w-full"
+                                        className="flex-1 rounded-none border border-ink bg-transparent py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-oat lg:w-full"
                                     >
                                         Lihat Detail
                                     </Link>
                                     {canBuyAgain(order.order_status) && (
                                         <Link
-                                            href="/list"
-                                            className="flex-1 rounded-[6px] bg-primary py-2.5 text-center text-[12px] font-bold text-white transition-colors hover:bg-[#E67312] lg:w-full"
+                                            href={productList.url()}
+                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Beli Lagi
                                         </Link>
