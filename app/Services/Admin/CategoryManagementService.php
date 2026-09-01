@@ -8,12 +8,17 @@ use Illuminate\Validation\ValidationException;
 
 class CategoryManagementService
 {
-    use StoresUploadedFiles;
     use ResolvesAdminPagination;
+    use StoresUploadedFiles;
 
     public function indexData(Request $request): array
     {
         $search = $request->string('search')->toString();
+        $status = $request->string('status')->toString();
+
+        if (! in_array($status, ['active', 'inactive'], true)) {
+            $status = '';
+        }
 
         return [
             'categories' => Category::query()
@@ -21,11 +26,13 @@ class CategoryManagementService
                 ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%")))
+                ->when($status === 'active', fn ($query) => $query->where('is_active', true))
+                ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
                 ->latest()
                 ->paginate($this->perPage($request))
                 ->withQueryString()
                 ->through(fn (Category $category): array => $this->row($category)),
-            'filters' => ['search' => $search],
+            'filters' => ['search' => $search, 'status' => $status],
             'stats' => [
                 'total' => Category::query()->count(),
                 'active' => Category::query()->where('is_active', true)->count(),
