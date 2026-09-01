@@ -32,8 +32,9 @@ interface OrderItem {
     product_name: string;
     product_sku: string | null;
     variant_sku: string | null;
-    color_name: string | null;
-    size: string | null;
+    net_weight: string | null;
+    grind_type: string | null;
+    shipping_weight_gram: number | null;
     price: string | number;
     quantity: number;
     subtotal: string | number;
@@ -681,7 +682,7 @@ function Products({ order }: { order: Order }) {
                 </p>
             </div>
             <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="admin-table w-full min-w-[760px] text-sm">
                     <thead className="border-b bg-[#fafafa] text-left text-xs text-[#555]">
                         <tr>
                             <th className="px-5 py-3">Product</th>
@@ -720,8 +721,10 @@ function Products({ order }: { order: Order }) {
                                 <td className="px-5 py-4 text-[#555]">
                                     {[
                                         item.variant_sku,
-                                        item.color_name,
-                                        item.size,
+                                        item.net_weight,
+                                        item.grind_type,
+                                        item.shipping_weight_gram &&
+                                            `${item.shipping_weight_gram}g kirim`,
                                     ]
                                         .filter(Boolean)
                                         .join(' · ') || '—'}

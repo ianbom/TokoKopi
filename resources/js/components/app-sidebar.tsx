@@ -11,10 +11,8 @@ import {
     Image,
     Images,
     Newspaper,
-    Layers3,
     LayoutGrid,
     Package,
-    ReceiptText,
     Settings,
     ShoppingBag,
     ShieldCheck,
@@ -77,19 +75,9 @@ const adminNavGroups: NavGroup[] = [
                 icon: Tags,
             },
             {
-                title: 'Koleksi',
-                href: '/admin/collections',
-                icon: Layers3,
-            },
-            {
                 title: 'Stok',
                 href: '/admin/stock',
                 icon: BarChart3,
-            },
-            {
-                title: 'Log Stok',
-                href: '/admin/stock/logs',
-                icon: ReceiptText,
             },
         ],
     },
@@ -240,10 +228,14 @@ export function AppSidebar() {
             <SidebarHeader className="h-16 border-b border-ink/15 px-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild className="h-10 rounded-[6px] text-white hover:bg-ink hover:text-white data-[active=true]:bg-ink">
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="h-10 rounded-[6px] text-white transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        >
                             <Link href={homeHref} prefetch>
                                 <span className="text-[15px] font-semibold tracking-[-0.03em] text-white uppercase group-data-[collapsible=icon]:hidden">
-                                    Dashboard AxeGear
+                                    Dashboard Declasse
                                 </span>
                             </Link>
                         </SidebarMenuButton>
@@ -251,7 +243,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="gap-1 px-2 py-3">
+            <SidebarContent className="admin-sidebar-scrollbar gap-1 px-2 py-3">
                 {isAdmin ? (
                     <NavMain groups={adminNavGroups} />
                 ) : (

@@ -266,7 +266,7 @@ export default function ResourceIndex({
 
                     {/* Table */}
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[700px] text-left text-sm">
+                        <table className="admin-table w-full min-w-[700px] text-left text-sm">
                             <thead>
                                 <tr className="border-b border-stone-100 bg-stone-50/40">
                                     <th className="w-14 px-5 py-3.5 text-xs font-semibold tracking-wider text-stone-500 uppercase">

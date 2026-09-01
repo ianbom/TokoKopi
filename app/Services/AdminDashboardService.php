@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -103,7 +104,7 @@ class AdminDashboardService
             ['label' => 'Shipped', 'value' => $this->orderStatusCount('shipped', $start, $end), 'format' => 'number'],
             ['label' => 'Completed', 'value' => $this->orderStatusCount('completed', $start, $end), 'format' => 'number'],
             ['label' => 'Customers', 'value' => $this->customersCount(), 'format' => 'number'],
-            ['label' => 'Published Products', 'value' => $this->countWhere('products', 'status', 'published'), 'format' => 'number'],
+            ['label' => 'Active Products', 'value' => $this->countWhere('products', 'status', 'active'), 'format' => 'number'],
             ['label' => 'Low Stock Variants', 'value' => $this->variantStockCount(1, 5), 'format' => 'number'],
             ['label' => 'Sold Out Variants', 'value' => $this->variantStockCount(null, 0), 'format' => 'number'],
         ];
@@ -148,7 +149,7 @@ class AdminDashboardService
         return $this->ordersInRange($start, $end)->where('payment_status', $status)->count();
     }
 
-    private function ordersInRange(CarbonImmutable $start, CarbonImmutable $end): \Illuminate\Database\Query\Builder
+    private function ordersInRange(CarbonImmutable $start, CarbonImmutable $end): Builder
     {
         return DB::table('orders')->whereBetween('created_at', [$start, $end]);
     }
@@ -177,13 +178,14 @@ class AdminDashboardService
             return 0;
         }
 
-        $query = DB::table('product_variants')
-            ->whereNull('deleted_at')
-            ->whereRaw('(stock - reserved_stock) <= ?', [$max])
-            ->where('is_active', true);
+        $query = DB::table('stocks')
+            ->join('product_variants', 'product_variants.id', '=', 'stocks.product_variant_id')
+            ->whereNull('product_variants.deleted_at')
+            ->where('product_variants.is_active', true)
+            ->where('stocks.quantity', '<=', $max);
 
         if ($min !== null) {
-            $query->whereRaw('(stock - reserved_stock) >= ?', [$min]);
+            $query->where('stocks.quantity', '>=', $min);
         }
 
         return $query->count();
@@ -383,15 +385,16 @@ class AdminDashboardService
                 'product_variants.id',
                 'product_variants.product_id',
                 'product_variants.sku',
-                'product_variants.color_name',
-                'product_variants.size',
-                'product_variants.stock',
-                'product_variants.reserved_stock',
-                DB::raw('(product_variants.stock - product_variants.reserved_stock) as available_stock'),
+                'product_variants.net_weight',
+                'product_variants.grind_type',
+                'stocks.quantity',
+                'stocks.low_stock_threshold',
+                DB::raw('stocks.quantity as available_stock'),
                 DB::raw('products.name as product_name'),
             ])
+            ->join('stocks', 'stocks.product_variant_id', '=', 'product_variants.id')
             ->whereNull('product_variants.deleted_at')
-            ->whereRaw('(product_variants.stock - product_variants.reserved_stock) <= 5')
+            ->whereColumn('stocks.quantity', '<=', 'stocks.low_stock_threshold')
             ->orderBy('available_stock')
             ->limit(10)
             ->get();

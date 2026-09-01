@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/pages/admin/catalog/shared';
+import { exportMethod, index as reportIndex } from '@/routes/admin/reports';
 
 type Metric = { label: string; value: number; format: 'currency' | 'number' };
 type ReportTable = {
@@ -21,13 +22,11 @@ type Props = {
         payment_status: string;
         order_status: string;
         category_id: string;
-        collection_id: string;
     };
     options: {
         paymentStatuses: string[];
         orderStatuses: string[];
         categories: { id: number; name: string }[];
-        collections: { id: number; name: string }[];
     };
     report: { metrics: Metric[]; tables: ReportTable[] };
 };
@@ -53,7 +52,7 @@ export default function ReportIndex({
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        get(`/admin/reports/${type}`, { preserveState: true, replace: true });
+        get(reportIndex.url(type), { preserveState: true, replace: true });
     };
 
     const query = new URLSearchParams(
@@ -63,17 +62,17 @@ export default function ReportIndex({
     return (
         <>
             <Head title={`${type} Report`} />
-            <div className="flex flex-1 flex-col gap-8 bg-white p-4 text-zinc-900 md:p-6">
-                <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+            <main className="flex min-h-[100dvh] flex-1 flex-col gap-6 bg-canvas p-4 text-ink md:p-6">
+                <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-widest text-[#151515]/50 uppercase">
+                        <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
                             <BarChart3 className="size-4" strokeWidth={1.7} />
                             Reports
                         </p>
-                        <h1 className="font-serif text-4xl leading-tight text-zinc-900">
+                        <h1 className="font-serif text-3xl leading-tight text-ink sm:text-4xl">
                             {titleCase(type)} Report
                         </h1>
-                        <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
+                        <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
                             Ringkasan data toko untuk order, produk, customer,
                             shipment, dan voucher.
                         </p>
@@ -81,23 +80,29 @@ export default function ReportIndex({
 
                     <Button
                         asChild
-                        className="h-9 rounded-lg bg-primary px-4 text-white shadow-none hover:bg-primary/90 active:scale-[0.98]"
+                        className="h-10 w-full rounded-[6px] bg-primary px-5 text-[12px] font-semibold tracking-[0.08em] text-white uppercase shadow-none hover:bg-[#E67312] active:scale-[0.98] sm:w-auto"
                     >
-                        <a href={`/admin/reports/${type}/export?${query}`}>
+                        <a
+                            href={exportMethod.url(type, {
+                                query: Object.fromEntries(
+                                    new URLSearchParams(query),
+                                ),
+                            })}
+                        >
                             <Download className="size-4" /> Export CSV
                         </a>
                     </Button>
                 </header>
 
-                <nav className="flex flex-wrap gap-2 border-b border-zinc-200 pb-3">
+                <nav className="grid grid-cols-5 rounded-[6px] border border-hairline-strong bg-white p-1 sm:flex">
                     {tabs.map((tab) => (
                         <Link
                             key={tab}
-                            href={`/admin/reports/${tab}`}
-                            className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                            href={reportIndex(tab)}
+                            className={`h-8 rounded-[4px] px-2 text-center text-xs font-semibold transition-colors sm:px-3 ${
                                 tab === type
-                                    ? 'border-[#151515] bg-primary text-white'
-                                    : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                                    ? 'bg-[#1A1A1A] text-white'
+                                    : 'text-muted-foreground hover:bg-surface-soft hover:text-ink'
                             }`}
                         >
                             {titleCase(tab)}
@@ -107,7 +112,7 @@ export default function ReportIndex({
 
                 <form
                     onSubmit={submit}
-                    className="grid gap-3 rounded-2xl border border-zinc-200 p-4 md:grid-cols-3 xl:grid-cols-6"
+                    className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:items-end"
                 >
                     <Input
                         type="date"
@@ -115,7 +120,7 @@ export default function ReportIndex({
                         onChange={(event) =>
                             setData('date_from', event.target.value)
                         }
-                        className="h-9 rounded-lg border-zinc-200 bg-white text-sm shadow-none"
+                        className="h-9 w-full cursor-pointer rounded-[6px] border-hairline-strong bg-white px-3 text-sm text-body shadow-none outline-none focus:border-[#F58220] focus:ring-2 focus:ring-[#F58220]/20 lg:min-w-[150px]"
                     />
                     <Input
                         type="date"
@@ -123,14 +128,14 @@ export default function ReportIndex({
                         onChange={(event) =>
                             setData('date_to', event.target.value)
                         }
-                        className="h-9 rounded-lg border-zinc-200 bg-white text-sm shadow-none"
+                        className="h-9 w-full cursor-pointer rounded-[6px] border-hairline-strong bg-white px-3 text-sm text-body shadow-none outline-none focus:border-[#F58220] focus:ring-2 focus:ring-[#F58220]/20 lg:min-w-[150px]"
                     />
                     <select
                         value={data.payment_status}
                         onChange={(event) =>
                             setData('payment_status', event.target.value)
                         }
-                        className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 transition-colors outline-none focus:border-[#151515]"
+                        className="h-9 w-full cursor-pointer rounded-[6px] border border-hairline-strong bg-white px-3 text-sm text-body shadow-none outline-none focus:border-[#F58220] focus:ring-2 focus:ring-[#F58220]/20 lg:min-w-[150px]"
                     >
                         <option value="">All payment</option>
                         {options.paymentStatuses.map((status) => (
@@ -144,7 +149,7 @@ export default function ReportIndex({
                         onChange={(event) =>
                             setData('order_status', event.target.value)
                         }
-                        className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 transition-colors outline-none focus:border-[#151515]"
+                        className="h-9 w-full cursor-pointer rounded-[6px] border border-hairline-strong bg-white px-3 text-sm text-body shadow-none outline-none focus:border-[#F58220] focus:ring-2 focus:ring-[#F58220]/20 lg:min-w-[150px]"
                     >
                         <option value="">All order</option>
                         {options.orderStatuses.map((status) => (
@@ -158,7 +163,7 @@ export default function ReportIndex({
                         onChange={(event) =>
                             setData('category_id', event.target.value)
                         }
-                        className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 transition-colors outline-none focus:border-[#151515]"
+                        className="h-9 w-full cursor-pointer rounded-[6px] border border-hairline-strong bg-white px-3 text-sm text-body shadow-none outline-none focus:border-[#F58220] focus:ring-2 focus:ring-[#F58220]/20 lg:min-w-[150px]"
                     >
                         <option value="">All categories</option>
                         {options.categories.map((category) => (
@@ -170,22 +175,23 @@ export default function ReportIndex({
                     <Button
                         type="submit"
                         disabled={processing}
-                        className="h-9 rounded-lg border-zinc-200 bg-white text-zinc-600 shadow-none hover:bg-zinc-50"
+                        variant="outline"
+                        className="h-9 w-full rounded-[6px] border-hairline-strong bg-white px-4 text-body shadow-none hover:bg-surface-soft hover:text-ink active:scale-[0.98] lg:w-auto"
                     >
                         <Search className="size-4" /> Apply
                     </Button>
                 </form>
 
-                <section className="grid overflow-hidden rounded-2xl border border-zinc-200 bg-white sm:grid-cols-2 xl:grid-cols-5">
+                <section className="grid overflow-hidden rounded-[8px] border border-hairline-strong bg-white sm:grid-cols-2 xl:grid-cols-5">
                     {report.metrics.map((metric) => (
                         <div
                             key={metric.label}
-                            className="border-r border-b border-zinc-200 px-5 py-5 last:border-r-0"
+                            className="border-r border-b border-hairline-strong px-4 py-4 last:border-r-0 sm:px-5 sm:py-5"
                         >
-                            <p className="text-sm font-semibold text-zinc-500">
+                            <p className="text-sm font-semibold text-muted-foreground">
                                 {metric.label}
                             </p>
-                            <p className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">
+                            <p className="mt-2 text-2xl font-bold tracking-tight text-ink">
                                 {metricValue(metric)}
                             </p>
                         </div>
@@ -195,21 +201,21 @@ export default function ReportIndex({
                 {report.tables.map((table) => (
                     <section
                         key={table.title}
-                        className="rounded-2xl border border-zinc-200 p-5"
+                        className="rounded-[8px] border border-hairline-strong p-4 sm:p-5"
                     >
                         <div className="mb-5 flex items-end justify-between gap-4">
                             <div>
-                                <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+                                <h2 className="text-lg font-semibold tracking-tight text-ink">
                                     {table.title}
                                 </h2>
-                                <p className="mt-1 text-sm text-zinc-400">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     {table.rows.length} rows
                                 </p>
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[760px] border-y border-zinc-200 text-sm">
-                                <thead className="border-b border-zinc-200 bg-zinc-50/70 text-xs tracking-wider text-zinc-500 uppercase">
+                        <div className="mt-5 overflow-x-auto rounded-[8px] border-y border-hairline-strong">
+                            <table className="admin-table w-full min-w-[760px] text-sm">
+                                <thead className="border-b border-hairline-strong bg-surface-soft text-xs tracking-wider text-muted-foreground uppercase">
                                     <tr className="text-left">
                                         <th className="w-14 py-4 pr-4 pl-4 font-semibold">
                                             No
@@ -224,19 +230,19 @@ export default function ReportIndex({
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-200">
+                                <tbody>
                                     {table.rows.map((row, index) => (
                                         <tr
                                             key={index}
-                                            className="transition-colors hover:bg-zinc-50/70"
+                                            className="transition-colors hover:bg-primary-soft"
                                         >
-                                            <td className="py-4 pr-4 pl-4 text-xs font-medium text-zinc-400">
+                                            <td className="py-4 pr-4 pl-4 text-xs font-medium text-muted-foreground">
                                                 {index + 1}
                                             </td>
                                             {table.columns.map((column) => (
                                                 <td
                                                     key={column}
-                                                    className="py-4 pr-4 text-zinc-600"
+                                                    className="py-4 pr-4 text-body"
                                                 >
                                                     {formatCell(
                                                         column,
@@ -252,7 +258,7 @@ export default function ReportIndex({
                                                 colSpan={
                                                     table.columns.length + 1
                                                 }
-                                                className="px-4 py-8 text-center text-sm text-zinc-400"
+                                                className="px-4 py-8 text-center text-sm text-muted-foreground"
                                             >
                                                 No report data found.
                                             </td>
@@ -263,7 +269,7 @@ export default function ReportIndex({
                         </div>
                     </section>
                 ))}
-            </div>
+            </main>
         </>
     );
 }

@@ -137,7 +137,6 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
 
 
     Route::get('stock', [StockController::class, 'index'])->name('stock.index');
-    Route::get('stock/logs', [StockController::class, 'logs'])->name('stock.logs');
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
@@ -230,6 +229,5 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 });
 
-// Route::post('/payments/midtrans/notification', MidtransWebhookController::class)->name('payments.midtrans.notification');
 
 require __DIR__.'/settings.php';

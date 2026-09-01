@@ -9,7 +9,6 @@ import {
     Plus,
     RotateCcw,
     Search,
-    Sparkles,
     Trash2,
     Tags,
 } from 'lucide-react';
@@ -182,72 +181,13 @@ export default function CategoriesIndex({
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                    {stats.map((m, i) => (
-                        <div
-                            key={i}
-                            className={[
-                                'relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5',
-                                m.featured
-                                    ? 'border-transparent shadow-lg shadow-[#151515]/20'
-                                    : 'border-zinc-100 shadow-sm hover:shadow-md',
-                                m.cardBg,
-                            ].join(' ')}
-                        >
-                            {!m.featured && m.accent && (
-                                <div
-                                    className={
-                                        'absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r ' +
-                                        m.accent
-                                    }
-                                />
-                            )}
-                            {m.featured && (
-                                <div className="absolute -top-5 -right-5 h-20 w-20 rounded-full bg-white/10" />
-                            )}
-
-                            <div className="flex flex-col gap-3 p-4">
-                                <div className="flex items-center justify-between">
-                                    <div
-                                        className={
-                                            'flex h-8 w-8 items-center justify-center rounded-xl ' +
-                                            m.iconBg
-                                        }
-                                    >
-                                        <m.icon
-                                            className={'h-4 w-4 ' + m.iconColor}
-                                        />
-                                    </div>
-                                    {m.featured && (
-                                        <Sparkles className="h-3.5 w-3.5 text-white/30" />
-                                    )}
-                                </div>
-                                <div>
-                                    <div
-                                        className={
-                                            'text-2xl leading-none font-bold tracking-tight ' +
-                                            m.valColor
-                                        }
-                                    >
-                                        {m.val}
-                                    </div>
-                                    <div
-                                        className={
-                                            'mt-1.5 text-[11px] font-semibold ' +
-                                            m.titleColor
-                                        }
-                                    >
-                                        {m.title}
-                                    </div>
-                                    <div
-                                        className={
-                                            'mt-0.5 text-[10px] ' + m.subColor
-                                        }
-                                    >
-                                        {m.sub}
-                                    </div>
-                                </div>
-                            </div>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+                    {stats.map((m) => (
+                        <div key={m.title} className="border bg-canvas p-4">
+                            <p className="text-xs text-muted-foreground">
+                                {m.title}
+                            </p>
+                            <p className="text-2xl font-semibold">{m.val}</p>
                         </div>
                     ))}
                 </div>
@@ -303,7 +243,7 @@ export default function CategoriesIndex({
 
                     {/* Table */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                        <table className="admin-table w-full text-left text-sm">
                             <thead>
                                 <tr className="border-b border-zinc-100 bg-zinc-50/60">
                                     <th className="w-14 px-4 py-3 text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">

@@ -186,9 +186,7 @@ class LoadTestSeeder extends Seeder
                         'order_status' => $state['order_status'], 'shipping_status' => $state['shipping_status'], 'source_channel' => 'website',
                         'no_return_refund_agreed' => true, 'no_return_refund_agreed_at' => $createdAt, 'paid_at' => $state['paid'] ? $createdAt->addMinutes(5) : null,
                         'cancelled_at' => $state['cancelled'] ? $createdAt->addMinutes(30) : null, 'expired_at' => $state['expired'] ? $createdAt->addDay() : null,
-                        'completed_at' => $state['completed'] ? $createdAt->addDays(7) : null, 'stock_reserved_at' => $createdAt,
-                        'stock_released_at' => $state['cancelled'] || $state['expired'] ? $createdAt->addMinutes(30) : null,
-                        'stock_finalized_at' => $state['paid'] ? $createdAt->addMinutes(5) : null, 'created_at' => $createdAt, 'updated_at' => $createdAt,
+                        'completed_at' => $state['completed'] ? $createdAt->addDays(7) : null, 'created_at' => $createdAt, 'updated_at' => $createdAt,
                     ];
                     $itemsByOrder[$orderNumber] = $items;
                 }

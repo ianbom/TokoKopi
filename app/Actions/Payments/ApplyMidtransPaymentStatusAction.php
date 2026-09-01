@@ -2,67 +2,75 @@
 
 namespace App\Actions\Payments;
 
-use App\Actions\Stock\FinalizeReservedStockAction;
-use App\Actions\Stock\ReleaseStockReservationAction;
+use App\Actions\Stock\FinalizeOrderStockAction;
 use App\Actions\Vouchers\ReleaseVoucherReservationAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Services\Notifications\NotificationService;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 class ApplyMidtransPaymentStatusAction
 {
     public function __construct(
-        private readonly FinalizeReservedStockAction $finalizeStock,
-        private readonly ReleaseStockReservationAction $releaseStock,
+        private readonly FinalizeOrderStockAction $finalizeStock,
         private readonly ReleaseVoucherReservationAction $releaseVoucher,
         private readonly NotificationService $notifications,
     ) {}
 
     public function execute(Payment $payment, string $transactionStatus, ?string $fraudStatus = null): void
     {
-        $payment->loadMissing('order');
-        $order = $payment->order;
+        DB::transaction(function () use ($payment, $transactionStatus, $fraudStatus): void {
+            $payment = Payment::query()
+                ->lockForUpdate()
+                ->with('order')
+                ->findOrFail($payment->id);
+            $order = $payment->order;
 
-        if (! $order) {
-            return;
-        }
+            if (! $order) {
+                return;
+            }
 
-        if ($order->payment_status === PaymentStatus::Paid->value && in_array($transactionStatus, ['pending', 'expire', 'cancel', 'deny', 'failure'], true)) {
-            return;
-        }
+            if ($order->payment_status === PaymentStatus::Paid->value && in_array($transactionStatus, ['pending', 'expire', 'cancel', 'deny', 'failure'], true)) {
+                return;
+            }
 
-        match ($transactionStatus) {
-            'settlement' => $this->markPaid($payment),
-            'capture' => match ($fraudStatus) {
-                'accept' => $this->markPaid($payment),
-                'challenge' => $this->markManualReview($payment),
-                'deny' => $this->markFailed($payment, PaymentStatus::Failed, OrderStatus::Cancelled),
-                default => $this->markManualReview($payment),
-            },
-            'pending', 'authorize' => $this->markPending($payment),
-            'expire' => $this->markFailed($payment, PaymentStatus::Expired, OrderStatus::PaymentExpired),
-            'cancel' => $this->markFailed($payment, PaymentStatus::Cancelled, OrderStatus::Cancelled),
-            'deny', 'failure' => $this->markFailed($payment, PaymentStatus::Failed, OrderStatus::PaymentFailed),
-            'refund' => $this->markRefunded($payment, PaymentStatus::Refunded, OrderStatus::Refunded),
-            'partial_refund' => $this->markRefunded($payment, PaymentStatus::PartiallyRefunded, null),
-            default => null,
-        };
+            match ($transactionStatus) {
+                'settlement' => $this->markPaid($payment),
+                'capture' => match ($fraudStatus) {
+                    'accept' => $this->markPaid($payment),
+                    'challenge' => $this->markManualReview($payment),
+                    'deny' => $this->markFailed($payment, PaymentStatus::Failed, OrderStatus::Cancelled),
+                    default => $this->markManualReview($payment),
+                },
+                'pending', 'authorize' => $this->markPending($payment),
+                'expire' => $this->markFailed($payment, PaymentStatus::Expired, OrderStatus::PaymentExpired),
+                'cancel' => $this->markFailed($payment, PaymentStatus::Cancelled, OrderStatus::Cancelled),
+                'deny', 'failure' => $this->markFailed($payment, PaymentStatus::Failed, OrderStatus::PaymentFailed),
+                'refund' => $this->markRefunded($payment, PaymentStatus::Refunded, OrderStatus::Refunded),
+                'partial_refund' => $this->markRefunded($payment, PaymentStatus::PartiallyRefunded, null),
+                default => null,
+            };
+        });
     }
 
     private function markPaid(Payment $payment): void
     {
         $order = $payment->order;
 
-        if ($order->payment_status !== PaymentStatus::Paid->value) {
-            try {
-                $this->finalizeStock->execute($order, $payment->midtrans_order_id);
-            } catch (DomainException $exception) {
-                $order->update(['payment_status' => PaymentStatus::ManualReview->value, 'order_status' => OrderStatus::PendingPayment->value]);
-                $payment->update(['transaction_status' => 'manual_review']);
-                throw $exception;
-            }
+        if ($order->payment_status === PaymentStatus::Paid->value) {
+            return;
+        }
+
+        try {
+            $this->finalizeStock->execute($order);
+        } catch (DomainException) {
+            $order->update(['payment_status' => PaymentStatus::ManualReview->value, 'order_status' => OrderStatus::PendingPayment->value]);
+            $payment->update(['transaction_status' => 'manual_review']);
+            $this->notifications->forOrder($order, 'Payment requires review', "Payment untuk order {$order->order_number} diterima, tetapi stok tidak cukup untuk difinalisasi.", 'payment');
+
+            return;
         }
 
         $order->update([
@@ -98,7 +106,6 @@ class ApplyMidtransPaymentStatusAction
             return;
         }
 
-        $this->releaseStock->execute($order);
         $this->releaseVoucher->execute($order);
         $order->update([
             'payment_status' => $paymentStatus->value,

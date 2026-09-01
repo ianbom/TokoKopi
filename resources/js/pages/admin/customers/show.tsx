@@ -180,7 +180,7 @@ export default function CustomerShow({ customer }: Props) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="admin-table w-full text-sm">
                                 <tbody className="divide-y">
                                     {customer.orders.map((order) => (
                                         <tr key={order.id}>

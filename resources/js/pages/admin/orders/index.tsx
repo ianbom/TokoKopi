@@ -5,8 +5,6 @@ import {
     ArrowUpDown,
     Ban,
     CheckCircle2,
-    ChevronLeft,
-    ChevronRight,
     Clock,
     Download,
     Eye,
@@ -33,7 +31,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { PerPageSelect } from '../pagination';
+import { Pagination } from '@/pages/admin/catalog/shared';
 
 interface Order {
     id: number;
@@ -312,87 +310,30 @@ export default function OrdersIndex({
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-                    {stats.map((m, i) => (
-                        <div
-                            key={i}
-                            className={[
-                                'relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5',
-                                m.featured
-                                    ? 'border-transparent shadow-lg shadow-[#151515]/20'
-                                    : 'border-zinc-100 shadow-sm hover:shadow-md',
-                                m.cardBg,
-                            ].join(' ')}
-                        >
-                            {!m.featured && m.accent && (
-                                <div
-                                    className={
-                                        'absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r ' +
-                                        m.accent
-                                    }
-                                />
-                            )}
-                            {m.featured && (
-                                <div className="absolute -top-5 -right-5 h-20 w-20 rounded-full bg-white/10" />
-                            )}
-
-                            <div className="flex flex-col gap-3 p-4">
-                                <div className="flex items-center justify-between">
-                                    <div
-                                        className={
-                                            'flex h-8 w-8 items-center justify-center rounded-xl ' +
-                                            m.iconBg
-                                        }
-                                    >
-                                        <m.icon
-                                            className={'h-4 w-4 ' + m.iconColor}
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div
-                                        className={
-                                            'text-2xl leading-none font-bold tracking-tight ' +
-                                            m.valColor
-                                        }
-                                    >
-                                        {m.val}
-                                    </div>
-                                    <div
-                                        className={
-                                            'mt-1.5 text-[11px] font-semibold ' +
-                                            m.titleColor
-                                        }
-                                    >
-                                        {m.title}
-                                    </div>
-                                    <div
-                                        className={
-                                            'mt-0.5 text-[10px] ' + m.subColor
-                                        }
-                                    >
-                                        {m.sub}
-                                    </div>
-                                </div>
-                            </div>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+                    {stats.map((m) => (
+                        <div key={m.title} className="border bg-canvas p-4">
+                            <p className="text-xs text-muted-foreground">
+                                {m.title}
+                            </p>
+                            <p className="text-2xl font-semibold">{m.val}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* Main Table Card */}
-                <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
+                <div className="space-y-4">
                     {/* Filter Bar */}
                     <form
                         onSubmit={handleSearch}
-                        className="flex flex-wrap items-end gap-3 border-b border-zinc-100 bg-zinc-50/40 px-5 py-4"
+                        className="flex flex-wrap items-end gap-3"
                     >
                         <div className="relative min-w-[200px] flex-1">
-                            <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                             <Input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search order/customer..."
-                                className="h-9 rounded-lg border-zinc-200 bg-white pl-9 text-sm shadow-sm"
+                                className="max-w-sm"
                             />
                         </div>
 
@@ -486,7 +427,7 @@ export default function OrdersIndex({
                                                 e.target.value,
                                             )
                                         }
-                                        className="h-10 min-w-[160px] cursor-pointer rounded-lg border-zinc-200 bg-white text-sm shadow-sm"
+                                        className="h-10 min-w-[160px] border bg-canvas px-3"
                                     />
                                 </label>
                                 <label className="flex flex-col gap-1">
@@ -502,25 +443,19 @@ export default function OrdersIndex({
                                                 e.target.value,
                                             )
                                         }
-                                        className="h-10 min-w-[160px] cursor-pointer rounded-lg border-zinc-200 bg-white text-sm shadow-sm"
+                                        className="h-10 min-w-[160px] border bg-canvas px-3"
                                     />
                                 </label>
                             </div>
                         </div>
 
                         <div className="ml-auto flex gap-2">
-                            <Button
-                                type="submit"
-                                size="sm"
-                                className="h-9 gap-1.5 bg-primary text-white hover:bg-primary/90"
-                            >
+                            <Button type="submit" variant="outline">
                                 <Search className="h-3.5 w-3.5" /> Search
                             </Button>
                             <Button
                                 type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-9 gap-1.5 text-zinc-500 hover:text-zinc-700"
+                                variant="outline"
                                 onClick={resetFilters}
                             >
                                 <RotateCcw className="h-3.5 w-3.5" /> Reset
@@ -529,10 +464,10 @@ export default function OrdersIndex({
                     </form>
 
                     {/* Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead>
-                                <tr className="border-b border-zinc-100 bg-zinc-50/60">
+                    <div className="overflow-x-auto border">
+                        <table className="admin-table w-full min-w-[960px] text-sm">
+                            <thead className="border-b bg-surface-soft text-left">
+                                <tr>
                                     <th className="w-14 px-4 py-3 text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">
                                         No
                                     </th>
@@ -568,7 +503,7 @@ export default function OrdersIndex({
                                     <th className="w-10 px-4 py-3"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-50">
+                            <tbody>
                                 {orders.data.length === 0 && (
                                     <tr>
                                         <td colSpan={9}>
@@ -764,62 +699,7 @@ export default function OrdersIndex({
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between border-t border-zinc-100 bg-zinc-50/40 px-5 py-3.5">
-                        <span className="text-xs text-zinc-400">
-                            {orders.from && orders.to
-                                ? 'Showing ' +
-                                  orders.from +
-                                  '-' +
-                                  orders.to +
-                                  ' of ' +
-                                  orders.total +
-                                  ' orders'
-                                : 'No orders'}
-                        </span>
-                        <div className="flex items-center gap-1">
-                            {orders.links.map((link, i) => {
-                                const isChevronLeft =
-                                    link.label.includes('Previous') ||
-                                    link.label.includes('&laquo;');
-                                const isChevronRight =
-                                    link.label.includes('Next') ||
-                                    link.label.includes('&raquo;');
-                                const label = isChevronLeft ? (
-                                    <ChevronLeft className="h-3.5 w-3.5" />
-                                ) : isChevronRight ? (
-                                    <ChevronRight className="h-3.5 w-3.5" />
-                                ) : (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                );
-
-                                return (
-                                    <button
-                                        key={i}
-                                        disabled={!link.url}
-                                        onClick={() =>
-                                            link.url && router.get(link.url)
-                                        }
-                                        className={[
-                                            'h-8 min-w-8 rounded-lg px-2.5 text-xs font-medium transition-colors',
-                                            link.active
-                                                ? 'bg-primary text-white shadow-sm'
-                                                : !link.url
-                                                  ? 'cursor-not-allowed text-zinc-300'
-                                                  : 'text-zinc-500 hover:bg-zinc-100',
-                                        ].join(' ')}
-                                    >
-                                        {label}
-                                    </button>
-                                );
-                            })}
-                            <PerPageSelect paginator={orders} />
-                        </div>
-                    </div>
+                    <Pagination paginator={orders} />
                 </div>
             </div>
         </>
@@ -878,11 +758,11 @@ function FilterSelect({
 }) {
     return (
         <div className="flex flex-col gap-1">
-            <span className="px-0.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase">
-                {label}
-            </span>
             <Select value={value} onValueChange={onChange}>
-                <SelectTrigger className="h-9 w-[150px] rounded-lg border-zinc-200 bg-white text-xs shadow-sm">
+                <SelectTrigger
+                    aria-label={label}
+                    className="h-10 w-[180px] rounded-none border bg-canvas px-3 text-sm shadow-none"
+                >
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>{children}</SelectContent>

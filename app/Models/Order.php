@@ -35,9 +35,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'cancelled_at',
     'expired_at',
     'completed_at',
-    'stock_reserved_at',
-    'stock_released_at',
-    'stock_finalized_at',
     'voucher_released_at',
 ])]
 class Order extends Model
@@ -96,9 +93,6 @@ class Order extends Model
             'paid_at' => 'datetime',
             'service_fee' => 'decimal:2',
             'shipping_cost' => 'decimal:2',
-            'stock_finalized_at' => 'datetime',
-            'stock_released_at' => 'datetime',
-            'stock_reserved_at' => 'datetime',
             'voucher_released_at' => 'datetime',
             'subtotal' => 'decimal:2',
         ];

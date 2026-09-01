@@ -2,73 +2,66 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Requests\Admin\ProductVariantRequest;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Services\Stock\StockLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductVariantService
 {
     use ResolvesAdminPagination;
-    use StoresUploadedFiles;
-
-    public function __construct(private readonly StockLogService $stockLogs) {}
 
     public function indexData(Request $request, ?Product $product = null): array
     {
         $search = $request->string('search')->toString();
         $status = $request->string('status')->toString();
+        $query = ProductVariant::query()->with(['product:id,name', 'stock'])->withCount('orderItems')
+            ->when($product, fn ($query) => $query->whereBelongsTo($product))
+            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                ->where('sku', 'like', "%{$search}%")
+                ->orWhere('net_weight', 'like', "%{$search}%")
+                ->orWhere('grind_type', 'like', "%{$search}%")
+                ->orWhereHas('product', fn ($productQuery) => $productQuery->where('name', 'like', "%{$search}%"))))
+            ->when($status !== '', fn ($query) => $query->where('is_active', $status === 'active'))
+            ->latest();
 
         return [
-            'variants' => ProductVariant::query()
-                ->with('product:id,name,slug')
-                ->withCount('orderItems')
-                ->when($product, fn ($query) => $query->whereBelongsTo($product))
-                ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
-                    ->where('sku', 'like', "%{$search}%")
-                    ->orWhere('color_name', 'like', "%{$search}%")
-                    ->orWhere('size', 'like', "%{$search}%")
-                    ->orWhereHas('product', fn ($query) => $query->where('name', 'like', "%{$search}%"))))
-                ->when($status === 'active', fn ($query) => $query->where('is_active', true))
-                ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
-                ->latest()
-                ->paginate($this->perPage($request))
-                ->withQueryString()
-                ->through(fn (ProductVariant $variant): array => $this->row($variant)),
-            'product' => $product ? ['id' => $product->id, 'name' => $product->name] : null,
+            'variants' => $query->paginate($this->perPage($request))->withQueryString()->through(fn (ProductVariant $variant): array => $this->row($variant)),
+            'product' => $product?->only(['id', 'name']),
             'filters' => ['search' => $search, 'status' => $status],
             'stats' => [
                 'total' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->count(),
                 'active' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->where('is_active', true)->count(),
                 'inactive' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->where('is_active', false)->count(),
-                'in_stock' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->whereRaw('(stock - reserved_stock) > 5')->count(),
-                'low_stock' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->whereRaw('(stock - reserved_stock) > 0')->whereRaw('(stock - reserved_stock) <= 5')->count(),
-                'sold_out' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->whereRaw('(stock - reserved_stock) = 0')->count(),
+                'low_stock' => ProductVariant::query()->when($product, fn ($query) => $query->whereBelongsTo($product))->whereHas('stock', fn ($query) => $query->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'low_stock_threshold'))->count(),
             ],
         ];
     }
 
-    public function create(Request $request): ProductVariant
+    public function create(ProductVariantRequest $request): ProductVariant
     {
-        $validated = $this->payload($request, true);
-
-        return DB::transaction(function () use ($request, $validated): ProductVariant {
-            $variant = ProductVariant::query()->create($validated);
-            $this->stockLogs->logIfChanged($variant, 0, $variant->stock, $request->user()->id, 'adjustment', 'Initial variant stock.');
+        return DB::transaction(function () use ($request): ProductVariant {
+            $variant = new ProductVariant($this->payload($request));
+            $variant->save();
+            $variant->stock()->create([
+                'quantity' => $request->integer('stock_quantity'),
+                'low_stock_threshold' => $request->integer('low_stock_threshold'),
+            ]);
 
             return $variant;
         });
     }
 
-    public function update(ProductVariant $variant, Request $request): void
+    public function update(ProductVariant $variant, ProductVariantRequest $request): void
     {
-        $validated = $this->payload($request, false, $variant);
-
-        DB::transaction(function () use ($request, $variant, $validated): void {
-            $stockBefore = $variant->stock;
-            $variant->update($validated);
-            $this->stockLogs->logIfChanged($variant, $stockBefore, $variant->stock, $request->user()->id, 'adjustment', 'Stock updated from variant form.');
+        DB::transaction(function () use ($variant, $request): void {
+            $variant->update($this->payload($request, $variant));
+            $variant->stock()->updateOrCreate([], [
+                'quantity' => $request->integer('stock_quantity'),
+                'low_stock_threshold' => $request->integer('low_stock_threshold'),
+            ]);
         });
     }
 
@@ -77,10 +70,10 @@ class ProductVariantService
         if ($variant->orderItems()->exists()) {
             $variant->update(['is_active' => false]);
 
-            return 'Variant sudah pernah dibeli, jadi dinonaktifkan.';
+            return 'Variant pernah dibeli dan dinonaktifkan.';
         }
 
-        $this->deletePublicFile($variant->image_url);
+        Storage::disk('public')->delete(str_replace('/storage/', '', (string) $variant->image_url));
         $variant->delete();
 
         return 'Variant berhasil dihapus.';
@@ -88,70 +81,45 @@ class ProductVariantService
 
     public function productOptions()
     {
-        return Product::query()
-            ->with('primaryImage:id,product_id,image_url')
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'sku', 'regular_price', 'sale_price'])
-            ->map(fn (Product $product): array => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'sku' => $product->sku,
-                'regular_price' => $product->regular_price,
-                'sale_price' => $product->sale_price,
-                'image_url' => $product->primaryImage?->image_url,
-            ]);
+        return Product::query()->orderBy('name')->get(['id', 'name', 'slug', 'sku'])->map(fn (Product $product): array => $product->only(['id', 'name', 'slug', 'sku']));
     }
 
     public function formData(ProductVariant $variant): array
     {
-        $variant->load('product:id,name');
+        $variant->load(['product:id,name', 'stock']);
 
         return [
-            ...$variant->only(['id', 'product_id', 'sku', 'variant_name', 'color_name', 'color_hex', 'size', 'package_type', 'regular_price', 'sale_price', 'stock', 'reserved_stock', 'weight', 'length', 'width', 'height', 'image_url', 'is_active']),
+            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
             'product' => $variant->product?->name,
+            'stock_quantity' => $variant->stock?->quantity ?? 0,
+            'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
         ];
     }
 
-    public function row(ProductVariant $variant): array
+    private function payload(ProductVariantRequest $request, ?ProductVariant $variant = null): array
+    {
+        $payload = collect($request->validated())->only(['product_id', 'sku', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram'])->all();
+        $payload['is_active'] = $request->boolean('is_active');
+
+        if ($request->hasFile('image')) {
+            if ($variant?->image_url) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $variant->image_url));
+            }
+            $payload['image_url'] = Storage::url($request->file('image')->store('product-variants', 'public'));
+        }
+
+        return $payload;
+    }
+
+    private function row(ProductVariant $variant): array
     {
         return [
-            'id' => $variant->id,
-            'product_id' => $variant->product_id,
+            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
             'product' => $variant->product?->name,
-            'sku' => $variant->sku,
-            'variant_name' => $variant->variant_name,
-            'color_name' => $variant->color_name,
-            'color_hex' => $variant->color_hex,
-            'size' => $variant->size,
-            'package_type' => $variant->package_type,
-            'regular_price' => $variant->regular_price,
-            'sale_price' => $variant->sale_price,
-            'stock' => $variant->stock,
-            'reserved_stock' => $variant->reserved_stock,
-            'weight' => $variant->weight,
-            'length' => $variant->length,
-            'width' => $variant->width,
-            'height' => $variant->height,
-            'available_stock' => $variant->stock - $variant->reserved_stock,
-            'image_url' => $variant->image_url,
-            'is_active' => $variant->is_active,
+            'stock_quantity' => $variant->stock?->quantity ?? 0,
+            'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             'order_items_count' => $variant->order_items_count,
             'created_at' => $variant->created_at?->toFormattedDateString(),
         ];
-    }
-
-    private function payload(Request $request, bool $defaultActive, ?ProductVariant $variant = null): array
-    {
-        $validated = $request->validated();
-        $validated['is_active'] = $request->boolean('is_active', $defaultActive);
-        unset($validated['image']);
-
-        if ($request->hasFile('image')) {
-            $this->deletePublicFile($variant?->image_url);
-            $validated['image_url'] = $this->storePublicFile($request->file('image'), 'images/variants');
-        }
-
-        return $validated;
     }
 }

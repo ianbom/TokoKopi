@@ -13,116 +13,83 @@ class ProductRequest extends FormRequest
         return $this->user()?->role === 'admin' && (bool) $this->user()?->is_active;
     }
 
-    /**
-     * @return array<string, list<mixed>>
-     */
     public function rules(): array
     {
         $product = $this->route('product');
         $productId = $product?->id;
-        $imageIdRule = Rule::exists('product_images', 'id');
-        $variantIdRule = Rule::exists('product_variants', 'id');
+        $imageId = Rule::exists('product_images', 'id');
+        $variantId = Rule::exists('product_variants', 'id');
 
         if ($productId) {
-            $imageIdRule->where('product_id', $productId);
-            $variantIdRule->where('product_id', $productId);
+            $imageId->where('product_id', $productId);
+            $variantId->where('product_id', $productId);
         }
 
         return [
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'collection_ids' => ['nullable', 'array'],
-            'collection_ids.*' => ['nullable', 'integer', 'exists:collections,id'],
             'name' => ['required', 'string', 'max:200'],
             'slug' => ['required', 'string', 'max:220', Rule::unique('products', 'slug')->ignore($product)],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($product)],
-            'brand_name' => ['nullable', 'string', 'max:150'],
-            'product_line' => ['nullable', 'string', 'max:150'],
-            'style_name' => ['nullable', 'string', 'max:180'],
-            'regular_price' => ['required', 'numeric', 'min:0'],
-            'sale_price' => ['nullable', 'numeric', 'min:0', 'lte:regular_price'],
-            'short_description' => ['nullable', 'string', 'max:1000'],
+            'origin' => ['nullable', 'string', 'max:180'],
+            'process' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'weight' => ['required', 'integer', 'min:0'],
-            'length' => ['nullable', 'integer', 'min:0'],
-            'width' => ['nullable', 'integer', 'min:0'],
-            'height' => ['nullable', 'integer', 'min:0'],
-            'status' => ['required', Rule::in(['draft', 'published', 'archived'])],
+            'status' => ['required', Rule::in(['draft', 'active', 'inactive', 'archived'])],
             'is_featured' => ['sometimes', 'boolean'],
             'is_new_arrival' => ['sometimes', 'boolean'],
             'is_best_seller' => ['sometimes', 'boolean'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
             'images' => ['nullable', 'array'],
-            'images.*.id' => ['nullable', 'integer', $imageIdRule],
-            'images.*.image_url' => ['nullable', 'string', 'max:255', 'not_regex:/^blob:/i'],
+            'images.*.id' => ['nullable', 'integer', $imageId],
+            'images.*.image_url' => ['nullable', 'string', 'max:2048', 'not_regex:/^blob:/i'],
             'images.*.image' => ['nullable', 'file', 'image', 'max:4096'],
-            'images.*.alt_text' => ['nullable', 'string', 'max:255'],
             'images.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'images.*.is_primary' => ['sometimes', 'boolean'],
             'variants' => ['nullable', 'array'],
-            'variants.*.id' => ['nullable', 'integer', $variantIdRule],
-            'variants.*.sku' => ['nullable', 'string', 'max:100'],
-            'variants.*.color_name' => ['nullable', 'string', 'max:100'],
-            'variants.*.color_hex' => ['nullable'],
-            'variants.*.variant_name' => ['nullable', 'string', 'max:180'],
-            'variants.*.size' => ['nullable', 'string', 'max:100'],
-            'variants.*.package_type' => ['nullable', 'string', 'max:150'],
-            'variants.*.regular_price' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.sale_price' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.stock' => ['nullable', 'integer', 'min:0'],
-            'variants.*.reserved_stock' => ['nullable', 'integer', 'min:0'],
-            'variants.*.weight' => ['nullable', 'integer', 'min:0'],
-            'variants.*.length' => ['nullable', 'integer', 'min:0'],
-            'variants.*.width' => ['nullable', 'integer', 'min:0'],
-            'variants.*.height' => ['nullable', 'integer', 'min:0'],
-            'variants.*.image_url' => ['nullable', 'string', 'max:255', 'not_regex:/^blob:/i'],
+            'variants.*.id' => ['nullable', 'integer', $variantId],
+            'variants.*.sku' => ['required', 'string', 'max:100'],
+            'variants.*.net_weight' => ['nullable', 'string', 'max:100'],
+            'variants.*.grind_type' => ['nullable', Rule::in(['whole_bean', 'fine', 'medium', 'coarse'])],
+            'variants.*.regular_price' => ['required', 'numeric', 'min:0'],
+            'variants.*.sale_price' => ['nullable', 'numeric', 'min:0', 'lte:variants.*.regular_price'],
+            'variants.*.shipping_weight_gram' => ['required', 'integer', 'min:0'],
+            'variants.*.image_url' => ['nullable', 'string', 'max:2048', 'not_regex:/^blob:/i'],
             'variants.*.image' => ['nullable', 'file', 'image', 'max:4096'],
             'variants.*.is_active' => ['sometimes', 'boolean'],
+            'variants.*.stock_quantity' => ['required', 'integer', 'min:0'],
+            'variants.*.low_stock_threshold' => ['required', 'integer', 'min:0'],
         ];
     }
 
-    /**
-     * @return array<int, callable>
-     */
     public function after(): array
     {
-        return [
-            function ($validator): void {
-                if ($this->input('status') !== 'published') {
-                    return;
-                }
+        return [function ($validator): void {
+            if ($this->input('status') !== 'active') {
+                return;
+            }
 
-                if ((int) $this->input('weight', 0) < 1) {
-                    $validator->errors()->add('weight', 'Weight minimal 1 gram untuk produk published.');
-                }
+            $images = collect($this->input('images', []))->filter(
+                fn (array $image, int $index): bool => filled($image['image_url'] ?? null) || $this->hasFile("images.{$index}.image")
+            );
+            $variants = collect($this->input('variants', []));
 
-                $images = collect($this->input('images', []))
-                    ->filter(fn (array $image, int $index): bool => $this->hasStoredImageUrl($image['image_url'] ?? null) || $this->hasFile("images.{$index}.image"));
+            if ($images->isEmpty()) {
+                $validator->errors()->add('images', 'Produk aktif membutuhkan minimal satu gambar.');
+            }
 
-                if ($images->isEmpty()) {
-                    $validator->errors()->add('images', 'Produk published minimal memiliki satu gambar.');
-                }
+            if (! $images->contains(fn (array $image): bool => (bool) ($image['is_primary'] ?? false))) {
+                $validator->errors()->add('images', 'Produk aktif membutuhkan satu gambar utama.');
+            }
 
-                if (! $images->contains(fn (array $image): bool => (bool) ($image['is_primary'] ?? false))) {
-                    $validator->errors()->add('images', 'Produk published membutuhkan satu gambar utama.');
-                }
-
-                $variants = collect($this->input('variants', []))
-                    ->filter(fn (array $variant): bool => filled($variant['sku'] ?? null));
-
-                $variants->each(function (array $variant, int $index) use ($validator): void {
-                    if ((int) ($variant['reserved_stock'] ?? 0) > (int) ($variant['stock'] ?? 0)) {
-                        $validator->errors()->add("variants.{$index}.reserved_stock", 'Reserved stock tidak boleh lebih besar dari stock.');
-                    }
-                });
-
-                if (! $variants->contains(fn (array $variant): bool => (bool) ($variant['is_active'] ?? false) && (int) ($variant['stock'] ?? 0) > 0)) {
-                    $validator->errors()->add('variants', 'Produk published membutuhkan satu varian aktif dengan stok tersedia.');
-                }
-            },
-        ];
+            if (! $variants->contains(fn (array $variant): bool => (bool) ($variant['is_active'] ?? false) && (int) ($variant['stock_quantity'] ?? 0) > 0)) {
+                $validator->errors()->add('variants', 'Produk aktif membutuhkan varian aktif dengan stok tersedia.');
+            }
+        }];
     }
 
-    private function hasStoredImageUrl(?string $imageUrl): bool
+    protected function prepareForValidation(): void
     {
-        return filled($imageUrl) && ! Str::startsWith($imageUrl, 'blob:');
+        if ($this->filled('slug')) {
+            $this->merge(['slug' => Str::slug($this->string('slug')->toString())]);
+        }
     }
 }

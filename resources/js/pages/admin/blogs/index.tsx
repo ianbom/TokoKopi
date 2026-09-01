@@ -88,7 +88,7 @@ export default function BlogIndex({ articles, categories, filters }: Props) {
                     </form>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="admin-table w-full text-sm">
                             <thead><tr className="border-b text-left text-muted-foreground">
                                 <th className="pr-4 pb-3 font-medium">Article</th>
                                 <th className="pr-4 pb-3 font-medium">Category</th>

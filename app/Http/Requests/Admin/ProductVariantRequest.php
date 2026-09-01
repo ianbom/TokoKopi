@@ -12,9 +12,6 @@ class ProductVariantRequest extends FormRequest
         return $this->user()?->role === 'admin' && (bool) $this->user()?->is_active;
     }
 
-    /**
-     * @return array<string, list<mixed>>
-     */
     public function rules(): array
     {
         $variant = $this->route('productVariant');
@@ -22,21 +19,15 @@ class ProductVariantRequest extends FormRequest
         return [
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'sku' => ['required', 'string', 'max:100', Rule::unique('product_variants', 'sku')->ignore($variant)],
-            'variant_name' => ['nullable', 'string', 'max:180'],
-            'color_name' => ['nullable', 'string', 'max:100'],
-            'color_hex' => ['nullable', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'size' => ['nullable', 'string', 'max:100'],
-            'package_type' => ['nullable', 'string', 'max:150'],
-            'regular_price' => ['nullable', 'numeric', 'min:0'],
-            'sale_price' => ['nullable', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'reserved_stock' => ['required', 'integer', 'min:0', 'lte:stock'],
-            'weight' => ['nullable', 'integer', 'min:0'],
-            'length' => ['nullable', 'integer', 'min:0'],
-            'width' => ['nullable', 'integer', 'min:0'],
-            'height' => ['nullable', 'integer', 'min:0'],
+            'net_weight' => ['nullable', 'string', 'max:100'],
+            'grind_type' => ['nullable', Rule::in(['whole_bean', 'fine', 'medium', 'coarse'])],
+            'regular_price' => ['required', 'numeric', 'min:0'],
+            'sale_price' => ['nullable', 'numeric', 'min:0', 'lte:regular_price'],
+            'shipping_weight_gram' => ['required', 'integer', 'min:0'],
             'image' => ['nullable', 'file', 'image', 'max:2048'],
             'is_active' => ['sometimes', 'boolean'],
+            'stock_quantity' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['required', 'integer', 'min:0'],
         ];
     }
 }

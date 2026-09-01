@@ -20,12 +20,12 @@ class WishlistInsightService
 
         return [
             'products' => Product::query()
-                ->with(['category:id,name', 'primaryImage'])
+                ->with(['categories:id,name', 'primaryImage'])
                 ->withCount('wishlists')
                 ->when($filters['search'] !== '', fn ($query) => $query->where(fn ($query) => $query
                     ->where('name', 'like', "%{$filters['search']}%")
                     ->orWhere('sku', 'like', "%{$filters['search']}%")))
-                ->when($filters['category_id'] !== '', fn ($query) => $query->where('category_id', $filters['category_id']))
+                ->when($filters['category_id'] !== '', fn ($query) => $query->whereHas('categories', fn ($categoryQuery) => $categoryQuery->whereKey($filters['category_id'])))
                 ->having('wishlists_count', '>', 0)
                 ->orderByDesc('wishlists_count')
                 ->paginate($this->perPage($request))
@@ -34,7 +34,7 @@ class WishlistInsightService
                     'id' => $product->id,
                     'name' => $product->name,
                     'sku' => $product->sku,
-                    'category' => $product->category?->name,
+                    'category' => $product->categories->first()?->name,
                     'thumbnail' => $product->primaryImage?->image_url,
                     'status' => $product->status,
                     'wishlists_count' => $product->wishlists_count,

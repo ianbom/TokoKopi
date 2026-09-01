@@ -357,16 +357,28 @@ class ShipmentManagementService
         $originAreaId = $this->validBiteshipAreaId($this->setting('origin_biteship_area_id', config('services.biteship.origin_area_id')));
         $destinationAreaId = $this->validBiteshipAreaId($order->address?->biteship_area_id);
         $destinationNote = data_get($order->address, 'address_note') ?: $order->address?->note;
+        $shipperName = $this->settings->first(
+            ['store_name', 'shipper_name'],
+            config('services.biteship.shipper_name'),
+        );
+        $shipperPhone = $this->settings->first(
+            ['store_phone', 'shipper_phone'],
+            config('services.biteship.shipper_phone'),
+        );
+        $originAddress = $this->settings->first(
+            ['store_address', 'origin_address'],
+            config('services.biteship.origin_address'),
+        );
 
         return array_filter([
-            'shipper_contact_name' => $this->setting('shipper_name', config('services.biteship.shipper_name')) ?: $this->settings->get('store_name'),
-            'shipper_contact_phone' => $this->setting('shipper_phone', config('services.biteship.shipper_phone')) ?: $this->settings->get('store_phone'),
+            'shipper_contact_name' => $shipperName,
+            'shipper_contact_phone' => $shipperPhone,
             'shipper_contact_email' => $this->setting('store_email', config('services.biteship.shipper_email')),
             'shipper_organization' => $this->settings->get('store_name') ?: config('app.name'),
-            'origin_contact_name' => $this->setting('shipper_name', config('services.biteship.origin_contact_name')) ?: $this->settings->get('store_name'),
-            'origin_contact_phone' => $this->setting('shipper_phone', config('services.biteship.origin_contact_phone')) ?: $this->settings->get('store_phone'),
+            'origin_contact_name' => $shipperName,
+            'origin_contact_phone' => $shipperPhone,
             'origin_contact_email' => $this->setting('store_email', config('services.biteship.origin_contact_email')),
-            'origin_address' => $this->setting('origin_address', config('services.biteship.origin_address')) ?: $this->settings->get('store_address'),
+            'origin_address' => $originAddress,
             'origin_note' => $this->setting('origin_note', config('services.biteship.origin_note')),
             'origin_postal_code' => $originPostalCode ? (int) $originPostalCode : null,
             'origin_area_id' => $originAreaId,
@@ -395,10 +407,7 @@ class ShipmentManagementService
                 'sku' => $item->variant_sku ?: $item->product_sku,
                 'value' => (int) round((float) $item->price),
                 'quantity' => $item->quantity,
-                'weight' => max(1, (int) $item->weight),
-                'height' => $item->height,
-                'length' => $item->length,
-                'width' => $item->width,
+                'weight' => max(1, (int) $item->shipping_weight_gram),
             ], fn ($value): bool => filled($value) || $value === 0))->values()->all(),
         ], fn ($value): bool => filled($value) || $value === 0 || is_array($value));
     }

@@ -103,7 +103,7 @@ export default function PagesIndex({ pages, filters, types }: Props) {
                         </Button>
                     </form>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="admin-table w-full text-sm">
                             <thead>
                                 <tr className="border-b text-left text-muted-foreground">
                                     <th className="w-14 pr-4 pb-3 font-medium">

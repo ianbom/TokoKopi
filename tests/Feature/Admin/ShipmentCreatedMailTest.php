@@ -63,15 +63,15 @@ it('emails the customer when admin creates a shipment from an order', function (
 
     OrderItem::query()->create([
         'order_id' => $order->id,
-        'product_name' => 'Khimar Premium',
-        'product_sku' => 'KHM-001',
-        'variant_sku' => 'KHM-001-BLK-M',
-        'color_name' => 'Black',
-        'size' => 'M',
+        'product_name' => 'Gayo Natural',
+        'product_sku' => 'GAYO-001',
+        'variant_sku' => 'GAYO-001-250-WB',
+        'net_weight' => '250g',
+        'grind_type' => 'whole_bean',
         'price' => 250000,
         'quantity' => 1,
         'subtotal' => 250000,
-        'weight' => 500,
+        'shipping_weight_gram' => 500,
     ]);
 
     Http::fake([
@@ -107,7 +107,7 @@ it('emails the customer when admin creates a shipment from an order', function (
             && str_contains($html, '40135')
             && str_contains($html, 'Jl. Dago No. 10, Bandung')
             && str_contains($html, '081234567890')
-            && str_contains($html, 'Khimar Premium')
+            && str_contains($html, 'Gayo Natural')
             && str_contains($html, 'JNE123456789')
             && str_contains($html, 'https://track.example.test/JNE123456789');
     });
@@ -116,9 +116,10 @@ it('emails the customer when admin creates a shipment from an order', function (
 function seedShipmentSettings(): void
 {
     collect([
-        'shipper_name' => 'Anemi Store',
-        'shipper_phone' => '080000000000',
-        'origin_address' => 'Jl. Store No. 1',
+        'store_name' => 'Anemi Store',
+        'store_phone' => '080000000000',
+        'store_email' => 'store@example.test',
+        'store_address' => 'Jl. Store No. 1',
         'store_postal_code' => '60111',
         'store_latitude' => '-6.2',
         'store_longitude' => '106.8',

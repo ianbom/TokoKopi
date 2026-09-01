@@ -33,7 +33,7 @@ class ProductImageService
 
             $payload = [
                 'image_url' => $storedImageUrl,
-                'alt_text' => $image['alt_text'] ?? $product->name,
+                'alt_text' => $product->name,
                 'sort_order' => (int) ($image['sort_order'] ?? $index),
                 'is_primary' => $index === $primaryIndex,
             ];
@@ -73,6 +73,7 @@ class ProductImageService
         if (str_contains($imageUrl, '/storage/')) {
             $path = Str::after($imageUrl, '/storage/');
             Storage::disk('public')->delete($path);
+
             return;
         }
 

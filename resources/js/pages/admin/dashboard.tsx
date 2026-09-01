@@ -53,8 +53,8 @@ type LowStockVariant = {
     product_id?: number | null;
     product_name: string | null;
     sku?: string;
-    color_name?: string | null;
-    size?: string | null;
+    net_weight?: string | null;
+    grind_type?: string | null;
     available_stock: number;
 };
 
@@ -256,7 +256,7 @@ function DashboardHeader({ filters }: { filters: DashboardFilters }) {
             <div className="min-w-0">
                 <p className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-primary uppercase">
                     <Shirt className="size-4" strokeWidth={1.7} />
-                    AxeGear Admin
+                    Deklasse Admin
                 </p>
                 <h1 className="text-[34px] leading-none font-semibold tracking-[-0.02em] text-ink uppercase sm:text-[42px]">
                     Dasbor
@@ -418,7 +418,9 @@ function MiniSummaryCard({
                         href={summaryHref(item.label)}
                         className="block px-2 transition-colors first:pl-0 hover:bg-primary-soft sm:px-4 sm:last:pr-0"
                     >
-                        <p className="text-xs text-muted-foreground">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {item.label}
+                        </p>
                         <p className="mt-1 text-xl font-bold tracking-tight text-ink">
                             {item.value}
                         </p>
@@ -570,7 +572,7 @@ function RecentOrdersTable({ orders }: { orders: RecentOrder[] }) {
             </div>
 
             <div className="mt-5 overflow-x-auto rounded-[8px] border-y border-hairline-strong">
-                <table className="w-full min-w-[760px] text-left text-sm">
+                <table className="admin-table w-full min-w-[760px] text-left text-sm">
                     <thead className="border-b border-hairline-strong bg-surface-soft text-xs tracking-wider text-muted-foreground uppercase">
                         <tr>
                             {[
@@ -706,10 +708,7 @@ function LowStockProductsCard({ products }: { products: LowStockVariant[] }) {
                                     </p>
                                 )}
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {[
-                                        product.color_name,
-                                        product.size && `Size ${product.size}`,
-                                    ]
+                                    {[product.net_weight, product.grind_type]
                                         .filter(Boolean)
                                         .join(' · ') || 'Standard variant'}
                                 </p>

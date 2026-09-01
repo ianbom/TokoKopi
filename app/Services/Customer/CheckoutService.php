@@ -2,7 +2,6 @@
 
 namespace App\Services\Customer;
 
-use App\Actions\Stock\ReleaseStockReservationAction;
 use App\Actions\Vouchers\ReleaseVoucherReservationAction;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -29,7 +28,6 @@ class CheckoutService
         private readonly BiteshipService $biteship,
         private readonly MidtransService $midtrans,
         private readonly SiteSettingService $settings,
-        private readonly ReleaseStockReservationAction $releaseStock,
         private readonly ReleaseVoucherReservationAction $releaseVoucher,
     ) {}
 
@@ -292,10 +290,7 @@ class CheckoutService
                     'shipping_weight_gram' => max(1, $variant->shipping_weight_gram) * $item->quantity,
                     'product_image_url' => $variant->image_url ?? $product->primaryImage?->image_url,
                 ]);
-                $stock?->decrement('quantity', $item->quantity);
             }
-
-            $order->forceFill(['stock_reserved_at' => now()])->save();
 
             $order->shipment()->create([
                 'shipping_provider' => 'biteship',
@@ -334,7 +329,6 @@ class CheckoutService
         } catch (\Throwable $exception) {
             DB::transaction(function () use ($payment): void {
                 $order = $payment->order()->lockForUpdate()->firstOrFail();
-                $this->releaseStock->execute($order);
                 $this->releaseVoucher->execute($order);
                 $order->update(['payment_status' => 'failed', 'order_status' => 'payment_failed', 'cancelled_at' => now()]);
                 $payment->update(['transaction_status' => 'snap_failed', 'raw_response' => ['error' => $exception->getMessage()]]);

@@ -185,7 +185,7 @@ function printBiteshipLabel(shipment: Shipment) {
                     </section>
 
                     <section class="section">
-                        <table>
+                        <table className="admin-table">
                             <thead>
                                 <tr>
                                     <th>Item</th>

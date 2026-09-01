@@ -9,7 +9,7 @@ class SyncExpiredMidtransPaymentsCommand extends Command
 {
     protected $signature = 'payments:sync-expired-midtrans';
 
-    protected $description = 'Synchronize expired pending Midtrans payments and release stock through the payment state action.';
+    protected $description = 'Synchronize expired pending Midtrans payments through the payment state action.';
 
     public function handle(SyncExpiredMidtransPaymentsAction $syncExpiredPayments): int
     {

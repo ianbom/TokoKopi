@@ -1,219 +1,65 @@
 <?php
 
 use App\Models\Category;
-use App\Models\Collection;
 use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
-it('creates a product with images, variants, and stock logs from the admin form payload', function () {
+it('creates a coffee product with categories, variants, images, and stock', function () {
     Storage::fake('public');
-
-    $admin = User::factory()->create([
-        'role' => 'admin',
-        'is_active' => true,
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $categories = collect([
+        Category::query()->create(['name' => 'Coffee Beans', 'slug' => 'coffee-beans']),
+        Category::query()->create(['name' => 'Single Origin', 'slug' => 'single-origin']),
     ]);
 
-    $category = Category::query()->create([
-        'name' => 'Gamis',
-        'slug' => 'gamis',
-        'description' => 'Gamis category',
-        'is_active' => true,
-    ]);
+    $categoryIds = $categories->pluck('id')->all();
+    $this->actingAs($admin)->post(route('admin.products.store'), productPayload($categoryIds))->assertRedirect();
 
-    $collection1 = Collection::query()->create([
-        'name' => 'Ramadan Collection',
-        'slug' => 'ramadan-collection',
-        'description' => 'Ramadan collection',
-        'is_featured' => true,
-        'is_active' => true,
-    ]);
-
-    $collection2 = Collection::query()->create([
-        'name' => 'Eid Collection',
-        'slug' => 'eid-collection',
-        'description' => 'Eid collection',
-        'is_featured' => false,
-        'is_active' => true,
-    ]);
-
-    $payload = productPayload($category, $collection1, $collection2);
-
-    $this->actingAs($admin)
-        ->post(route('admin.products.store'), $payload)
-        ->assertRedirect();
-
-    $product = Product::query()
-        ->where('slug', 'gamis-syari-pita')
-        ->firstOrFail();
-
-    expect($product)
-        ->category_id->toBe($category->id)
-        ->name->toBe('Gamis Syar\'i Pita')
-        ->sku->toBe('GMS-001')
-        ->short_description->toBe('Gamis premium untuk daily wear.')
-        ->description->toBe('Gamis premium dengan detail pita dan bahan nyaman.')
-        ->status->toBe('published')
-        ->is_featured->toBeTrue()
-        ->is_new_arrival->toBeTrue()
-        ->is_best_seller->toBeFalse();
-
-    expect((float) $product->regular_price)->toBe(350000.00)
-        ->and((float) $product->sale_price)->toBe(299000.00)
-        ->and($product->weight)->toBe(500)
-        ->and($product->length)->toBe(30)
-        ->and($product->width)->toBe(25)
-        ->and($product->height)->toBe(5);
-
-    $this->assertDatabaseHas('products', [
-        'id' => $product->id,
-        'category_id' => $category->id,
-        'name' => 'Gamis Syar\'i Pita',
-        'slug' => 'gamis-syari-pita',
-        'sku' => 'GMS-001',
-        'regular_price' => 350000,
-        'sale_price' => 299000,
-        'status' => 'published',
-        'is_featured' => true,
-        'is_new_arrival' => true,
-        'is_best_seller' => false,
-    ]);
-
-    $this->assertDatabaseHas('product_collections', [
-        'product_id' => $product->id,
-        'collection_id' => $collection1->id,
-    ]);
-
-    $this->assertDatabaseHas('product_collections', [
-        'product_id' => $product->id,
-        'collection_id' => $collection2->id,
-    ]);
-
-    $this->assertDatabaseHas('product_images', [
-        'product_id' => $product->id,
-        'alt_text' => 'Gamis Syar\'i Pita tampak depan',
-        'sort_order' => 0,
-        'is_primary' => true,
-    ]);
+    $product = Product::query()->where('slug', 'gayo-natural')->firstOrFail();
+    expect($product->origin)->toBe('Aceh Gayo')
+        ->and($product->status)->toBe('active')
+        ->and($product->description)->toBe('<h2>Gayo Natural</h2><p>Kopi arabika dengan rasa buah tropis.</p>')
+        ->and($product->categories->modelKeys())->toBe($categoryIds);
 
     $image = $product->images()->firstOrFail();
-    expect($image->image_url)->toStartWith('/storage/product/gamis-syari-pita/');
-    Storage::disk('public')->assertExists(Str::after($image->image_url, '/storage/'));
-
-    $variant = ProductVariant::query()
-        ->where('sku', 'GMS-001-BLK-M')
-        ->firstOrFail();
-
-    expect($variant)
-        ->product_id->toBe($product->id)
-        ->variant_name->toBe('Black M')
-        ->color_name->toBe('Black')
-        ->color_hex->toBe('#000000')
-        ->size->toBe('M')
-        ->package_type->toBe('Apparel')
-        ->stock->toBe(12)
-        ->reserved_stock->toBe(2)
-        ->is_active->toBeTrue();
-
-    expect((float) $variant->regular_price)->toBe(15000.00);
-    expect((float) $variant->sale_price)->toBe(12000.00);
-    expect($variant->weight)->toBe(510)
-        ->and($variant->length)->toBe(31)
-        ->and($variant->width)->toBe(26)
-        ->and($variant->height)->toBe(6);
-    expect($variant->image_url)->toStartWith('/storage/product/gamis-syari-pita/variants/');
-    Storage::disk('public')->assertExists(Str::after($variant->image_url, '/storage/'));
-
-    $this->assertDatabaseHas('product_variants', [
-        'id' => $variant->id,
-        'product_id' => $product->id,
-        'sku' => 'GMS-001-BLK-M',
-        'variant_name' => 'Black M',
-        'color_name' => 'Black',
-        'color_hex' => '#000000',
-        'size' => 'M',
-        'package_type' => 'Apparel',
-        'regular_price' => 15000,
-        'sale_price' => 12000,
-        'stock' => 12,
-        'reserved_stock' => 2,
-        'weight' => 510,
-        'length' => 31,
-        'width' => 26,
-        'height' => 6,
-        'is_active' => true,
-    ]);
-
-    $this->assertDatabaseHas('stock_logs', [
-        'product_variant_id' => $variant->id,
-        'user_id' => $admin->id,
-        'type' => 'adjustment',
-        'quantity' => 12,
-        'stock_before' => 0,
-        'stock_after' => 12,
-        'reference_type' => 'manual_adjustment',
-        'note' => 'Initial variant stock.',
-    ]);
+    expect($image->alt_text)->toBe('Gayo Natural');
+    Storage::disk('public')->assertExists(str($image->image_url)->after('/storage/')->toString());
+    $this->assertDatabaseHas('product_variants', ['product_id' => $product->id, 'sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean']);
+    $this->assertDatabaseHas('stocks', ['quantity' => 20, 'low_stock_threshold' => 5]);
 });
 
-/**
- * @return array<string, mixed>
- */
-function productPayload(Category $category, Collection $collection1, Collection $collection2): array
+it('paginates products with the requested per-page value', function () {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+    foreach (range(1, 11) as $number) {
+        Product::query()->create([
+            'name' => "Coffee {$number}",
+            'slug' => "coffee-{$number}",
+            'status' => 'draft',
+        ]);
+    }
+
+    $this->actingAs($admin)
+        ->get(route('admin.products.index', ['per_page' => 10]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/products/index')
+            ->where('products.per_page', 10)
+            ->where('products.total', 11)
+            ->has('products.data', 10));
+});
+
+function productPayload(array $categoryIds): array
 {
     return [
-        'category_id' => $category->id,
-        'collection_ids' => [$collection1->id, $collection2->id],
-        'name' => 'Gamis Syar\'i Pita',
-        'slug' => 'gamis-syari-pita',
-        'sku' => 'GMS-001',
-        'short_description' => 'Gamis premium untuk daily wear.',
-        'description' => 'Gamis premium dengan detail pita dan bahan nyaman.',
-        'regular_price' => 350000,
-        'sale_price' => 299000,
-        'weight' => 500,
-        'length' => 30,
-        'width' => 25,
-        'height' => 5,
-        'status' => 'published',
-        'is_featured' => true,
-        'is_new_arrival' => true,
-        'is_best_seller' => false,
-        'images' => [
-            [
-                'image_url' => null,
-                'image' => UploadedFile::fake()->image('product-front.jpg', 800, 1067),
-                'alt_text' => 'Gamis Syar\'i Pita tampak depan',
-                'sort_order' => 0,
-                'is_primary' => true,
-            ],
-        ],
-        'variants' => [
-            [
-                'sku' => 'GMS-001-BLK-M',
-                'variant_name' => 'Black M',
-                'color_name' => 'Black',
-                'color_hex' => '#000000',
-                'size' => 'M',
-                'package_type' => 'Apparel',
-                'regular_price' => 15000,
-                'sale_price' => 12000,
-                'stock' => 12,
-                'reserved_stock' => 2,
-                'weight' => 510,
-                'length' => 31,
-                'width' => 26,
-                'height' => 6,
-                'image_url' => null,
-                'image' => UploadedFile::fake()->image('variant-black.jpg', 800, 1067),
-                'is_active' => true,
-            ],
-        ],
+        'name' => 'Gayo Natural', 'slug' => 'gayo-natural', 'sku' => 'GAYO', 'origin' => 'Aceh Gayo', 'process' => 'Natural', 'description' => '<h2>Gayo Natural</h2><p>Kopi arabika dengan rasa buah tropis.</p>', 'status' => 'active', 'category_ids' => $categoryIds,
+        'images' => [['image' => UploadedFile::fake()->image('gayo-natural.jpg'), 'sort_order' => 0, 'is_primary' => true]],
+        'variants' => [['sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean', 'regular_price' => 95000, 'sale_price' => 85000, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 20, 'low_stock_threshold' => 5]],
     ];
 }

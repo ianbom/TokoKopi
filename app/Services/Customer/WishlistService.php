@@ -2,7 +2,6 @@
 
 namespace App\Services\Customer;
 
-use App\Models\ProductVariant;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -14,19 +13,18 @@ class WishlistService
     {
         $wishlistItems = Wishlist::query()
             ->with([
-                'product:id,category_id,name,slug,sku,regular_price,sale_price,status,is_new_arrival,is_best_seller,is_featured',
-                'product.category:id,name,slug',
+                'product:id,name,slug,sku,status,is_new_arrival,is_best_seller,is_featured',
+                'product.categories:id,name,slug',
                 'product.primaryImage:id,product_id,image_url,alt_text',
                 'product.images:id,product_id,image_url,alt_text,sort_order',
                 'product.variants' => fn ($query) => $query
-                    ->select('id', 'product_id', 'color_name', 'color_hex', 'size', 'stock', 'reserved_stock', 'image_url', 'is_active')
+                    ->select('id', 'product_id', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'image_url', 'is_active')
+                    ->with('stock:id,product_variant_id,quantity')
                     ->where('is_active', true)
-                    ->orderByRaw('(stock - reserved_stock) > 0 desc')
-                    ->orderBy('color_name')
-                    ->orderBy('size'),
+                    ->orderBy('regular_price'),
             ])
             ->where('user_id', $user->id)
-            ->whereHas('product', fn ($query) => $query->where('status', 'published'))
+            ->whereHas('product', fn ($query) => $query->whereIn('status', ['active', 'published']))
             ->latest('id')
             ->get()
             ->map(fn (Wishlist $wishlist) => $this->wishlistCard($wishlist))
@@ -75,34 +73,30 @@ class WishlistService
         $image = $product->primaryImage?->image_url
             ?? $product->images->first()?->image_url
             ?? $variants->firstWhere('image_url', '!=', null)?->image_url;
+        $prices = $variants->map(fn ($variant): float => (float) ($variant->sale_price ?? $variant->regular_price));
+        $regularPrices = $variants->map(fn ($variant): float => (float) $variant->regular_price);
+        $availableStock = $variants->sum(fn ($variant): int => $variant->stock?->quantity ?? 0);
 
         return [
             'id' => $wishlist->id,
             'product_id' => $product->id,
             'slug' => $product->slug,
             'title' => $product->name,
-            'category' => $product->category?->name,
-            'price' => (float) $product->regular_price,
-            'sale_price' => $product->sale_price !== null ? (float) $product->sale_price : null,
+            'category' => $product->categories->first()?->name,
+            'price' => $regularPrices->min() ?? 0,
+            'sale_price' => $prices->min() !== $regularPrices->min() ? $prices->min() : null,
             'image' => $image,
             'badge' => $this->badge($product),
-            'colors' => $variants
-                ->filter(fn (ProductVariant $variant) => filled($variant->color_hex))
-                ->unique('color_hex')
-                ->values()
-                ->map(fn (ProductVariant $variant) => [
-                    'name' => $variant->color_name,
-                    'hex' => $variant->color_hex,
-                ]),
-            'available_stock' => $variants->sum(fn (ProductVariant $variant) => max(0, $variant->stock - $variant->reserved_stock)),
-            'is_available' => $product->status === 'published',
+            'colors' => [],
+            'available_stock' => $availableStock,
+            'is_available' => $product->status === 'active' && $availableStock > 0,
         ];
     }
 
     private function badge($product): ?string
     {
         return match (true) {
-            $product->sale_price !== null => 'Sale',
+            $product->variants->contains(fn ($variant): bool => $variant->sale_price !== null) => 'Sale',
             (bool) $product->is_new_arrival => 'New',
             (bool) $product->is_best_seller => 'Best',
             (bool) $product->is_featured => 'Featured',

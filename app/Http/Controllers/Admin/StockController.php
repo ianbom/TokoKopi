@@ -17,11 +17,6 @@ class StockController extends Controller
         return inertia('admin/stock/index', $stock->variantsIndex($request));
     }
 
-    public function logs(Request $request, StockService $stock): Response
-    {
-        return inertia('admin/stock/logs', $stock->logsIndex($request));
-    }
-
     public function edit(ProductVariant $productVariant, StockService $stock): Response
     {
         return inertia('admin/stock/adjustment', [

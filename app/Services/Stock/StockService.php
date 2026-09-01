@@ -3,156 +3,87 @@
 namespace App\Services\Stock;
 
 use App\Models\ProductVariant;
-use App\Models\StockLog;
-use App\Services\Admin\ResolvesAdminPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StockService
 {
-    use ResolvesAdminPagination;
-
-    public function __construct(private readonly StockLogService $stockLogs) {}
-
     public function variantsIndex(Request $request): array
     {
         $search = $request->string('search')->toString();
         $availability = $request->string('availability')->toString();
+        $query = ProductVariant::query()->with(['product:id,name', 'stock'])
+            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                ->where('sku', 'like', "%{$search}%")
+                ->orWhereHas('product', fn ($productQuery) => $productQuery->where('name', 'like', "%{$search}%"))))
+            ->when($availability === 'in_stock', fn ($query) => $query->whereHas('stock', fn ($stockQuery) => $stockQuery->whereColumn('quantity', '>', 'low_stock_threshold')))
+            ->when($availability === 'low_stock', fn ($query) => $query->whereHas('stock', fn ($stockQuery) => $stockQuery->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'low_stock_threshold')))
+            ->when($availability === 'sold_out', fn ($query) => $query->whereDoesntHave('stock', fn ($stockQuery) => $stockQuery->where('quantity', '>', 0)))
+            ->latest();
 
         return [
-            'variants' => ProductVariant::query()
-                ->with('product:id,name')
-                ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
-                    ->where('sku', 'like', "%{$search}%")
-                    ->orWhereHas('product', fn ($query) => $query->where('name', 'like', "%{$search}%"))))
-                ->when($availability === 'low_stock', fn ($query) => $query->whereRaw('(stock - reserved_stock) between 1 and 5'))
-                ->when($availability === 'sold_out', fn ($query) => $query->whereRaw('(stock - reserved_stock) <= 0'))
-                ->when($availability === 'in_stock', fn ($query) => $query->whereRaw('(stock - reserved_stock) > 5'))
-                ->orderBy('stock')
-                ->paginate($this->perPage($request))
-                ->withQueryString()
-                ->through(fn (ProductVariant $variant): array => $this->variantRow($variant)),
+            'variants' => $query->paginate($this->perPage($request))->withQueryString()->through(fn (ProductVariant $variant): array => $this->row($variant)),
             'filters' => ['search' => $search, 'availability' => $availability],
             'stats' => [
                 'total' => ProductVariant::query()->count(),
-                'in_stock' => ProductVariant::query()->whereRaw('(stock - reserved_stock) > 5')->count(),
-                'low_stock' => ProductVariant::query()->whereRaw('(stock - reserved_stock) > 0')->whereRaw('(stock - reserved_stock) <= 5')->count(),
-                'sold_out' => ProductVariant::query()->whereRaw('(stock - reserved_stock) = 0')->count(),
+                'in_stock' => ProductVariant::query()->whereHas('stock', fn ($query) => $query->whereColumn('quantity', '>', 'low_stock_threshold'))->count(),
+                'low_stock' => ProductVariant::query()->whereHas('stock', fn ($query) => $query->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'low_stock_threshold'))->count(),
+                'sold_out' => ProductVariant::query()->whereDoesntHave('stock', fn ($query) => $query->where('quantity', '>', 0))->count(),
             ],
-        ];
-    }
-
-    public function logsIndex(Request $request): array
-    {
-        $search = $request->string('search')->toString();
-        $type = $request->string('type')->toString();
-
-        return [
-            'logs' => StockLog::query()
-                ->with(['variant.product:id,name', 'user:id,name'])
-                ->when($search !== '', fn ($query) => $query->whereHas('variant', fn ($query) => $query->where('sku', 'like', "%{$search}%")))
-                ->when($type !== '', fn ($query) => $query->where('type', $type))
-                ->latest()
-                ->paginate($this->perPage($request))
-                ->withQueryString()
-                ->through(fn (StockLog $log): array => $this->logRow($log)),
-            'filters' => ['search' => $search, 'type' => $type],
         ];
     }
 
     public function adjustmentForm(ProductVariant $variant): array
     {
-        $variant->load('product:id,name');
+        $variant->load(['product:id,name', 'stock']);
 
         return [
             'id' => $variant->id,
             'product_id' => $variant->product_id,
             'product' => $variant->product?->name,
             'sku' => $variant->sku,
-            'stock' => $variant->stock,
-            'reserved_stock' => $variant->reserved_stock,
-            'available_stock' => $variant->stock - $variant->reserved_stock,
+            'quantity' => $variant->stock?->quantity ?? 0,
+            'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
         ];
     }
 
     public function adjust(ProductVariant $productVariant, Request $request): void
     {
         DB::transaction(function () use ($request, $productVariant): void {
-            $variant = ProductVariant::query()->whereKey($productVariant->id)->lockForUpdate()->firstOrFail();
-            $quantity = (int) $request->integer('quantity');
+            $stock = $productVariant->stock()->lockForUpdate()->firstOrCreate([], ['quantity' => 0, 'low_stock_threshold' => 5]);
+            $quantity = $request->integer('quantity');
+            $next = match ($request->input('type')) {
+                'out' => $stock->quantity - abs($quantity),
+                'in' => $stock->quantity + abs($quantity),
+                default => $quantity,
+            };
 
-            if ($request->input('type') === 'out' && $quantity > 0) {
-                $quantity = -$quantity;
+            if ($next < 0) {
+                throw ValidationException::withMessages(['quantity' => 'Stok tidak boleh negatif.']);
             }
 
-            $stockAfter = $variant->stock + $quantity;
-
-            if ($stockAfter < 0) {
-                throw ValidationException::withMessages([
-                    'quantity' => 'Adjustment tidak boleh membuat stok menjadi negatif.',
-                ]);
-            }
-
-            if ($stockAfter < $variant->reserved_stock) {
-                Log::warning('stock_adjustment_rejected_below_reserved', [
-                    'user_id' => $request->user()?->id,
-                    'variant_id' => $variant->id,
-                    'stock_before' => $variant->stock,
-                    'stock_after' => $stockAfter,
-                    'reserved_stock' => $variant->reserved_stock,
-                ]);
-
-                throw ValidationException::withMessages([
-                    'quantity' => 'Stock tidak boleh lebih kecil dari reserved stock.',
-                ]);
-            }
-
-            $stockBefore = $variant->stock;
-            $variant->update(['stock' => $stockAfter]);
-            $this->stockLogs->logIfChanged(
-                $variant,
-                $stockBefore,
-                $stockAfter,
-                $request->user()->id,
-                $request->input('type'),
-                (string) $request->input('note'),
-            );
+            $stock->update(['quantity' => $next]);
         });
     }
 
-    public function variantRow(ProductVariant $variant): array
+    private function row(ProductVariant $variant): array
     {
         return [
             'id' => $variant->id,
             'product_id' => $variant->product_id,
             'product' => $variant->product?->name,
             'sku' => $variant->sku,
-            'color_name' => $variant->color_name,
-            'size' => $variant->size,
-            'stock' => $variant->stock,
-            'reserved_stock' => $variant->reserved_stock,
-            'available_stock' => $variant->stock - $variant->reserved_stock,
+            'net_weight' => $variant->net_weight,
+            'grind_type' => $variant->grind_type,
+            'quantity' => $variant->stock?->quantity ?? 0,
+            'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             'is_active' => $variant->is_active,
         ];
     }
 
-    private function logRow(StockLog $log): array
+    private function perPage(Request $request): int
     {
-        return [
-            'id' => $log->id,
-            'product_id' => $log->variant?->product_id,
-            'product' => $log->variant?->product?->name,
-            'variant' => $log->variant?->sku,
-            'type' => $log->type,
-            'quantity' => $log->quantity,
-            'stock_before' => $log->stock_before,
-            'stock_after' => $log->stock_after,
-            'reference' => trim(($log->reference_type ?? '').' #'.($log->reference_id ?? ''), ' #'),
-            'admin' => $log->user?->name,
-            'note' => $log->note,
-            'created_at' => $log->created_at?->toFormattedDateString(),
-        ];
+        return min(max($request->integer('per_page', 15), 1), 100);
     }
 }

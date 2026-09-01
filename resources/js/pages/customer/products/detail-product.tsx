@@ -1,10 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowRight, Minus, Plus } from 'lucide-react';
+import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { addProductVariantToCart as addProductVariantToCartRoute } from '@/actions/App/Http/Controllers/Customer/CartController';
 import ShopLayout from '@/layouts/shop-layout';
-import { detail } from '@/routes';
 
 type ProductImage = {
     url: string;
@@ -65,20 +64,12 @@ const stripHtml = (value: string | null) =>
         .replaceAll('&nbsp;', ' ')
         .trim() ?? '';
 
-export default function DetailProduct({ product, relatedProducts }: Props) {
-    return (
-        <DetailProductPage
-            key={product.id}
-            product={product}
-            relatedProducts={relatedProducts}
-        />
-    );
+export default function DetailProduct({ product }: Props) {
+    return <DetailProductPage key={product.id} product={product} />;
 }
 
-function DetailProductPage({ product, relatedProducts }: Props) {
-    const [mainImage, setMainImage] = useState<string | null>(
-        product.images[0]?.url ?? null,
-    );
+function DetailProductPage({ product }: { product: ProductDetail }) {
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [selectedVariantId, setSelectedVariantId] = useState<number | null>(
         product.variants[0]?.id ?? null,
     );
@@ -96,9 +87,7 @@ function DetailProductPage({ product, relatedProducts }: Props) {
         product.price;
     const description =
         product.short_description || stripHtml(product.description);
-    const selectedImage =
-        product.images.find((image) => image.url === mainImage) ??
-        product.images[0];
+    const selectedImage = product.images[activeImageIndex];
     const meta = [
         ['ORIGIN', product.origin],
         ['PROCESS', humanize(product.process)],
@@ -115,7 +104,13 @@ function DetailProductPage({ product, relatedProducts }: Props) {
         cartForm.setData('quantity', 1);
 
         if (variant.image_url) {
-            setMainImage(variant.image_url);
+            const variantImageIndex = product.images.findIndex(
+                (image) => image.url === variant.image_url,
+            );
+
+            if (variantImageIndex >= 0) {
+                setActiveImageIndex(variantImageIndex);
+            }
         }
     };
     const changeQuantity = (nextQuantity: number) => {
@@ -143,8 +138,22 @@ function DetailProductPage({ product, relatedProducts }: Props) {
                 <section className="grid border-b border-hairline lg:grid-cols-2">
                     <ProductGallery
                         gallery={product.images}
+                        activeIndex={activeImageIndex}
                         mainImage={selectedImage}
-                        onSelect={setMainImage}
+                        onNext={() =>
+                            setActiveImageIndex((current) =>
+                                current === product.images.length - 1
+                                    ? 0
+                                    : current + 1,
+                            )
+                        }
+                        onPrevious={() =>
+                            setActiveImageIndex((current) =>
+                                current === 0
+                                    ? product.images.length - 1
+                                    : current - 1,
+                            )
+                        }
                         productTitle={product.title}
                     />
 
@@ -276,6 +285,8 @@ function DetailProductPage({ product, relatedProducts }: Props) {
                                 )}
                             </form>
 
+                            <CoffeeStory product={product} />
+
                             <p className="mt-6 border-t border-hairline pt-4 text-[8px] font-medium tracking-[0.04em] text-ink/65 uppercase">
                                 Roasted fresh weekly · Shipping calculated at
                                 checkout · Secure checkout
@@ -283,8 +294,6 @@ function DetailProductPage({ product, relatedProducts }: Props) {
                         </div>
                     </section>
                 </section>
-
-                <CoffeeStory product={product} meta={meta} />
 
                 {product.images[2] && (
                     <section className="relative border-b border-hairline bg-ink text-canvas">
@@ -300,8 +309,6 @@ function DetailProductPage({ product, relatedProducts }: Props) {
                         </p>
                     </section>
                 )}
-
-         
             </main>
         </ShopLayout>
     );
@@ -309,13 +316,17 @@ function DetailProductPage({ product, relatedProducts }: Props) {
 
 function ProductGallery({
     gallery,
+    activeIndex,
     mainImage,
-    onSelect,
+    onNext,
+    onPrevious,
     productTitle,
 }: {
     gallery: ProductImage[];
+    activeIndex: number;
     mainImage?: ProductImage;
-    onSelect: (url: string) => void;
+    onNext: () => void;
+    onPrevious: () => void;
     productTitle: string;
 }) {
     return (
@@ -333,131 +344,97 @@ function ProductGallery({
                         Image unavailable
                     </div>
                 )}
+                {gallery.length > 1 && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={onPrevious}
+                            aria-label={'Previous image for ' + productTitle}
+                            className="absolute top-1/2 left-4 flex size-10 -translate-y-1/2 items-center justify-center border border-canvas/70 bg-ink/75 text-canvas transition-colors hover:bg-ink"
+                        >
+                            <ArrowLeft size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onNext}
+                            aria-label={'Next image for ' + productTitle}
+                            className="absolute top-1/2 right-4 flex size-10 -translate-y-1/2 items-center justify-center border border-canvas/70 bg-ink/75 text-canvas transition-colors hover:bg-ink"
+                        >
+                            <ArrowRight size={16} />
+                        </button>
+                        <span className="absolute right-4 bottom-4 bg-ink/75 px-3 py-1 text-[9px] font-semibold tracking-[0.08em] text-canvas uppercase">
+                            {activeIndex + 1} / {gallery.length}
+                        </span>
+                    </>
+                )}
             </div>
-            {gallery.length > 0 && (
-                <div className="grid grid-cols-3 gap-px bg-hairline p-4 sm:p-5">
-                    {gallery.slice(0, 3).map((image, index) => {
-                        const active = image.url === mainImage?.url;
-
-                        return (
-                            <button
-                                key={image.url}
-                                type="button"
-                                onClick={() => onSelect(image.url)}
-                                aria-label={
-                                    'Show image ' +
-                                    (index + 1) +
-                                    ' for ' +
-                                    productTitle
-                                }
-                                className={
-                                    active
-                                        ? 'bg-canvas p-1 text-left ring-1 ring-ink'
-                                        : 'bg-canvas p-1 text-left transition-opacity hover:opacity-70'
-                                }
-                            >
-                                <img
-                                    src={image.url}
-                                    alt=""
-                                    loading="lazy"
-                                    className="aspect-[1.15/1] w-full object-cover"
-                                />
-                                <span className="mt-2 block text-[7px] font-semibold tracking-[0.05em] text-ink/70 uppercase">
-                                    0{index + 1} ·{' '}
-                                    {index === 0
-                                        ? 'Packshot'
-                                        : index === 1
-                                          ? 'Detail'
-                                          : 'Lifestyle'}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
         </section>
     );
 }
 
-function CoffeeStory({
-    product,
-    meta,
-}: {
-    product: ProductDetail;
-    meta: Array<[string, string]>;
-}) {
+function CoffeeStory({ product }: { product: ProductDetail }) {
     return (
-        <section className="grid border-b border-hairline bg-[#f1e8dc] md:grid-cols-[.9fr_1.1fr]">
-            <div className="border-b border-hairline px-7 py-8 sm:px-10 sm:py-10 md:border-r md:border-b-0">
-                <p className="font-condensed text-[clamp(30px,3.2vw,48px)] leading-[0.83] font-semibold tracking-[-0.035em] uppercase">
+        <section className="mt-8 border-y border-hairline bg-[#f1e8dc] px-5 py-6 sm:px-6 sm:py-7">
+            <div>
+                <h2 className="font-condensed text-[clamp(30px,3.2vw,44px)] leading-[0.83] font-semibold tracking-[-0.035em] uppercase">
                     About
                     <br />
                     this coffee.
-                </p>
-                <p className="mt-5 max-w-sm text-[11px] leading-[1.45] text-ink/85 sm:text-[12px]">
+                </h2>
+                <p className="mt-5 text-[11px] leading-[1.55] text-ink/85 sm:text-[12px]">
                     {stripHtml(product.description) ||
                         product.short_description}
                 </p>
             </div>
-            <dl className="px-7 py-6 sm:px-10 sm:py-8">
-                {meta.map(([label, value]) => (
-                    <div
-                        key={label}
-                        className="grid grid-cols-[108px_1fr] border-b border-ink/20 py-2 text-[9px] leading-4 sm:grid-cols-[150px_1fr]"
-                    >
-                        <dt className="font-semibold tracking-[0.06em] uppercase">
-                            {label}
-                        </dt>
-                        <dd className="text-ink/80">{value}</dd>
-                    </div>
-                ))}
-            </dl>
-        </section>
-    );
-}
 
-function RelatedProducts({ products }: { products: ProductCard[] }) {
-    return (
-        <section className="bg-canvas px-7 py-10 sm:px-10 sm:py-12">
-            <p className="text-[9px] font-semibold tracking-[0.08em] uppercase">
-                You may also like
-            </p>
-            <h2 className="mt-1 font-condensed text-[clamp(31px,3.8vw,54px)] leading-[0.85] font-semibold tracking-[-0.04em] uppercase">
-                More from Declasse.
-            </h2>
-            <div className="mt-8 grid grid-cols-2 border-t border-l border-hairline sm:grid-cols-4">
-                {products.map((product, index) => (
-                    <Link
-                        key={product.id}
-                        href={detail.url({ query: { product: product.slug } })}
-                        className="group border-r border-b border-hairline bg-canvas p-3 sm:p-4"
-                    >
-                        <span className="text-[8px] font-semibold tracking-[0.06em] text-ink/70 uppercase">
-                            0{index + 1}
-                        </span>
-                        <div className="mt-3 aspect-[.8] overflow-hidden bg-oat">
-                            {product.image_url ? (
-                                <img
-                                    src={product.image_url}
-                                    alt={product.title}
-                                    loading="lazy"
-                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                                />
-                            ) : (
-                                <div className="flex h-full items-center justify-center px-3 text-center text-[8px] font-semibold tracking-[0.06em] text-ink/60 uppercase">
-                                    Image unavailable
-                                </div>
-                            )}
-                        </div>
-                        <h3 className="mt-3 text-[10px] font-semibold tracking-[0.04em] uppercase">
-                            {product.title}
-                        </h3>
-                        <p className="mt-1 text-[9px] text-ink/70">
-                            {formatPrice(product.sale_price ?? product.price)}
-                        </p>
-                    </Link>
-                ))}
-            </div>
+            {product.variants.length > 0 && (
+                <div className="mt-6 border-t border-ink/20 pt-5">
+                    <p className="text-[9px] font-semibold tracking-[0.08em] uppercase">
+                        Stock details
+                    </p>
+                    <div className="mt-3 overflow-x-auto border-y border-ink/20">
+                        <table className="w-full min-w-[520px] text-left text-[9px]">
+                            <thead className="border-b border-ink/20 text-ink/60 uppercase">
+                                <tr>
+                                    <th className="py-2.5 pr-3">SKU</th>
+                                    <th className="py-2.5 pr-3">Grind</th>
+                                    <th className="py-2.5 pr-3">Weight</th>
+                                    <th className="py-2.5 pr-3">Price</th>
+                                    <th className="py-2.5">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {product.variants.map((variant) => (
+                                    <tr
+                                        key={variant.id}
+                                        className="border-b border-ink/15 last:border-b-0"
+                                    >
+                                        <td className="py-3 pr-3 font-semibold">
+                                            {variant.sku}
+                                        </td>
+                                        <td className="py-3 pr-3 capitalize">
+                                            {humanize(variant.grind_type) ??
+                                                '-'}
+                                        </td>
+                                        <td className="py-3 pr-3">
+                                            {variant.net_weight ?? '-'}
+                                        </td>
+                                        <td className="py-3 pr-3">
+                                            {formatPrice(
+                                                variant.sale_price ??
+                                                    variant.regular_price,
+                                            )}
+                                        </td>
+                                        <td className="py-3">
+                                            {variant.available_stock}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

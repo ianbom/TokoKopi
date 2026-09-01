@@ -72,7 +72,7 @@ class ShipmentCreatedMail extends Mailable
             ->map(fn ($item): array => [
                 'name' => $item->product_name,
                 'sku' => $item->variant_sku ?: $item->product_sku,
-                'variant' => collect([$item->color_name, $item->size])->filter()->implode(' / '),
+                'variant' => collect([$item->net_weight, $item->grind_type])->filter()->implode(' / '),
                 'quantity' => $item->quantity,
                 'price' => (float) $item->price,
                 'subtotal' => (float) $item->subtotal,
