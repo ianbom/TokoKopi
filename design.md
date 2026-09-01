@@ -1,6 +1,6 @@
 # Declasse Coffee Design System
 
-Last synchronized: **August 31, 2026**.
+Last synchronized: **September 1, 2026**.
 
 This document is the visual and implementation reference for future customer-facing pages. It describes the design already established by the active storefront, not a separate aspirational redesign.
 
@@ -73,30 +73,30 @@ Use semantic Tailwind tokens. Do not introduce page-local hex values when an exi
 
 | Token               | Value                  | Primary usage                                            |
 | ------------------- | ---------------------- | -------------------------------------------------------- |
-| `canvas`            | `#FAF6EE`              | Global page background, light surfaces                   |
-| `sand`              | `#F2E7D8`              | Hero copy panels, alternate warm sections                |
-| `oat`               | `#DDD0BA`              | Muted surfaces, image support areas                      |
-| `ink`               | `#1F2923`              | Text, borders, dark sections, primary structure          |
-| `primary`           | `#B65C3A`              | Interaction accent, subscription band, selected emphasis |
-| `primary-hover`     | `#A75034`              | Accent hover state                                       |
-| `primary-active`    | `#8F432B`              | Accent pressed state                                     |
-| `primary-soft`      | `#F4E0D6`              | Soft accent surface                                      |
-| `hairline`          | `rgb(31 41 35 / 0.18)` | Default structural divider                               |
-| `hairline-strong`   | `rgb(31 41 35 / 0.32)` | Stronger control or section divider                      |
-| `surface-soft`      | `#F7F1E8`              | Quiet secondary surface                                  |
-| `surface-dark`      | `#1F2923`              | Story sections and footer                                |
-| `surface-dark-soft` | `#2B352E`              | Secondary dark surface                                   |
-| `body`              | `#344039`              | Secondary body text                                      |
-| `muted-soft`        | `#6F786F`              | Muted supporting text                                    |
+| `canvas`            | `#FFFFFF`              | Dominant page background and light surfaces              |
+| `sand`              | `#F1F8F8`              | Hero copy panels and alternate light sections            |
+| `oat`               | `#DBAC5E`              | Restrained yellow brand accent                           |
+| `ink`               | `#103F41`              | Text, borders, and primary structure                     |
+| `primary`           | `#135D60`              | Brand interaction, selected emphasis, and key sections   |
+| `primary-hover`     | `#0F4B4E`              | Primary hover state                                      |
+| `primary-active`    | `#0B393B`              | Primary pressed state                                    |
+| `primary-soft`      | `#E6F3F3`              | Soft green accent surface                                |
+| `hairline`          | `rgb(19 93 96 / 0.20)` | Default structural divider                               |
+| `hairline-strong`   | `rgb(19 93 96 / 0.34)` | Stronger control or section divider                      |
+| `surface-soft`      | `#F3F9F9`              | Quiet secondary surface                                  |
+| `surface-dark`      | `#0E4547`              | Story sections, footer, and dark panels                  |
+| `surface-dark-soft` | `#176B6D`              | Secondary dark surface                                   |
+| `body`              | `#264F51`              | Secondary body text                                      |
+| `muted-soft`        | `#5F7778`              | Muted supporting text                                    |
 
 Usage hierarchy:
 
-1. Canvas and sand dominate the page.
-2. Ink provides structure and high contrast.
-3. Oat supports muted image or content regions.
-4. Terracotta is reserved for meaningful emphasis and interaction.
+1. White canvas dominates the page.
+2. Green provides structure, interaction, and high contrast.
+3. Pale green supports quiet secondary surfaces.
+4. Yellow is reserved for limited promotional and brand emphasis.
 
-Do not use terracotta as the only indicator of state. Pair color with text, weight, border, or position.
+Do not use yellow as the only indicator of state. Pair color with text, weight, border, or position.
 
 ### Borders
 
@@ -104,7 +104,7 @@ Borders are the main layout device.
 
 - Use `border-hairline` for modular section dividers.
 - Use `border-ink` for the global header boundary.
-- Use light cream borders over photographic or dark product cards.
+- Use white or translucent green borders over photographic or dark product cards.
 - Prefer shared borders between grid cells over gaps and floating cards.
 - Let photography reach the border edge.
 
@@ -121,9 +121,9 @@ The storefront remains mostly flat.
 
 | Token             | Value                              | Usage                       |
 | ----------------- | ---------------------------------- | --------------------------- |
-| `shadow-subtle`   | `0 1px 2px rgb(31 41 35 / 0.06)`   | Small utility emphasis only |
-| `shadow-dropdown` | `0 10px 28px rgb(31 41 35 / 0.14)` | Dropdown menus              |
-| `shadow-modal`    | `0 24px 64px rgb(31 41 35 / 0.20)` | Modal overlays              |
+| `shadow-subtle`   | `0 1px 2px rgb(19 93 96 / 0.06)`   | Small utility emphasis only |
+| `shadow-dropdown` | `0 10px 28px rgb(19 93 96 / 0.14)` | Dropdown menus              |
+| `shadow-modal`    | `0 24px 64px rgb(19 93 96 / 0.20)` | Modal overlays              |
 
 Do not add shadows to ordinary cards or editorial sections.
 
@@ -172,7 +172,7 @@ The active Navbar is sticky, full-width, and capped internally at `1600px`.
 - Left: Shop, Subscriptions, Story.
 - Center: Declasse serif wordmark.
 - Right: Search, Account, Bag count.
-- Hover: terracotta text or reduced wordmark opacity.
+- Hover: primary green text or reduced wordmark opacity.
 
 Bag count is always visible and formatted with at least two digits; values above 99 display `99+`.
 
@@ -195,7 +195,7 @@ The Footer is part of every `ShopLayout` page and has three layers.
 
 ### Subscription Band
 
-- Background: primary terracotta.
+- Background: primary green.
 - Text: canvas.
 - Desktop grid: `1fr 1.2fr 1fr`.
 - Use white dividers at 20% opacity.
@@ -208,7 +208,7 @@ The Footer is part of every `ShopLayout` page and has three layers.
 - Background: surface-dark.
 - Desktop grid: wide newsletter column plus Shop, About, and Follow columns.
 - Newsletter uses a condensed statement and bottom-border-only email field.
-- Link hover color is terracotta.
+- Link hover color is primary green.
 - Keep footer links small and calm; hierarchy comes from spacing and typography.
 
 ### Legal Row
@@ -264,7 +264,7 @@ THE ROUTINE.
 - Two equal columns on large screens.
 - Photography occupies one side edge-to-edge.
 - Surface-dark editorial copy occupies the other side.
-- Use an oat uppercase eyebrow, large condensed statement, compact body copy, and a small terracotta text link.
+- Use a yellow uppercase eyebrow, large condensed statement, compact body copy, and a small green text link.
 - Mobile stacks the image above the copy panel.
 
 ### 5. Secondary Product Grid
@@ -309,7 +309,7 @@ Use surface-dark with canvas text for one meaningful story section, not as a rep
 - Eyebrow: small uppercase oat.
 - Heading: condensed uppercase.
 - Body: narrow and compact.
-- Link: restrained terracotta.
+- Link: restrained primary green.
 
 ### Outline Pill CTA
 

@@ -56,17 +56,17 @@ export default function HTMLRender({
     return (
         <div
             className={cn(
-                'space-y-3 text-sm leading-7 text-zinc-700',
-                '[&_a]:font-semibold [&_a]:text-[#9A6B45] [&_a]:underline [&_a]:underline-offset-4',
-                '[&_blockquote]:rounded-r-lg [&_blockquote]:border-l-4 [&_blockquote]:border-zinc-300 [&_blockquote]:bg-zinc-50 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-zinc-600',
-                '[&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-zinc-800',
-                '[&_h1]:text-2xl [&_h1]:leading-tight [&_h1]:font-semibold [&_h1]:text-zinc-950',
-                '[&_h2]:text-xl [&_h2]:leading-snug [&_h2]:font-semibold [&_h2]:text-zinc-900',
-                '[&_mark]:rounded-sm [&_mark]:bg-yellow-200 [&_mark]:px-1 [&_mark]:text-zinc-950',
+                'space-y-3 text-sm leading-7 text-body',
+                '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
+                '[&_blockquote]:rounded-r-lg [&_blockquote]:border-l-4 [&_blockquote]:border-primary-border [&_blockquote]:bg-primary-soft [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-body',
+                '[&_code]:rounded [&_code]:bg-surface-soft [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-ink',
+                '[&_h1]:text-2xl [&_h1]:leading-tight [&_h1]:font-semibold [&_h1]:text-ink',
+                '[&_h2]:text-xl [&_h2]:leading-snug [&_h2]:font-semibold [&_h2]:text-ink',
+                '[&_mark]:rounded-sm [&_mark]:bg-accent/30 [&_mark]:px-1 [&_mark]:text-ink',
                 '[&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5',
                 '[&_p]:m-0',
-                '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-zinc-950 [&_pre]:p-4 [&_pre]:text-zinc-50',
-                '[&_strong]:font-semibold [&_strong]:text-zinc-900',
+                '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-surface-dark [&_pre]:p-4 [&_pre]:text-canvas',
+                '[&_strong]:font-semibold [&_strong]:text-ink',
                 '[&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5',
                 className,
             )}

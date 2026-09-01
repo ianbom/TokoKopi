@@ -29,7 +29,7 @@ export default function Footer() {
                     </p>
                     <a
                         href="#newsletter"
-                        className="mt-5 inline-flex rounded-none border border-current px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-canvas hover:text-primary"
+                        className="mt-5 inline-flex rounded-none border border-current px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-canvas hover:text-surface-dark"
                     >
                         Start a subscription →
                     </a>
@@ -61,7 +61,7 @@ export default function Footer() {
                         />
                         <button
                             type="submit"
-                            className="px-1 text-xs uppercase transition-colors hover:text-primary"
+                            className="px-1 text-xs uppercase transition-colors hover:text-oat"
                         >
                             Join →
                         </button>
@@ -90,20 +90,17 @@ export default function Footer() {
                 <span className="flex gap-6">
                     <Link
                         href={privacy.url()}
-                        className="transition-colors hover:text-primary"
+                        className="transition-colors hover:text-oat"
                     >
                         Privacy
                     </Link>
                     <Link
                         href={shipping.url()}
-                        className="transition-colors hover:text-primary"
+                        className="transition-colors hover:text-oat"
                     >
                         Shipping
                     </Link>
-                    <a
-                        href="#"
-                        className="transition-colors hover:text-primary"
-                    >
+                    <a href="#" className="transition-colors hover:text-oat">
                         Terms
                     </a>
                 </span>
@@ -124,7 +121,7 @@ function FooterColumn({
             <h3 className="text-xs tracking-[0.08em] text-canvas uppercase">
                 {title}
             </h3>
-            <div className="flex flex-col gap-1 text-sm text-oat [&_a]:transition-colors [&_a:hover]:text-primary">
+            <div className="flex flex-col gap-1 text-sm text-oat [&_a]:transition-colors [&_a:hover]:text-canvas">
                 {children}
             </div>
         </div>
