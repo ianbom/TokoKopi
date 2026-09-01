@@ -95,12 +95,12 @@ function OutlineLink({ children }: { children: ReactNode }) {
 
 function ProductGrid({ products }: { products: Product[] }) {
     return (
-        <section className="grid grid-cols-2 border-b border-hairline lg:grid-cols-4">
+        <section className="grid grid-cols-2 border-b border-surface-dark bg-surface-dark lg:grid-cols-4">
             {products.map((product, index) => (
                 <Link
                     key={product.id}
                     href={list.url({ query: { search: product.name } })}
-                    className="group relative isolate aspect-[4/5] overflow-hidden border-r border-b border-canvas/70 text-canvas even:border-r-0 sm:aspect-square lg:last:border-r-0 lg:even:border-r"
+                    className="group relative isolate aspect-[4/5] overflow-hidden border-r border-b border-surface-dark text-canvas even:border-r-0 sm:aspect-square lg:last:border-r-0 lg:even:border-r"
                 >
                     <img
                         src={product.image}
