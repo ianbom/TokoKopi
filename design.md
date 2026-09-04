@@ -1,236 +1,152 @@
 # Declasse Coffee Design System
 
-Last synchronized: **August 31, 2026**.
+Last synchronized: **September 3, 2026**.
 
-This document is the visual and implementation reference for future customer-facing pages. It describes the design already established by the active storefront, not a separate aspirational redesign.
+This document is the visual source of truth for customer-facing Declasse pages. The direction follows the editorial coffee storefront shown in `design/new-welcome.png`: bright white space, deep teal structure, restrained gold accents, full-bleed photography, thin grid lines, and condensed campaign typography.
 
 ## Source of Truth
 
-Use these files in this order when resolving inconsistencies:
+Use these files in order:
 
-1. `resources/css/app.css` for fonts, colors, radii, shadows, focus states, and global motion.
+1. `resources/css/app.css` for tokens, fonts, radii, focus, shadows, and motion.
 2. `resources/js/layouts/shop-layout.tsx` for the storefront shell.
 3. `resources/js/components/Navbar.tsx` and `resources/js/components/Footer.tsx` for global navigation.
-4. `resources/js/pages/welcome.tsx` for the canonical editorial page composition.
-5. This document for applying those patterns consistently to new pages.
+4. `resources/js/pages/welcome.tsx` for canonical editorial composition.
+5. This document for extending the design consistently.
 
-If this document and active source code disagree, active source code wins. Update this document in the same change whenever the design language changes intentionally.
+Generated Wayfinder files are never edited manually. Customer navigation uses generated route helpers.
 
 ## Brand Direction
 
-Declasse is a contemporary specialty-coffee storefront with an editorial, fashion-influenced visual language.
+Declasse is a contemporary specialty-coffee brand. The interface is:
 
-The interface should feel:
+- clean and predominantly white,
+- structured by thin teal dividers,
+- editorial rather than card-heavy,
+- photographic and product-led,
+- compact in navigation and metadata,
+- expressive through large condensed headlines,
+- accented with gold only for actions and small emphasis.
 
-- warm,
-- calm,
-- structured,
-- premium,
-- photographic,
-- product-focused,
-- direct rather than decorative.
+Avoid brown-heavy café palettes, beige page backgrounds, gradients, glassmorphism, detached SaaS cards, large shadows, excessive decoration, and inconsistent local hex colors.
 
-Visual character comes from typography, full-bleed photography, thin borders, split layouts, controlled contrast, and generous negative space.
+## Core Palette
 
-Avoid generic café styling, rustic wood textures, brown-heavy palettes, glassmorphism, floating SaaS cards, large soft shadows, decorative gradients, and excessive rounded corners.
+Always use semantic Tailwind tokens from `app.css`.
 
-## Design Tokens
+| Role       | Token                          | Value     | Usage                                      |
+| ---------- | ------------------------------ | --------- | ------------------------------------------ |
+| White      | `canvas`, `background`, `card` | `#ffffff` | Page, header, product cells, light panels  |
+| Teal       | `teal`, `ink`, `surface-dark`  | `#135d60` | Brand text, dark panels, footer, marquee   |
+| Gold       | `primary`, `accent`            | `#dbac5e` | Arrows, active emphasis, CTA highlights    |
+| Warm white | `sand`, `surface-soft`         | `#f8f8f5` | Quiet image support and secondary surfaces |
+| Stone      | `oat`, `surface-muted`         | `#dedad3` | Muted separators and neutral support       |
+| Body teal  | `body`                         | `#315e60` | Supporting copy on white                   |
+| Muted teal | `muted-foreground`             | `#718482` | Secondary labels and helper text           |
 
-### Typography
+Rules:
 
-The storefront uses three font families defined in `app.css`:
+- White must remain the dominant storefront color.
+- Teal owns headings, navigation, structural bands, and footer surfaces.
+- Gold is an accent, never a large page background.
+- Borders use translucent teal through `hairline` or `hairline-strong`.
+- New pages must not add page-local brand hex values.
 
-| Role              | Font             | Tailwind utility | Usage                                                 |
-| ----------------- | ---------------- | ---------------- | ----------------------------------------------------- |
-| Interface         | DM Sans          | `font-sans`      | Navigation, body copy, controls, prices, captions     |
-| Editorial serif   | Bodoni Moda      | `font-serif`     | Declasse wordmark and product-card names              |
-| Display condensed | Barlow Condensed | `font-condensed` | Hero statements, campaign headings, footer statements |
+## Typography
+
+| Role      | Font             | Utility          | Usage                                      |
+| --------- | ---------------- | ---------------- | ------------------------------------------ |
+| Interface | DM Sans          | `font-sans`      | Navigation, labels, body, prices, controls |
+| Wordmark  | Bodoni Moda      | `font-serif`     | Declasse logo only or rare editorial names |
+| Campaign  | Barlow Condensed | `font-condensed` | Hero and campaign statements               |
 
 Typography rules:
 
-- Use condensed uppercase display text for major editorial statements.
-- Use the serif selectively; it is not the default body or heading font.
-- Keep navigation and metadata small, uppercase, and letter-spaced.
-- Use tight line-height and negative tracking on large display headings.
-- Use compact body copy with a restrained line length.
-- Preserve tabular numerals for prices, quantities, and counts.
-- Headings use balanced wrapping; prose uses pretty wrapping through global CSS.
+- Major statements use condensed uppercase text, line-height `0.81–0.84`, and tight negative tracking.
+- Wordmark remains serif, centered, normal case, and lightly tracked inward.
+- Navigation and metadata use `10–12px`, uppercase, medium or semibold weight.
+- Body copy generally uses `12–14px` with compact `16–20px` line-height.
+- Prices use tabular numerals and Indonesian Rupiah formatting.
+- Do not use serif as the default product-card headline.
 
-Canonical scales from the active storefront:
+Canonical scale:
 
-- Wordmark: `text-3xl` to `lg:text-[46px]`.
-- Hero display: responsive `clamp(64px, 8vw, 138px)`, line-height near `0.81`.
-- Story display: responsive `clamp(56px, 5.8vw, 95px)`.
-- Section display: responsive `clamp(56px, 5.7vw, 100px)`.
-- Product-card name: serif `20–28px`.
-- Body: typically `14px` with `20px` line-height.
-- Navigation: `11–12px` uppercase.
-- Labels and marquee: `10–11px` uppercase.
+- Wordmark: `30–46px`.
+- Hero statement: `clamp(64px, 8vw, 138px)`.
+- Editorial statement: `clamp(56px, 5.8vw, 95px)`.
+- Category statement: `clamp(52px, 5vw, 82px)`.
+- Product name: `12–14px` uppercase.
 
-### Color Palette
+## Structure
 
-Use semantic Tailwind tokens. Do not introduce page-local hex values when an existing token fits.
+Storefront composition is a connected grid, not a stack of floating cards.
 
-| Token               | Value                  | Primary usage                                            |
-| ------------------- | ---------------------- | -------------------------------------------------------- |
-| `canvas`            | `#FAF6EE`              | Global page background, light surfaces                   |
-| `sand`              | `#F2E7D8`              | Hero copy panels, alternate warm sections                |
-| `oat`               | `#DDD0BA`              | Muted surfaces, image support areas                      |
-| `ink`               | `#1F2923`              | Text, borders, dark sections, primary structure          |
-| `primary`           | `#B65C3A`              | Interaction accent, subscription band, selected emphasis |
-| `primary-hover`     | `#A75034`              | Accent hover state                                       |
-| `primary-active`    | `#8F432B`              | Accent pressed state                                     |
-| `primary-soft`      | `#F4E0D6`              | Soft accent surface                                      |
-| `hairline`          | `rgb(31 41 35 / 0.18)` | Default structural divider                               |
-| `hairline-strong`   | `rgb(31 41 35 / 0.32)` | Stronger control or section divider                      |
-| `surface-soft`      | `#F7F1E8`              | Quiet secondary surface                                  |
-| `surface-dark`      | `#1F2923`              | Story sections and footer                                |
-| `surface-dark-soft` | `#2B352E`              | Secondary dark surface                                   |
-| `body`              | `#344039`              | Secondary body text                                      |
-| `muted-soft`        | `#6F786F`              | Muted supporting text                                    |
+- Sections touch each other directly.
+- Use `1px` semantic hairlines between cells.
+- Desktop editorial sections normally use balanced two-column grids.
+- Product strips use two columns on mobile and four on large screens.
+- Images remain full-bleed inside their grid cell.
+- Avoid outer rounded containers and large section gaps.
+- Default section padding is `28px` mobile, `48–56px` desktop.
 
-Usage hierarchy:
+## Buttons and Links
 
-1. Canvas and sand dominate the page.
-2. Ink provides structure and high contrast.
-3. Oat supports muted image or content regions.
-4. Terracotta is reserved for meaningful emphasis and interaction.
+Primary editorial CTAs use a restrained outlined pill matching the reference.
 
-Do not use terracotta as the only indicator of state. Pair color with text, weight, border, or position.
+- Border: current teal or gold.
+- Radius: fully rounded.
+- Height is compact; use `10–11px` uppercase copy.
+- Arrow uses gold.
+- Hover may invert to gold with teal text.
+- Do not use gradients, heavy shadows, or oversized buttons.
 
-### Borders
-
-Borders are the main layout device.
-
-- Use `border-hairline` for modular section dividers.
-- Use `border-ink` for the global header boundary.
-- Use light cream borders over photographic or dark product cards.
-- Prefer shared borders between grid cells over gaps and floating cards.
-- Let photography reach the border edge.
-
-### Radius
-
-The theme radius tokens are all `0px`. The default interface is sharp.
-
-- Buttons, CTA links, and navigation controls use sharp `0px` corners.
-- Do not use pill-shaped controls in the storefront or authentication flows.
-
-### Shadows
-
-The storefront remains mostly flat.
-
-| Token             | Value                              | Usage                       |
-| ----------------- | ---------------------------------- | --------------------------- |
-| `shadow-subtle`   | `0 1px 2px rgb(31 41 35 / 0.06)`   | Small utility emphasis only |
-| `shadow-dropdown` | `0 10px 28px rgb(31 41 35 / 0.14)` | Dropdown menus              |
-| `shadow-modal`    | `0 24px 64px rgb(31 41 35 / 0.20)` | Modal overlays              |
-
-Do not add shadows to ordinary cards or editorial sections.
-
-### Motion
-
-- Global interactive transition duration is `200ms`.
-- Image hover scale may use `500ms` and should remain subtle, around `1.025`.
-- Mobile navigation uses a `300ms` horizontal transform.
-- Motion must clarify state, not decorate the page.
-- Respect reduced-motion preferences for any new nonessential animation.
-
-### Focus and Selection
-
-- Interactive elements receive a visible `2px` ink outline with offset.
-- Text selection uses an ink background with canvas text.
-- Never remove keyboard focus without an equivalent visible replacement.
+Administrative controls may keep their existing square control language. This pill rule applies to the customer storefront editorial CTA only.
 
 ## Storefront Shell
 
-All customer-facing commerce pages should use `ShopLayout`.
+`ShopLayout` provides:
 
-The shell provides:
-
-- a flex column with `min-h-screen`,
-- canvas background,
-- sans-serif interface typography,
-- ink foreground,
-- horizontal overflow protection,
-- global Navbar,
-- a full-width growing main region,
+- white page background,
+- teal default foreground,
+- sticky global Navbar,
+- full-width growing main area,
 - global Toaster,
-- global Footer.
+- global Footer,
+- horizontal overflow protection.
 
-Pages own their internal sections. Do not add a second page-wide card or unrelated outer container inside the shell.
+Pages own their sections. Do not place the whole customer page inside a detached centered card.
 
 ## Navbar
 
-### Desktop
+Desktop:
 
-The active Navbar is sticky, full-width, and capped internally at `1600px`.
-
-- Height: `64px` base, `76px` at large screens.
-- Background: canvas.
-- Bottom border: solid ink.
-- Layout: three-column grid, `1fr auto 1fr`.
+- White background with one teal hairline below.
+- Internal height around `68px`.
+- Three-column grid: left navigation, centered wordmark, right utilities.
 - Left: Shop, Subscriptions, Story.
 - Center: Declasse serif wordmark.
 - Right: Search, Account, Bag count.
-- Hover: terracotta text or reduced wordmark opacity.
+- Text remains small, uppercase, and teal.
+- Hover uses gold.
 
-Bag count is always visible and formatted with at least two digits; values above 99 display `99+`.
+Mobile:
 
-### Mobile
+- Keep wordmark and Bag visible.
+- Use one menu icon only.
+- Open a full-screen white drawer from the right.
+- Separate navigation rows with teal hairlines.
+- Preserve accessible open and close labels.
 
-- Keep the wordmark centered within the grid.
-- Keep Bag visible.
-- Hide desktop navigation utilities.
-- Use a 40px menu trigger.
-- Open a full-viewport canvas drawer from the right.
-- Use large uppercase rows separated by hairlines.
-- Include Shop, Subscriptions, Story, Account, and Bag.
-- Provide explicit open and close labels for assistive technology.
+## Canonical Homepage
 
-Do not use a floating hamburger card, blurred header, or translucent backdrop.
+### Split Hero
 
-## Footer
+- Desktop uses equal white-copy and lifestyle-image columns.
+- Mobile stacks copy before image.
+- Copy panel distributes intro, CTA, and oversized headline vertically.
+- Hero photography is full-height, lightly desaturated, and editorial.
 
-The Footer is part of every `ShopLayout` page and has three layers.
-
-### Subscription Band
-
-- Background: primary terracotta.
-- Text: canvas.
-- Desktop grid: `1fr 1.2fr 1fr`.
-- Use white dividers at 20% opacity.
-- First cell: condensed campaign statement.
-- Second cell: compact explanatory copy and a sharp outline CTA.
-- Third cell: quiet oat color block on medium screens and above.
-
-### Newsletter and Link Grid
-
-- Background: surface-dark.
-- Desktop grid: wide newsletter column plus Shop, About, and Follow columns.
-- Newsletter uses a condensed statement and bottom-border-only email field.
-- Link hover color is terracotta.
-- Keep footer links small and calm; hierarchy comes from spacing and typography.
-
-### Legal Row
-
-- Use small uppercase oat text.
-- Stack on mobile; align horizontally from small screens upward.
-- Include copyright, Privacy, Shipping, and Terms.
-
-## Canonical Homepage Composition
-
-`welcome.tsx` is the canonical example for building editorial storefront pages.
-
-### 1. Split Hero
-
-- Desktop uses two balanced columns.
-- Left panel uses sand and substantial padding.
-- Left content is vertically distributed: short prose, sharp outline CTA, oversized condensed statement.
-- Right panel is full-height lifestyle photography.
-- Mobile stacks content before image.
-- Images remain full-bleed and use restrained saturation or contrast adjustments.
-
-Canonical statement style:
+Canonical statement:
 
 ```text
 COFFEE
@@ -238,210 +154,90 @@ WITHOUT
 THE ROUTINE.
 ```
 
-### 2. Announcement Strip
+### Marquee
 
-- Background: surface-dark.
-- Text: canvas.
-- Height is compact, currently at least `32px`.
-- Use uppercase `10px` copy with wide tracking.
-- Separate phrases with short oat hairlines.
-- Current implementation is static, not an animated marquee.
+- Teal background, white `10px` uppercase copy.
+- Compact height around `32px`.
+- Short gold dividers separate phrases.
+- Keep the strip horizontally clipped.
 
-### 3. Product Image Grid
+### Product Strips
 
-- Two columns on mobile, four columns on large screens.
-- Use shared borders and no card gap.
-- Default card ratio is `4/5`; square from small screens upward.
-- Product photography fills the card.
-- Add a dark top-to-bottom readability scrim.
-- Show a two-digit index at the top-left.
-- Place serif product name, supporting label, and price at the bottom-left.
-- Use subtle image scale on hover.
-- Do not add badges, rounded containers, or detached text panels by default.
+- Use real Inertia product props, never frontend dummy arrays.
+- Two columns mobile, four columns desktop.
+- White cells with shared teal hairlines.
+- Image above, centered metadata below.
+- Show two-digit index, uppercase product name, one-line category/description, and Rupiah price.
+- No wishlist, badge, floating overlay, or rounded card shell.
+- Use a product image fallback only when backend image data is empty.
 
-### 4. Story Split
+### Editorial Story
 
-- Two equal columns on large screens.
-- Photography occupies one side edge-to-edge.
-- Surface-dark editorial copy occupies the other side.
-- Use an oat uppercase eyebrow, large condensed statement, compact body copy, and a small terracotta text link.
-- Mobile stacks the image above the copy panel.
+- Balanced image and teal copy panel.
+- Gold eyebrow and text action.
+- White condensed headline and supporting copy.
+- Image and panel share a direct edge without gap or radius.
 
-### 5. Secondary Product Grid
+### Ritual Categories
 
-Reuse the product-grid language instead of inventing a second card system. Content may change; structure should remain consistent.
+- Left side contains campaign statement and compact category links.
+- Category links use hairline divisions and gold arrows.
+- Right side uses full-bleed coffee photography.
 
-### 6. Closing Campaign Split
+### Closing Campaign
 
-- Use an asymmetric desktop split around `0.9fr 1.1fr`.
-- Copy panel contains compact prose, a condensed multiline statement, and sharp outline CTA.
-- Image remains full-bleed.
-- Mobile stacks copy before image.
+- White copy panel paired with full-bleed lifestyle photography.
+- Repeat the large teal condensed statement language.
+- Use one compact outline CTA.
 
-### 7. Footer
+## Footer
 
-Do not create a page-specific homepage footer. Use the global Footer supplied by `ShopLayout`.
+Footer uses one continuous teal field.
 
-## Reusable Composition Patterns
+- Subscription band uses white copy, teal background, white translucent dividers, and gold CTA treatment.
+- Newsletter and link columns remain compact and aligned to the grid.
+- Inputs use transparent backgrounds with a light bottom border.
+- Link hover uses gold.
+- Legal row uses small uppercase neutral text.
+- No contrasting brown or terracotta footer block.
 
-### Editorial Split
+## Images
 
-Use for heroes, brand stories, policy introductions, account highlights, and campaigns.
+- Prefer high-resolution coffee product and ritual photography.
+- Use `object-cover` for full-bleed editorial images.
+- Product images may use `object-cover` within a warm-white support cell.
+- Keep color treatment restrained with mild saturation or contrast adjustments.
+- Provide meaningful alt text.
+- Avoid low-resolution crops and decorative imagery unrelated to coffee.
 
-- Prefer CSS Grid.
-- Keep one side photographic and one side typographic.
-- Use borders rather than gap-based floating panels.
-- Stack in reading order on mobile.
+## Motion and Accessibility
 
-### Modular Grid
-
-Use for product catalogs, related products, category navigation, and structured data.
-
-- Share hairline borders.
-- Keep cells square or intentionally editorial in proportion.
-- Avoid independent rounded card shells.
-- Preserve clear hover and focus states.
-
-### Dark Editorial Panel
-
-Use surface-dark with canvas text for one meaningful story section, not as a repeated alternating stripe.
-
-- Eyebrow: small uppercase oat.
-- Heading: condensed uppercase.
-- Body: narrow and compact.
-- Link: restrained terracotta.
-
-### Outline Pill CTA
-
-Use for quiet editorial actions such as Shop Coffee or Start a Subscription.
-
-- Transparent background.
-- Current-color 1px border.
-- Rounded full.
-- Small uppercase copy.
-- Compact horizontal padding.
-- Include a simple arrow.
-
-Primary commerce actions remain sharp and filled; buttons never use pill corners.
+- Default interaction duration: `200ms`.
+- Image hover scale: maximum `1.025` over `500ms`.
+- Mobile drawer: `300ms` horizontal transform.
+- Keyboard focus: visible `2px` teal outline with offset.
+- Maintain WCAG-readable white/teal contrast.
+- Respect reduced-motion preferences for nonessential motion.
+- Controls require accessible names and keyboard operation.
 
 ## Responsive Rules
 
-Follow Tailwind's mobile-first breakpoints used by the active codebase.
-
-### Mobile
-
-- Page sections stack vertically.
-- Product grids remain two columns where product recognition remains clear.
-- Use `20–32px` horizontal padding depending density.
-- Keep photography prominent.
-- Use the fullscreen navigation drawer.
-- Footer columns stack or use a simple two-column arrangement.
-
-### Medium Screens
-
-- Activate desktop navigation at `md`.
-- Footer subscription band becomes three columns.
-- Footer content begins splitting into multiple columns.
-
-### Large Screens
-
-- Use split editorial sections.
-- Use four-column product grids.
-- Increase section padding to approximately `40–64px`.
-- Keep global navigation content capped at `1600px`.
-
-Do not center every section inside a narrow container. The established storefront is predominantly full-bleed with controlled internal padding.
-
-## Photography
-
-- Use high-resolution product or coffee lifestyle photography.
-- Prefer architectural light, natural shadow, warm surfaces, and minimal compositions.
-- Use `object-cover` for editorial image cells.
-- Preserve consistent crop intent across responsive sizes.
-- Add meaningful alt text for content images; decorative repeats use empty alt text.
-- Avoid decorative coffee-bean patterns and low-quality café stock imagery.
-
-## Content Hierarchy
-
-New customer pages should generally prioritize:
-
-1. page identity,
-2. primary customer action,
-3. product or service imagery,
-4. supporting information,
-5. secondary navigation.
-
-Keep metadata and helper copy visually quieter than titles and primary actions.
-
-## Accessibility
-
-- Use semantic headings in document order.
-- Use buttons for actions and links for navigation.
-- Keep visible labels or accessible names on icon-only controls.
-- Maintain the global focus-visible treatment.
-- Do not rely on color alone for selection or validation.
-- Preserve readable contrast on image overlays.
-- Use appropriate alt text.
-- Keep primary touch targets near 40–48px.
-- Respect reduced-motion preferences for new animation.
-
-## Implementation Defaults
-
-When building a new customer-facing page:
-
-1. Wrap it in `ShopLayout`.
-2. Use tokens from `app.css` through Tailwind utilities.
-3. Use generated Wayfinder functions for Laravel navigation and forms.
-4. Start with full-bleed grid structure and hairline borders.
-5. Choose one dominant editorial statement, not several competing displays.
-6. Use serif only for the wordmark or selected editorial/product naming.
-7. Use real backend data for product and commerce content.
-8. Provide responsive image behavior and accessible interactions.
-9. Reuse existing patterns before creating a new component language.
-10. Update this document if a deliberate global design change is shipped.
-
-## Anti-Patterns
-
-Do not introduce:
-
-- generic brown café palettes,
-- pure-black luxury styling,
-- gold or neon accents,
-- glassmorphism,
-- blurred sticky navigation,
-- gradient page backgrounds,
-- floating card dashboards,
-- large rounded content cards,
-- shadows on ordinary sections,
-- multiple unrelated card systems,
-- excessive badges,
-- oversized iconography,
-- decorative motion without state meaning,
-- page-specific headers or footers that duplicate `ShopLayout`,
-- hardcoded routes where Wayfinder exists,
-- page-local colors that duplicate theme tokens.
+- Mobile is the default layout.
+- Stack split sections below `lg` unless a smaller split remains readable.
+- Product grids use `2 → 4` columns.
+- Keep headline clamps; do not hardcode desktop sizes on mobile.
+- Prevent horizontal overflow in marquee, navigation, and grid sections.
+- Do not hide essential shopping actions on mobile.
 
 ## Review Checklist
 
-Before accepting a new customer page, verify:
-
-- It uses `ShopLayout`.
-- Typography follows the three established font roles.
-- Colors use active semantic tokens.
-- Borders create the layout structure.
-- Radius and shadows remain restrained.
-- The page has a clear editorial hierarchy.
-- Mobile reading order is correct.
-- Navigation uses Wayfinder.
-- Interactions have hover, focus, disabled, and loading states where relevant.
-- Images have intentional crops and alt text.
-- No dummy commerce data is displayed when backend data exists.
-- The page feels consistent beside `welcome.tsx`, Navbar, and Footer.
-
-## Final Standard
-
-Every Declasse storefront page should look like part of one system:
-
-> Specialty coffee, contemporary editorial composition, warm structured commerce.
-
-The result should be recognizable as the same brand even when page content and functionality differ.
+- Dominant background is white.
+- Brand structure uses `#135d60` teal.
+- Accent is limited to `#dbac5e` gold.
+- Sections share edges and hairlines.
+- Hero and editorial headings use condensed uppercase typography.
+- Navbar wordmark remains centered.
+- Product grids use backend data and Rupiah pricing.
+- Footer is a continuous teal composition.
+- No old beige, brown, or terracotta visual dominance remains.
+- Mobile layout has no overflow and all actions remain reachable.

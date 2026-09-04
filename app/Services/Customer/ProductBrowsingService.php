@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
 class ProductBrowsingService
@@ -65,7 +64,7 @@ class ProductBrowsingService
         };
 
         return [
-            'products' => Inertia::scroll($products->paginate(12)->withQueryString()->through(fn (Product $product) => $this->card($product))),
+            'products' => $products->paginate(20)->withQueryString()->through(fn (Product $product) => $this->card($product)),
             'filters' => ['category' => $category, 'grind_type' => $grindType, 'process' => $process, 'price' => $price, 'sort' => $sort, 'type' => $type],
             'options' => [
                 'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']),
@@ -120,7 +119,7 @@ class ProductBrowsingService
             ->when($section === 'featured', fn ($query) => $query->where('is_featured', true))
             ->when($section === 'new', fn ($query) => $query->where('is_new_arrival', true))
             ->when($section === 'best', fn ($query) => $query->where('is_best_seller', true))
-            ->limit($limit)->get()->map(fn (Product $product) => $this->card($product))->all();
+            ->latest()->limit($limit)->get()->map(fn (Product $product) => $this->card($product))->all();
     }
 
     private function relations(): array

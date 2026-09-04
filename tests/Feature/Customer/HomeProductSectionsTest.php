@@ -67,7 +67,7 @@ function createHomeProduct(array $overrides = []): Product
             'name' => $name,
             'slug' => Str::slug($name).'-'.Str::lower(Str::random(6)),
             'regular_price' => 100000,
-            'status' => 'published',
+            'status' => 'active',
         ],
         ...$attributes,
     ]);

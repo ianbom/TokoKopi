@@ -36,12 +36,12 @@ type OrderItem = {
     product_slug: string | null;
     product_sku: string | null;
     variant_sku: string | null;
-    color_name: string | null;
-    size: string | null;
+    net_weight: string | null;
+    grind_type: string | null;
     price: number;
     quantity: number;
     subtotal: number;
-    weight: number | null;
+    shipping_weight_gram: number;
     product_image_url: string | null;
 };
 
@@ -143,6 +143,14 @@ const FALLBACK_IMAGE = '/img/hasan-almasi-_X2UAmIcpko-unsplash.webp';
 
 const formatPrice = (amount: number) =>
     `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`;
+
+const humanize = (value: string | null) =>
+    value
+        ? value
+              .split('_')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+        : null;
 
 const formatDateTime = (value: string | null) => {
     if (!value) {
@@ -731,24 +739,27 @@ export default function DetailOrder({ order }: Props) {
                                                     <td className="px-4 py-4">
                                                         <div className="space-y-1 text-[12px] text-muted-foreground">
                                                             <p>
-                                                                Warna:{' '}
-                                                                <span className="font-semibold text-ink">
-                                                                    {item.color_name ??
-                                                                        '-'}
-                                                                </span>
-                                                            </p>
-                                                            <p>
-                                                                Ukuran:{' '}
-                                                                <span className="font-semibold text-ink">
-                                                                    {item.size ??
-                                                                        '-'}
-                                                                </span>
-                                                            </p>
-                                                            <p>
                                                                 Berat:{' '}
                                                                 <span className="font-semibold text-ink">
-                                                                    {item.weight
-                                                                        ? `${item.weight} gr`
+                                                                    {item.net_weight ??
+                                                                        '-'}
+                                                                </span>
+                                                            </p>
+                                                            <p>
+                                                                Grind:{' '}
+                                                                <span className="font-semibold text-ink">
+                                                                    {humanize(
+                                                                        item.grind_type,
+                                                                    ) ??
+                                                                        '-'}
+                                                                </span>
+                                                            </p>
+                                                            <p>
+                                                                Berat Kirim:{' '}
+                                                                <span className="font-semibold text-ink">
+                                                                    {item.shipping_weight_gram >
+                                                                    0
+                                                                        ? `${item.shipping_weight_gram} gr`
                                                                         : '-'}
                                                                 </span>
                                                             </p>
@@ -811,30 +822,34 @@ export default function DetailOrder({ order }: Props) {
                                                 {item.product_name}
                                             </Link>
                                             <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
-                                                {item.color_name && (
-                                                    <span>
-                                                        Warna:{' '}
-                                                        <strong className="text-ink">
-                                                            {item.color_name}
-                                                        </strong>
-                                                    </span>
-                                                )}
-                                                {item.size && (
-                                                    <span>
-                                                        Ukuran:{' '}
-                                                        <strong className="text-ink">
-                                                            {item.size}
-                                                        </strong>
-                                                    </span>
-                                                )}
-                                                {item.weight && (
+                                                {item.net_weight && (
                                                     <span>
                                                         Berat:{' '}
                                                         <strong className="text-ink">
-                                                            {item.weight} gr
+                                                            {item.net_weight}
                                                         </strong>
                                                     </span>
                                                 )}
+                                                {item.grind_type && (
+                                                    <span>
+                                                        Grind:{' '}
+                                                        <strong className="text-ink">
+                                                            {humanize(
+                                                                item.grind_type,
+                                                            )}
+                                                        </strong>
+                                                    </span>
+                                                )}
+                                                {item.shipping_weight_gram >
+                                                    0 && (
+                                                    <span>
+                                                        Berat Kirim:{' '}
+                                                        <strong className="text-ink">
+                                                            {item.shipping_weight_gram}{' '}
+                                                            gr
+                                                        </strong>
+                                                    </span>
+                                                    )}
                                             </div>
                                             <p className="mt-0.5 text-[11px] text-muted-foreground">
                                                 SKU:{' '}

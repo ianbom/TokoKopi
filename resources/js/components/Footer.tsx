@@ -5,10 +5,10 @@ import { privacy, shipping } from '@/routes/policy';
 
 export default function Footer() {
     return (
-        <footer className="bg-surface-dark text-canvas">
-            <section
+        <footer className="bg-teal text-white">
+            {/* <section
                 id="subscription"
-                className="grid border-b border-white/20 bg-primary text-canvas md:grid-cols-[1fr_1.2fr_1fr]"
+                className="grid border-b border-white/20 bg-teal text-white md:grid-cols-[1fr_1.2fr_1fr]"
             >
                 <div className="border-b border-white/20 p-7 md:border-r md:border-b-0 lg:p-10">
                     <p className="font-condensed text-4xl leading-[0.82] uppercase lg:text-5xl">
@@ -29,16 +29,16 @@ export default function Footer() {
                     </p>
                     <a
                         href="#newsletter"
-                        className="mt-5 inline-flex rounded-none border border-current px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-canvas hover:text-primary"
+                        className="mt-5 inline-flex rounded-full border border-primary px-4 py-2 text-[10px] tracking-[0.08em] uppercase transition-colors hover:bg-primary hover:text-teal"
                     >
                         Start a subscription →
                     </a>
                 </div>
                 <div
                     aria-hidden="true"
-                    className="hidden min-h-36 bg-oat/70 md:block"
+                    className="hidden min-h-36 bg-teal md:block"
                 />
-            </section>
+            </section> */}
             <section className="grid gap-10 border-b border-white/20 p-7 sm:grid-cols-2 lg:grid-cols-[2fr_repeat(3,1fr)] lg:gap-8 lg:p-10">
                 <div id="newsletter">
                     <h2 className="font-condensed text-4xl leading-[0.82] uppercase">
@@ -57,7 +57,7 @@ export default function Footer() {
                             id="footer-email"
                             type="email"
                             placeholder="Your email"
-                            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-canvas outline-none placeholder:text-oat"
+                            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-white/60"
                         />
                         <button
                             type="submit"

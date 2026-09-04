@@ -144,31 +144,7 @@ const adminNavGroups: NavGroup[] = [
                 href: '/admin/vouchers',
                 icon: CircleDollarSign,
             },
-            {
-                title: 'Banner',
-                href: '/admin/banners',
-                icon: Image,
-            },
-            {
-                title: 'Blog',
-                href: '/admin/blogs',
-                icon: Newspaper,
-            },
-            {
-                title: 'Gallery',
-                href: '/admin/gallery',
-                icon: Images,
-            },
-            {
-                title: 'Halaman',
-                href: '/admin/pages',
-                icon: FileText,
-            },
-            {
-                title: 'New Product',
-                href: '/admin/new-product',
-                icon: Package,
-            },
+          
         ],
     },
     {

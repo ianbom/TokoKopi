@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             UserSeeder::class,
-            CoffeeCatalogSeeder::class,
+            PublicProductsSeeder::class,
             BannerSeeder::class,
             PageSeeder::class,
             SiteSettingSeeder::class,

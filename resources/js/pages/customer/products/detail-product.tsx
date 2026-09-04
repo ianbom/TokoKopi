@@ -294,21 +294,6 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                         </div>
                     </section>
                 </section>
-
-                {product.images[2] && (
-                    <section className="relative border-b border-hairline bg-ink text-canvas">
-                        <img
-                            src={product.images[2].url}
-                            alt={product.images[2].alt}
-                            loading="lazy"
-                            className="h-[300px] w-full object-cover opacity-80 sm:h-[380px]"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/10 to-transparent" />
-                        <p className="absolute bottom-7 left-7 max-w-36 text-[11px] leading-[1.1] font-semibold tracking-[0.06em] uppercase sm:bottom-10 sm:left-10">
-                            Made for everyday rituals.
-                        </p>
-                    </section>
-                )}
             </main>
         </ShopLayout>
     );
@@ -381,10 +366,6 @@ function CoffeeStory({ product }: { product: ProductDetail }) {
                     <br />
                     this coffee.
                 </h2>
-                <p className="mt-5 text-[11px] leading-[1.55] text-ink/85 sm:text-[12px]">
-                    {stripHtml(product.description) ||
-                        product.short_description}
-                </p>
             </div>
 
             {product.variants.length > 0 && (

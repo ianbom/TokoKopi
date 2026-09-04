@@ -71,6 +71,38 @@ it('filters the coffee catalog through the displayed header controls', function 
             ->has('options.processes'));
 });
 
+it('paginates the coffee catalog by twenty products', function () {
+    $this->seed(CoffeeCatalogSeeder::class);
+
+    for ($index = 1; $index <= 9; $index++) {
+        $product = Product::query()->create([
+            'name' => "Extra Coffee {$index}",
+            'slug' => "extra-coffee-{$index}",
+            'sku' => "EXTRA-{$index}",
+            'status' => 'active',
+        ]);
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => "EXTRA-{$index}-250",
+            'net_weight' => '250g',
+            'grind_type' => 'whole_bean',
+            'regular_price' => 90000,
+        ]);
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 12,
+        ]);
+    }
+
+    $this->get(route('list', ['page' => 2]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('products.per_page', 20)
+            ->where('products.current_page', 2)
+            ->where('products.last_page', 2)
+            ->has('products.data', 1));
+});
+
 it('renders active coffee products from the database for the grid', function () {
     $category = Category::query()->create([
         'name' => 'Single Origin',

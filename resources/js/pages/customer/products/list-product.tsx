@@ -1,6 +1,7 @@
-import { InfiniteScroll, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import EditorialProductGrid from '@/components/storefront/editorial-product-grid';
 import ShopLayout from '@/layouts/shop-layout';
 import { detail, list } from '@/routes';
 
@@ -32,6 +33,15 @@ type Props = {
     products: {
         data: ProductCard[];
         total: number;
+        current_page: number;
+        last_page: number;
+        from: number | null;
+        to: number | null;
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
     };
     filters: Filters;
     options: {
@@ -56,16 +66,6 @@ const quickLinks = [
     { label: 'Ready to Drink', filters: { category: 'ready-to-drink' } },
     { label: 'Best Sellers', filters: { type: 'best_seller' } },
 ] satisfies QuickLink[];
-
-const formatPrice = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    })
-        .format(value)
-        .replace('IDR', 'Rp')
-        .trim();
 
 const humanize = (value: string) => value.replaceAll('_', ' ');
 
@@ -130,7 +130,7 @@ export default function ListProduct({ products, filters, options }: Props) {
                         </p>
                     </div>
                     <img
-                        src="/images/product-list-hero.png"
+                        src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                         alt="Coffee pouch and cup on a sunlit table"
                         fetchPriority="high"
                         decoding="async"
@@ -248,6 +248,7 @@ export default function ListProduct({ products, filters, options }: Props) {
                 isFiltering={isFiltering}
                 products={products.data}
             />
+            <ProductPagination products={products} />
         </ShopLayout>
     );
 }
@@ -361,7 +362,7 @@ function FilterMenu({
     );
 }
 
-const ProductGrid = memo(function ProductGrid({
+function ProductGrid({
     filterKey,
     isFiltering,
     products,
@@ -371,99 +372,76 @@ const ProductGrid = memo(function ProductGrid({
     products: ProductCard[];
 }) {
     return (
-        <InfiniteScroll data="products" buffer={400}>
-            {({ loading }) => (
-                <>
-                    <div
-                        key={filterKey}
-                        aria-busy={isFiltering}
-                        className={`bg-black grid grid-cols-2 border-t border-hairline transition duration-200 motion-reduce:transform-none motion-reduce:transition-none sm:grid-cols-3 lg:grid-cols-4 ${
-                            isFiltering
-                                ? 'translate-y-1 opacity-50'
-                                : 'translate-y-0 opacity-100'
-                        }`}
-                    >
-                        {products.map((product, index) => (
-                            <ProductTile
-                                key={product.id}
-                                index={index}
-                                product={product}
-                            />
-                        ))}
-                    </div>
-                    {loading && <ProductGridSkeleton />}
-                </>
-            )}
-        </InfiniteScroll>
-    );
-});
-
-function ProductGridSkeleton() {
-    return (
         <div
-            aria-label="Loading products"
-            aria-busy="true"
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+            key={filterKey}
+            aria-busy={isFiltering}
+            className={`border-t border-hairline transition duration-200 motion-reduce:transform-none motion-reduce:transition-none ${
+                isFiltering
+                    ? 'translate-y-1 opacity-50'
+                    : 'translate-y-0 opacity-100'
+            }`}
         >
-            {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                    key={index}
-                    className="relative aspect-[4/5] overflow-hidden border-r border-b border-hairline bg-oat"
-                >
-                    <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
-                    <div className="absolute right-5 bottom-6 left-5 space-y-3 sm:right-7 sm:bottom-7 sm:left-7">
-                        <div className="h-6 w-4/5 animate-pulse bg-canvas/50" />
-                        <div className="h-3 w-1/2 animate-pulse bg-canvas/40" />
-                        <div className="h-4 w-1/3 animate-pulse bg-canvas/50" />
-                    </div>
-                </div>
-            ))}
+            <EditorialProductGrid
+                products={products.map((product) => ({
+                    id: product.id,
+                    name: product.title,
+                    imageUrl: product.image_url,
+                    metadata: product.short_description,
+                    price: product.sale_price ?? product.price,
+                    href: detail.url({
+                        query: { product: product.slug },
+                    }),
+                }))}
+                animated
+            />
         </div>
     );
 }
 
-const ProductTile = memo(function ProductTile({
-    index,
-    product,
-}: {
-    index: number;
-    product: ProductCard;
-}) {
+function ProductPagination({ products }: { products: Props['products'] }) {
+    if (products.last_page <= 1) {
+        return null;
+    }
+
     return (
-        <article
-            style={{ animationDelay: `${Math.min(index, 7) * 45}ms` }}
-            className="group relative animate-in overflow-hidden border-r border-b border-hairline bg-ink text-canvas duration-300 fill-mode-both fade-in slide-in-from-bottom-2 motion-reduce:animate-none"
+        <nav
+            aria-label="Product pagination"
+            className="flex items-center justify-between gap-4 border-b border-hairline bg-white px-5 py-5 text-[10px] font-semibold tracking-[0.08em] text-teal uppercase sm:px-8"
         >
-            <Link
-                href={detail.url({ query: { product: product.slug } })}
-                className="relative isolate block aspect-[4/5] overflow-hidden"
-            >
-                {product.image_url ? (
-                    <img
-                        src={product.image_url}
-                        alt={product.title}
-                        loading="lazy"
-                        decoding="async"
-                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]"
-                    />
-                ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-oat px-6 text-center text-[11px] font-semibold tracking-[0.12em] text-body uppercase">
-                        Image unavailable
-                    </div>
-                )}
-                <span className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/55" />
-                <div className="absolute right-5 bottom-6 left-5 z-10 sm:right-7 sm:bottom-7 sm:left-7">
-                    <h3 className="line-clamp-2 font-serif text-[21px] leading-[1.05] font-normal sm:text-[25px] lg:text-[28px]">
-                        {product.title}
-                    </h3>
-                    <p className="mt-2 line-clamp-1 text-[12px] leading-5 text-canvas/85 sm:text-[14px]">
-                        {product.short_description}
-                    </p>
-                    <strong className="mt-3 block text-[13px] font-medium sm:text-[14px]">
-                        {formatPrice(product.sale_price ?? product.price)}
-                    </strong>
-                </div>
-            </Link>
-        </article>
+            <div className="hidden text-body sm:block">
+                {products.from}–{products.to} of {products.total}
+            </div>
+            <div className="flex items-center gap-1">
+                {products.links.map((link, index) => {
+                    const isPreviousOrNext =
+                        index === 0 || index === products.links.length - 1;
+
+                    if (!link.url) {
+                        return (
+                            <span
+                                key={`${link.label}-${index}`}
+                                aria-disabled="true"
+                                className={`px-3 py-2 text-body/40 ${isPreviousOrNext ? 'hidden sm:block' : ''}`}
+                            >
+                                {link.label}
+                            </span>
+                        );
+                    }
+
+                    return (
+                        <Link
+                            key={`${link.label}-${index}`}
+                            href={link.url}
+                            preserveScroll
+                            preserveState
+                            replace
+                            className={`border border-hairline px-3 py-2 transition-colors hover:bg-sand ${link.active ? 'bg-teal text-white' : 'bg-white text-teal'} ${isPreviousOrNext ? 'hidden sm:block' : ''}`}
+                        >
+                            {link.label}
+                        </Link>
+                    );
+                })}
+            </div>
+        </nav>
     );
-});
+}

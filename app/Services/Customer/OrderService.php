@@ -246,7 +246,7 @@ class OrderService
                 'price' => (float) $item->price,
                 'quantity' => (int) $item->quantity,
                 'subtotal' => (float) $item->subtotal,
-                'weight' => $item->weight,
+                'shipping_weight_gram' => (int) $item->shipping_weight_gram,
                 'product_image_url' => $item->product_image_url,
             ])->values(),
             'address' => $order->address ? [

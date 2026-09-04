@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Menu, Search, ShoppingBag, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { about, cart, home, list, login } from '@/routes';
@@ -20,8 +20,8 @@ export default function Navbar({
     const closeMenu = () => setIsOpen(false);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-ink bg-canvas text-ink">
-            <nav className="mx-auto grid min-h-16 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center px-5 text-[11px] tracking-[0.04em] uppercase sm:px-8 lg:min-h-[76px] lg:px-10 lg:text-xs">
+        <header className="sticky top-0 z-50 border-b border-hairline bg-white text-teal">
+            <nav className="mx-auto grid min-h-16 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center px-5 text-[10px] font-semibold tracking-[0.04em] uppercase sm:px-8 lg:min-h-[68px] lg:px-10 lg:text-[11px]">
                 <div className="hidden items-center gap-5 md:flex lg:gap-9">
                     <Link
                         href={list.url()}
@@ -30,22 +30,16 @@ export default function Navbar({
                         Shop
                     </Link>
                     <Link
-                        href={home.url() + '#subscription'}
+                        href={home.url()}
                         className="transition-colors hover:text-primary"
                     >
-                        Subscriptions
-                    </Link>
-                    <Link
-                        href={about.url()}
-                        className="transition-colors hover:text-primary"
-                    >
-                        Story
+                        Home
                     </Link>
                 </div>
                 <Link
                     href={home.url()}
                     aria-label="Declasse home"
-                    className="font-serif text-3xl font-normal tracking-[-0.09em] normal-case transition-opacity hover:opacity-70 sm:text-4xl lg:text-[46px]"
+                    className="font-serif text-3xl font-normal tracking-[-0.09em] text-teal normal-case transition-opacity hover:opacity-70 sm:text-4xl lg:text-[46px]"
                 >
                     Declasse
                 </Link>
@@ -53,10 +47,9 @@ export default function Navbar({
                     <Link
                         href={list.url()}
                         aria-label="Search products"
-                        className="hidden items-center gap-1.5 transition-colors hover:text-primary md:inline-flex"
+                        className="hidden transition-colors hover:text-primary md:inline"
                     >
-                        <Search className="size-3.5" strokeWidth={1.5} />
-                        <span>Search</span>
+                        Search
                     </Link>
                     <Link
                         href={accountHref}
@@ -68,8 +61,7 @@ export default function Navbar({
                         href={cart.url()}
                         className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
                     >
-                        <ShoppingBag className="size-3.5" strokeWidth={1.5} />
-                        <span>Bag ({bagCount})</span>
+                        Bag ({bagCount})
                     </Link>
                     <button
                         type="button"
