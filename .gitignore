@@ -28,5 +28,5 @@ yarn-error.log
 /.zed
 /taildashboard
 taildashboard
-/scrapper
-scrapper
+# /scrapper
+# scrapper

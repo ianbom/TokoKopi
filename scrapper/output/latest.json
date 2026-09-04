@@ -1,0 +1,325 @@
+{
+  "schema_version": "2.0",
+  "source": {
+    "marketplace": "tokopedia",
+    "store_url": "https://www.tokopedia.com/deklase-roastery/product",
+    "scraped_at": "2026-09-04",
+    "product_count": 10
+  },
+  "products": [
+    {
+      "source_id": "1736981748814611487",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-bali-kala-patra-natural-filter-roast-1736981748814611487-1736981828383441951",
+      "listing_text": ">50%\nKOPI ARABIKA BALI KALA PATRA NATURAL FILTER ROAST\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus",
+      "title": "KOPI ARABIKA BALI KALA PATRA NATURAL FILTER ROAST",
+      "slug": "kopi-arabika-bali-kala-patra-natural-filter-roast-1736981748814611487-1736981828383441951",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA BALI KALA PATRA NATURAL FILTER ROAST",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736981748814611487-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1736029086044161055",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-ijen-lestari-natural-specialty-coffee-beans-1736029086044161055-1736029090535801887",
+      "listing_text": ">50%\nKOPI ARABIKA IJEN LESTARI NATURAL | SPECIALTY COFFEE BEANS\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus\n5.0\n2 terjual",
+      "title": "KOPI ARABIKA IJEN LESTARI NATURAL | SPECIALTY COFFEE BEANS - 100 gram, Whole Beans",
+      "slug": "kopi-arabika-ijen-lestari-natural-specialty-coffee-beans-1736029086044161055-1736029090535801887",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": "IJEN BONDOWOSO",
+      "process": "NATURAL CLASSIC",
+      "description": "De Classe Artisan Gelato and Coffee Roastery merupakan Gelateria, Kedai Kopi sekaligus Coffee Roastery yang terletak di Blitar Jawa Timur\n\n\nPengiriman dilakukan setiam jam 12.00 WIB, untuk pesanan diatas jam tersebut akan dikirimkan keesokan harinya.\nJadwal pengiriman SENIN - SABTU\n\n\n\n\n——————————————————————————————————————————————————————————————————\n\n\nARABIKA IJEN LESTARI CM\n\n\nORIGIN : IJEN BONDOWOSO\nPROFILE : LIGHT TO MEDIUM / FILTER\nVARIETAL : MIX VARIETY\nPROCESS : NATURAL CLASSIC\nNOTES : WATERMELON, ORANGE, BROWN SUGAR\nNETTO : 100 GR / 200 GR / 500 GR\n\n\n\n\n\n\nCOCOK DIGUNAKAN UNTUK :\nFILTER /V60\nAEROPRESS\nCOLD BREW\nCOLD DRIP\n\n\nTAMBAHKAN DI NOTED JIKA INGIN DI GILING / GRINDING\n-HALUS\n-MEDIUM\n-KASAR\nJIKA TIDAK ADA NOTED MAKA AKAN DIKIRIM WHOLE BEANS\n\n\nKami menyediakan kopi robusta bubuk, kopi arabika bubuk, kopi flores, kopi aceh gayo, kopi gayo aceh, kopi arabica, kopi robusta, kopi espresso, kopi bubuk espresso, kopi espresso bubuk, kopi blend, kopi bubuk robusta, kopi bubuk arabika, biji kopi robusta, biji kopi arabika, biji kopi espresso, biji kopi robusta temanggung.\nKami menjamin menjual produk kopi murni, kopi bubuk asli, biji kopi robusta, biji kopi arabika, kopi kiloan yang pasti kopi murah kiloan.\n\nLihat Selengkapnya",
+      "net_weight": "100 gram",
+      "grind_type": "whole_beans",
+      "option_labels": [
+        "Masuk",
+        "Daftar",
+        "Detail Produk",
+        "Ulasan",
+        "Rekomendasi",
+        "Terpilih:\n100 gram, Whole Beans",
+        "+ Keranjang",
+        "Beli Langsung",
+        "Chat",
+        "Wishlist",
+        "Share",
+        "100 gram",
+        "200 gram",
+        "500 gram",
+        "Whole Beans",
+        "Halus",
+        "Medium",
+        "Kasar",
+        "Detail Produk",
+        "Lihat Selengkapnya",
+        "Follow",
+        "Lihat Kurir Lainnya",
+        "Scan QR",
+        "Laporkan"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736029086044161055-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1736029075831227423",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-toraja-rantekarua-natural-komasti-specialty-coffee-beans-1736029075831227423-1736029082164102175",
+      "listing_text": ">50%\nKOPI ARABIKA TORAJA RANTEKARUA NATURAL KOMASTI SPECIALTY COFFEE BEANS\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus",
+      "title": "KOPI ARABIKA TORAJA RANTEKARUA NATURAL KOMASTI SPECIALTY COFFEE BEANS",
+      "slug": "kopi-arabika-toraja-rantekarua-natural-komasti-specialty-coffee-beans-1736029075831227423-1736029082164102175",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA TORAJA RANTEKARUA NATURAL KOMASTI SPECIALTY COFFEE BEANS",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736029075831227423-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1736029031347684383",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-malabar-natural-jawa-barat-specialty-coffee-beans-1736029031347684383-1736029128155563039",
+      "listing_text": ">50%\nKOPI ARABIKA MALABAR NATURAL JAWA BARAT SPECIALTY COFFEE BEANS\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus",
+      "title": "KOPI ARABIKA MALABAR NATURAL JAWA BARAT SPECIALTY COFFEE BEANS",
+      "slug": "kopi-arabika-malabar-natural-jawa-barat-specialty-coffee-beans-1736029031347684383-1736029128155563039",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA MALABAR NATURAL JAWA BARAT SPECIALTY COFFEE BEANS",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736029031347684383-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1736028999080969247",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-bali-belantih-kopyol-anaerob-natural-specialty-coffee-beans-1736028999080969247-1736028970483287071",
+      "listing_text": ">50%\nKOPI ARABIKA BALI BELANTIH KOPYOL ANAEROB NATURAL SPECIALTY COFFEE BEANS\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus",
+      "title": "KOPI ARABIKA BALI BELANTIH KOPYOL ANAEROB NATURAL SPECIALTY COFFEE BEANS",
+      "slug": "kopi-arabika-bali-belantih-kopyol-anaerob-natural-specialty-coffee-beans-1736028999080969247-1736028970483287071",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA BALI BELANTIH KOPYOL ANAEROB NATURAL SPECIALTY COFFEE BEANS",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736028999080969247-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1734446333950002207",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/robusta-komersil-grade-kopi-bubuk-robusta-biji-kopi-robusta-bubuk-kopitiam-1734446333950002207",
+      "listing_text": ">42%\nRobusta Komersil Grade | Kopi Bubuk Robusta | Biji Kopi Robusta | Bubuk Kopitiam\nRp55.000\nRp95.000\nHemat s.d 8% Pakai Bonus\n5.0\n7 terjual",
+      "title": "Robusta Komersil Grade | Kopi Bubuk Robusta | Biji Kopi Robusta | Bubuk Kopitiam - 500 gram, Whole Beans",
+      "slug": "robusta-komersil-grade-kopi-bubuk-robusta-biji-kopi-robusta-bubuk-kopitiam-1734446333950002207",
+      "regular_price": 95000,
+      "sale_price": 55000,
+      "origin": null,
+      "process": null,
+      "description": "Robusta Komersil Grade dari lereng gunung Kawi yang terletak di Kabupaten Blitar Jawa Timur\nTingkat Kematangan : Dark Roast\nCocok digunakan untuk kopi tubruk, kopi tiam, maupun cafe.",
+      "net_weight": "500 gram",
+      "grind_type": "whole_beans",
+      "option_labels": [
+        "Masuk",
+        "Daftar",
+        "Detail Produk",
+        "Ulasan",
+        "Rekomendasi",
+        "Terpilih:\n500 gram, Whole Beans",
+        "+ Keranjang",
+        "Beli Langsung",
+        "Chat",
+        "Wishlist",
+        "Share",
+        "500 gram",
+        "1 Kg",
+        "Whole Beans",
+        "Giling Halus",
+        "Giling Medium",
+        "Giling Kasar",
+        "Detail Produk",
+        "Follow",
+        "Lihat Kurir Lainnya",
+        "Scan QR",
+        "Laporkan"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1734446333950002207-1.webp",
+          "alt": "Gambar Robusta Komersil Grade | Kopi Bubuk Robusta | Biji Kopi Robusta | Bubuk Kopitiam - 500 gram, Whole Beans dari Deklase Roastery Kota Blitar Tokopedia"
+        }
+      ]
+    },
+    {
+      "source_id": "1734435847880213535",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-ethiopia-shakiso-gigesa-washed-floral-ethiopia-coffee-single-origin-1734435847880213535",
+      "listing_text": ">33%\nKOPI ARABIKA ETHIOPIA SHAKISO GIGESA WASHED FLORAL | ETHIOPIA COFFEE SINGLE ORIGIN\nRp80.000\nRp120.000\nHemat s.d 8% Pakai Bonus\n5.0\n1 terjual",
+      "title": "KOPI ARABIKA ETHIOPIA SHAKISO GIGESA WASHED FLORAL | ETHIOPIA COFFEE SINGLE ORIGIN",
+      "slug": "kopi-arabika-ethiopia-shakiso-gigesa-washed-floral-ethiopia-coffee-single-origin-1734435847880213535",
+      "regular_price": 120000,
+      "sale_price": 80000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA ETHIOPIA SHAKISO GIGESA WASHED FLORAL | ETHIOPIA COFFEE SINGLE ORIGIN",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1734435847880213535-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1733170502848513055",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/arabika-argopuro-walida-hermetically-sealed-natural-filter-roast-1733170502848513055",
+      "listing_text": ">50%\nARABIKA ARGOPURO WALIDA HERMETICALLY SEALED NATURAL FILTER ROAST\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus",
+      "title": "ARABIKA ARGOPURO WALIDA HERMETICALLY SEALED NATURAL FILTER ROAST - 100 gram, WHOLE BEANS",
+      "slug": "arabika-argopuro-walida-hermetically-sealed-natural-filter-roast-1733170502848513055",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "ARABIKA ARGOPURO WALIDA HERMETICALLY SEALED NATURAL FILTER ROAST - 100 gram, WHOLE BEANS",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar",
+        "Laporkan"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1733170502848513055-1.webp",
+          "alt": "Gambar ARABIKA ARGOPURO WALIDA HERMETICALLY SEALED NATURAL FILTER ROAST - 100 gram, WHOLE BEANS dari Deklase Roastery undefined Tokopedia"
+        }
+      ]
+    },
+    {
+      "source_id": "1734435635951862815",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-sumatera-karo-blueberry-infused-1734435635951862815",
+      "listing_text": ">50%\nKOPI ARABIKA SUMATERA KARO BLUEBERRY INFUSED\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus\n4.9\n90+ terjual",
+      "title": "KOPI ARABIKA SUMATERA KARO BLUEBERRY INFUSED",
+      "slug": "kopi-arabika-sumatera-karo-blueberry-infused-1734435635951862815",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA SUMATERA KARO BLUEBERRY INFUSED",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1734435635951862815-1.webp",
+          "alt": "product-image"
+        }
+      ]
+    },
+    {
+      "source_id": "1736028952696816671",
+      "source_url": "https://www.tokopedia.com/deklase-roastery/kopi-arabika-toraja-awan-rantekarua-wethulled-specialty-coffee-beans-1736028952696816671",
+      "listing_text": ">50%\nKOPI ARABIKA TORAJA AWAN RANTEKARUA WETHULLED | SPECIALTY COFFEE BEANS\nRp40.000\nRp80.000\nHemat s.d 8% Pakai Bonus\n5.0\n4 terjual",
+      "title": "KOPI ARABIKA TORAJA AWAN RANTEKARUA WETHULLED | SPECIALTY COFFEE BEANS - 100 gram, Whole Beans",
+      "slug": "kopi-arabika-toraja-awan-rantekarua-wethulled-specialty-coffee-beans-1736028952696816671",
+      "regular_price": 80000,
+      "sale_price": 40000,
+      "origin": null,
+      "process": null,
+      "description": "KOPI ARABIKA TORAJA AWAN RANTEKARUA WETHULLED | SPECIALTY COFFEE BEANS - 100 gram, Whole Beans",
+      "net_weight": null,
+      "grind_type": null,
+      "option_labels": [
+        "Masuk",
+        "Daftar",
+        "Laporkan"
+      ],
+      "category_slugs": [
+        "coffee-beans"
+      ],
+      "images": [
+        {
+          "url": "/products/tokopedia/1736028952696816671-1.webp",
+          "alt": "Gambar KOPI ARABIKA TORAJA AWAN RANTEKARUA WETHULLED | SPECIALTY COFFEE BEANS - 100 gram, Whole Beans dari Deklase Roastery undefined Tokopedia"
+        }
+      ]
+    }
+  ]
+}
