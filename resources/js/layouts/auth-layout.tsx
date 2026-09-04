@@ -31,9 +31,9 @@ export default function AuthLayout({
     const resolvedHeroImage = heroImage ?? defaultHero;
 
     return (
-        <div className="min-h-svh bg-canvas font-sans text-ink">
-            <div className="grid min-h-svh lg:grid-cols-[.95fr_1.05fr]">
-                <section className="relative hidden min-h-svh overflow-hidden border-r border-hairline bg-surface-dark text-canvas lg:flex lg:flex-col lg:justify-between">
+        <div className="min-h-svh bg-canvas font-sans text-ink lg:h-svh lg:min-h-0 lg:overflow-hidden">
+            <div className="grid min-h-svh lg:h-full lg:min-h-0 lg:grid-cols-[.95fr_1.05fr]">
+                <section className="relative hidden min-h-svh overflow-hidden border-r border-hairline bg-surface-dark text-canvas lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:justify-between">
                     <img
                         src={resolvedHeroImage.src}
                         alt={resolvedHeroImage.alt}
@@ -75,30 +75,19 @@ export default function AuthLayout({
                     )}
                 </section>
 
-                <main className="flex min-h-svh flex-col bg-canvas">
-                    <header className="flex items-center justify-between border-b border-hairline px-6 py-5 sm:px-10 lg:px-12 xl:px-16">
-                        <Link
-                            href={home()}
-                            className="font-serif text-[30px] leading-none tracking-[-0.045em] hover:text-primary lg:hidden"
-                        >
-                            Declasse
-                        </Link>
-                        <p className="ml-auto text-[9px] font-semibold tracking-[0.1em] text-ink/60 uppercase">
-                            Secure member access
-                        </p>
-                    </header>
+                <main className="flex min-h-svh flex-col bg-canvas lg:h-full lg:min-h-0 lg:overflow-hidden">
 
-                    <div className="flex flex-1 items-center px-6 py-10 sm:px-10 lg:px-12 xl:px-16 xl:py-14">
+                    <div className="flex flex-1 items-center px-6 py-10 sm:px-10 lg:min-h-0 lg:overflow-y-auto lg:px-12 lg:py-6 xl:px-16 xl:py-8">
                         <div
                             className={[
-                                'mx-auto w-full max-w-[500px]',
+                                'mx-auto w-full max-w-[500px] lg:max-w-[460px]',
                                 contentClassName ?? '',
                             ].join(' ')}
                         >
                             {breadcrumbs && breadcrumbs.length > 0 && (
                                 <nav
                                     aria-label="Breadcrumb"
-                                    className="mb-7 flex flex-wrap items-center gap-2 text-[9px] font-semibold tracking-[0.08em] uppercase"
+                                    className="mb-7 flex flex-wrap items-center gap-2 text-[9px] font-semibold tracking-[0.08em] uppercase lg:mb-4"
                                 >
                                     {breadcrumbs.map((crumb, index) => (
                                         <div
@@ -126,17 +115,17 @@ export default function AuthLayout({
                             )}
 
                             {(title || description) && (
-                                <div className="mb-8 border-b border-hairline pb-7">
+                                <div className="mb-8 border-b border-hairline pb-7 lg:mb-5 lg:pb-5">
                                     <p className="text-[9px] font-semibold tracking-[0.1em] text-primary uppercase">
                                         Declasse account
                                     </p>
                                     {title && (
-                                        <h1 className="mt-3 font-condensed text-[clamp(46px,6vw,72px)] leading-[0.82] font-semibold tracking-[-0.05em] uppercase">
+                                        <h1 className="mt-3 font-condensed text-[clamp(46px,6vw,72px)] leading-[0.82] font-semibold tracking-[-0.05em] uppercase lg:text-[clamp(40px,4.2vw,62px)]">
                                             {title}
                                         </h1>
                                     )}
                                     {description && (
-                                        <p className="mt-5 max-w-[42ch] text-[12px] leading-[1.55] text-ink/70">
+                                        <p className="mt-5 max-w-[42ch] text-[12px] leading-[1.55] text-ink/70 lg:mt-3">
                                             {description}
                                         </p>
                                     )}
@@ -147,10 +136,6 @@ export default function AuthLayout({
                         </div>
                     </div>
 
-                    <footer className="flex items-center justify-between border-t border-hairline px-6 py-4 text-[8px] font-semibold tracking-[0.08em] text-ink/50 uppercase sm:px-10 lg:px-12 xl:px-16">
-                        <span>Declasse Coffee</span>
-                        <span>Private · Secure</span>
-                    </footer>
                 </main>
             </div>
         </div>
