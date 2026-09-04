@@ -86,7 +86,7 @@ export default function Footer() {
                 </FooterColumn>
             </section>
             <div className="flex flex-col gap-3 px-7 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:items-center sm:justify-between lg:px-10">
-                <span>© 2026 Declasse Coffee</span>
+                <span>© 2026 Deklase Coffee</span>
                 <span className="flex gap-6">
                     <Link
                         href={privacy.url()}

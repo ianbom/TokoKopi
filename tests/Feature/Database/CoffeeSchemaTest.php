@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
-test('database matches the Declasse Coffee catalog contract', function () {
+test('database matches the Deklase Coffee catalog contract', function () {
     expect(Schema::hasTable('product_categories'))->toBeTrue()
         ->and(Schema::hasTable('stocks'))->toBeTrue()
         ->and(Schema::hasTable('collections'))->toBeFalse()

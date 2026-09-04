@@ -147,7 +147,7 @@ export default function MyCart({
 
     return (
         <ShopLayout>
-            <Head title="Keranjang | Declasse" />
+            <Head title="Keranjang Deklasee" />
 
             <section className="border-t border-b border-hairline bg-sand">
                 <div className="grid min-h-[190px] lg:grid-cols-[1.25fr_.75fr]">

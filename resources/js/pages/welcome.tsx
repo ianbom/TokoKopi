@@ -40,7 +40,7 @@ function OutlineLink({ children }: { children: ReactNode }) {
 export default function Welcome({ wePresent, mostLoved }: Props) {
     return (
         <ShopLayout>
-            <Head title="Declasse Coffee" />
+            <Head title="Deklase Coffee" />
             <div className="overflow-x-clip bg-canvas text-ink">
                 <section className="grid min-h-[500px] grid-cols-1 border-b border-hairline lg:grid-cols-2">
                     <div className="flex min-h-[430px] flex-col justify-between bg-white p-7 sm:p-12 lg:min-h-0 lg:p-14">
@@ -62,7 +62,7 @@ export default function Welcome({ wePresent, mostLoved }: Props) {
                     </div>
                     <img
                         src={images.hero}
-                        alt="Hand holding a Declasse coffee can"
+                        alt="Hand holding a Deklase coffee can"
                         fetchPriority="high"
                         className="h-full min-h-[300px] w-full object-cover contrast-95 saturate-75"
                     />

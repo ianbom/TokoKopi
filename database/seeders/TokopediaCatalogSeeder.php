@@ -3,13 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
-use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use App\Models\Stock;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class TokopediaCatalogSeeder extends Seeder
@@ -19,13 +19,13 @@ class TokopediaCatalogSeeder extends Seeder
         $payload = $this->readPayload();
 
         DB::transaction(function () use ($payload): void {
-            $categories = $this->syncCategories($payload['categories'] ?? []);
-            $collections = $this->syncCollections($payload['collections'] ?? []);
-            $products = $this->syncProducts($payload, $categories);
+            $categories = $this->syncCategories($payload['products'] ?? []);
 
-            $this->syncImages($payload['product_images'] ?? [], $products);
-            $this->syncVariants($payload['product_variants'] ?? [], $products);
-            $this->syncProductCollections($payload['product_collections'] ?? [], $products, $collections);
+            foreach ($payload['products'] ?? [] as $productData) {
+                $product = $this->syncProduct($productData, $categories);
+                $this->syncImages($product, $productData['images'] ?? []);
+                $this->syncVariant($product, $productData);
+            }
         });
     }
 
@@ -38,155 +38,134 @@ class TokopediaCatalogSeeder extends Seeder
         }
 
         $payload = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-        if (! is_array($payload) || ($payload['schema_version'] ?? null) !== '1.0') {
+        if (! is_array($payload) || ! in_array((string) ($payload['schema_version'] ?? ''), ['2.0', '2.1'], true)) {
             throw new RuntimeException('Format Tokopedia catalog JSON tidak didukung.');
         }
 
         return $payload;
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function syncCategories(array $rows): array
+    /** @param array<int, array<string, mixed>> $products @return array<string, int> */
+    private function syncCategories(array $products): array
     {
-        $ids = [];
-        foreach ($rows as $row) {
-            $record = Category::query()->withTrashed()->updateOrCreate(
-                ['slug' => $row['slug']],
-                Arr::only($row, ['name', 'description', 'image_url', 'sort_order', 'is_active']),
+        $names = [
+            'coffee-beans' => 'Coffee Beans',
+            'espresso' => 'Espresso',
+            'filter-coffee' => 'Filter Coffee',
+            'ready-to-drink' => 'Ready to Drink',
+            'tea' => 'Tea',
+            'powder-siap-seduh' => 'Powder Siap Seduh',
+        ];
+        $slugs = collect($products)
+            ->flatMap(fn (array $product): array => $product['category_slugs'] ?? ['coffee-beans'])
+            ->concat(array_keys($names))
+            ->unique()
+            ->values();
+
+        return $slugs->mapWithKeys(function (string $slug) use ($names): array {
+            $name = $names[$slug] ?? Str::headline($slug);
+            $category = Category::query()->withTrashed()->updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $name,
+                    'description' => "Produk {$name} dari Deklase Roastery.",
+                    'sort_order' => (array_search($slug, array_keys($names), true) + 1) * 10,
+                    'is_active' => true,
+                ],
             );
-            if ($record->trashed()) {
-                $record->restore();
-            }
-            $ids[$record->slug] = $record->id;
-        }
+            $category->restore();
 
-        foreach ($rows as $row) {
-            $parentSlug = $row['parent_slug'] ?? null;
-            $parentId = $parentSlug ? ($ids[$parentSlug] ?? null) : null;
-            if ($parentSlug && ! $parentId) {
-                throw new RuntimeException("Parent category slug [{$parentSlug}] tidak ditemukan.");
-            }
-            Category::query()->whereKey($ids[$row['slug']])->update(['parent_id' => $parentId]);
-        }
-
-        return $ids;
+            return [$slug => $category->id];
+        })->all();
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function syncCollections(array $rows): array
+    /** @param array<string, mixed> $data @param array<string, int> $categories */
+    private function syncProduct(array $data, array $categories): Product
     {
-        $ids = [];
-        foreach ($rows as $row) {
-            $record = Collection::query()->withTrashed()->updateOrCreate(
-                ['slug' => $row['slug']],
-                Arr::only($row, ['name', 'description', 'banner_desktop_url', 'banner_mobile_url', 'sort_order', 'is_featured', 'is_active', 'starts_at', 'ends_at']),
-            );
-            if ($record->trashed()) {
-                $record->restore();
-            }
-            $ids[$record->slug] = $record->id;
-        }
+        $slug = (string) ($data['slug'] ?? Str::slug((string) ($data['title'] ?? 'tokopedia-product')));
+        $sku = $this->sku($data, $slug);
+        $product = Product::query()->withTrashed()->updateOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => (string) ($data['title'] ?? $slug),
+                'sku' => $sku,
+                'origin' => $data['origin'] ?? null,
+                'process' => $data['process'] ?? null,
+                'description' => (string) ($data['description'] ?? $data['title'] ?? ''),
+                'status' => 'active',
+                'is_featured' => false,
+                'is_new_arrival' => false,
+                'is_best_seller' => false,
+            ],
+        );
+        $product->restore();
+        $product->categories()->sync(collect($data['category_slugs'] ?? ['coffee-beans'])
+            ->map(fn (string $slug): ?int => $categories[$slug] ?? null)
+            ->filter()
+            ->all());
 
-        return $ids;
+        return $product;
     }
 
-    /** @param array<string, mixed> $payload */
-    private function syncProducts(array $payload, array $categories): array
+    /** @param array<int, array<string, mixed>> $images */
+    private function syncImages(Product $product, array $images): void
     {
-        $ids = [];
-        foreach ($payload['products'] ?? [] as $row) {
-            $categoryId = $categories[$row['category_slug']] ?? null;
-            if (! $categoryId) {
-                throw new RuntimeException("Category slug [{$row['category_slug']}] tidak ditemukan.");
+        $urls = [];
+        foreach ($images as $index => $imageData) {
+            $url = (string) ($imageData['url'] ?? $imageData['image_url'] ?? '');
+            if ($url === '') {
+                continue;
             }
-
-            $product = Product::query()->withTrashed()->updateOrCreate(
-                ['slug' => $row['slug']],
-                Arr::only($row, [
-                    'name', 'sku', 'brand_name', 'product_line', 'style_name', 'regular_price', 'sale_price',
-                    'short_description', 'description', 'weight', 'length', 'width', 'height', 'status',
-                    'is_featured', 'is_new_arrival', 'is_best_seller',
-                ]) + ['category_id' => $categoryId],
-            );
-            if ($product->trashed()) {
-                $product->restore();
-            }
-            $ids[$product->slug] = $product->id;
-        }
-
-        return $ids;
-    }
-
-    /** @param array<int, array<string, mixed>> $rows */
-    private function syncImages(array $rows, array $products): void
-    {
-        $grouped = [];
-        foreach ($rows as $row) {
-            $productId = $products[$row['product_slug']] ?? null;
-            if (! $productId) {
-                throw new RuntimeException("Product slug [{$row['product_slug']}] untuk image tidak ditemukan.");
-            }
-            $grouped[$productId][] = $row;
+            $urls[] = $url;
             $image = ProductImage::query()->withTrashed()->updateOrCreate(
-                ['product_id' => $productId, 'image_url' => $row['image_url']],
-                Arr::only($row, ['alt_text', 'sort_order', 'is_primary']),
+                ['product_id' => $product->id, 'image_url' => $url],
+                ['alt_text' => $imageData['alt'] ?? $product->name, 'sort_order' => $index, 'is_primary' => $index === 0],
             );
-            if ($image->trashed()) {
-                $image->restore();
-            }
+            $image->restore();
         }
 
-        foreach ($products as $productId) {
-            $urls = array_column($grouped[$productId] ?? [], 'image_url');
-            $query = ProductImage::query()->where('product_id', $productId);
-            $urls ? $query->whereNotIn('image_url', $urls)->delete() : $query->delete();
-        }
+        $query = ProductImage::query()->where('product_id', $product->id);
+        $urls === [] ? $query->delete() : $query->whereNotIn('image_url', $urls)->delete();
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function syncVariants(array $rows, array $products): void
+    /** @param array<string, mixed> $data */
+    private function syncVariant(Product $product, array $data): void
     {
-        $grouped = [];
-        foreach ($rows as $row) {
-            $productId = $products[$row['product_slug']] ?? null;
-            if (! $productId) {
-                throw new RuntimeException("Product slug [{$row['product_slug']}] untuk variant tidak ditemukan.");
-            }
-            $grouped[$productId][] = $row;
-            $variant = ProductVariant::query()->withTrashed()->updateOrCreate(
-                ['sku' => $row['sku']],
-                Arr::only($row, [
-                    'variant_name', 'color_name', 'color_hex', 'size', 'package_type', 'regular_price', 'sale_price',
-                    'stock', 'reserved_stock', 'weight', 'length', 'width', 'height', 'image_url', 'is_active',
-                ]) + ['product_id' => $productId],
-            );
-            if ($variant->trashed()) {
-                $variant->restore();
-            }
-        }
-
-        foreach ($products as $productId) {
-            $skus = array_column($grouped[$productId] ?? [], 'sku');
-            $query = ProductVariant::query()->where('product_id', $productId);
-            $skus ? $query->whereNotIn('sku', $skus)->delete() : $query->delete();
-        }
+        $regularPrice = (int) ($data['regular_price'] ?? $data['sale_price'] ?? 0);
+        $salePrice = isset($data['sale_price']) && (int) $data['sale_price'] < $regularPrice ? (int) $data['sale_price'] : null;
+        $variant = ProductVariant::query()->withTrashed()->updateOrCreate(
+            ['sku' => $this->sku($data, (string) $product->slug)],
+            [
+                'product_id' => $product->id,
+                'net_weight' => $data['net_weight'] ?? null,
+                'grind_type' => $data['grind_type'] ?? null,
+                'regular_price' => $regularPrice,
+                'sale_price' => $salePrice,
+                'shipping_weight_gram' => $this->grams($data['net_weight'] ?? null),
+                'image_url' => $data['images'][0]['url'] ?? null,
+                'is_active' => true,
+            ],
+        );
+        $variant->restore();
+        Stock::query()->updateOrCreate(['product_variant_id' => $variant->id], ['quantity' => 0, 'low_stock_threshold' => 5]);
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function syncProductCollections(array $rows, array $products, array $collections): void
+    /** @param array<string, mixed> $data */
+    private function sku(array $data, string $fallback): string
     {
-        $grouped = [];
-        foreach ($rows as $row) {
-            $productId = $products[$row['product_slug']] ?? null;
-            $collectionId = $collections[$row['collection_slug']] ?? null;
-            if (! $productId || ! $collectionId) {
-                throw new RuntimeException('Relasi product collection mengandung slug yang tidak ditemukan.');
-            }
-            $grouped[$productId][$collectionId] = ['sort_order' => $row['sort_order'] ?? 0];
+        $sourceId = preg_replace('/[^A-Za-z0-9]/', '', (string) ($data['source_id'] ?? '')) ?: md5($fallback);
+
+        return 'TKP-'.Str::upper(Str::substr($sourceId, 0, 24));
+    }
+
+    private function grams(?string $weight): int
+    {
+        if (! $weight || ! preg_match('/([0-9]+(?:[.,][0-9]+)?)\s*(kg|g|gram)/i', $weight, $match)) {
+            return 0;
         }
 
-        foreach ($products as $productId) {
-            Product::query()->whereKey($productId)->firstOrFail()->collections()->sync($grouped[$productId] ?? []);
-        }
+        $value = (float) str_replace(',', '.', $match[1]);
+
+        return strtolower($match[2]) === 'kg' ? (int) ($value * 1000) : (int) $value;
     }
 }

@@ -16,7 +16,7 @@ type AuthLayoutProps = {
 
 const defaultHero = {
     src: 'https://images.unsplash.com/photo-1515442261605-65987783cb6a?auto=format&fit=crop&w=1500&q=90',
-    alt: 'Kopi Declasse dalam suasana hangat dan tenang',
+    alt: 'Kopi Deklase dalam suasana hangat dan tenang',
 };
 
 export default function AuthLayout({
@@ -46,7 +46,7 @@ export default function AuthLayout({
                             href={home()}
                             className="font-serif text-[34px] leading-none tracking-[-0.045em] hover:text-oat"
                         >
-                            Declasse
+                            Deklase
                         </Link>
                         <span className="text-[9px] font-semibold tracking-[0.12em] uppercase">
                             Coffee roastery
@@ -117,7 +117,7 @@ export default function AuthLayout({
                             {(title || description) && (
                                 <div className="mb-8 border-b border-hairline pb-7 lg:mb-5 lg:pb-5">
                                     <p className="text-[9px] font-semibold tracking-[0.1em] text-primary uppercase">
-                                        Declasse account
+                                        Deklase account
                                     </p>
                                     {title && (
                                         <h1 className="mt-3 font-condensed text-[clamp(46px,6vw,72px)] leading-[0.82] font-semibold tracking-[-0.05em] uppercase lg:text-[clamp(40px,4.2vw,62px)]">

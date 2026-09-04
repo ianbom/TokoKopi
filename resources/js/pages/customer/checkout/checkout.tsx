@@ -63,12 +63,12 @@ const formatWeight = (grams: number) => {
 const formatDistance = (meters: number) =>
     meters >= 1000
         ? `${new Intl.NumberFormat('id-ID', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 0,
-          }).format(meters / 1000)} km`
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 0,
+        }).format(meters / 1000)} km`
         : `${new Intl.NumberFormat('id-ID', {
-              maximumFractionDigits: 0,
-          }).format(meters)} m`;
+            maximumFractionDigits: 0,
+        }).format(meters)} m`;
 
 const checkoutStockAlertKey = 'checkout.stock_alert';
 
@@ -114,13 +114,13 @@ const distanceMeters = (from: Coordinates, to: Coordinates) => {
     const haversine =
         Math.sin(latitudeDelta / 2) ** 2 +
         Math.cos(fromLatitude) *
-            Math.cos(toLatitude) *
-            Math.sin(longitudeDelta / 2) ** 2;
+        Math.cos(toLatitude) *
+        Math.sin(longitudeDelta / 2) ** 2;
 
     return Math.round(
         earthRadiusMeters *
-            2 *
-            Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)),
+        2 *
+        Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)),
     );
 };
 
@@ -224,7 +224,7 @@ function CheckoutScreen() {
 
     return (
         <ShopLayout>
-            <Head title="Checkout | Declasse Coffee" />
+            <Head title="Checkout Deklasee Coffee" />
 
             <main className="min-h-screen bg-canvas">
                 <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -329,12 +329,12 @@ function CheckoutScreen() {
                                                 {(!address.postal_code ||
                                                     !address.latitude ||
                                                     !address.longitude) && (
-                                                    <p className="mt-2 text-[11px] font-semibold text-error">
-                                                        Lengkapi kode pos dan
-                                                        koordinat di buku
-                                                        alamat.
-                                                    </p>
-                                                )}
+                                                        <p className="mt-2 text-[11px] font-semibold text-error">
+                                                            Lengkapi kode pos dan
+                                                            koordinat di buku
+                                                            alamat.
+                                                        </p>
+                                                    )}
                                             </button>
                                         ))}
                                     </div>
@@ -757,8 +757,8 @@ function CheckoutRouteMap({
                     {!storeCoordinates
                         ? 'Koordinat toko belum dikonfigurasi.'
                         : !destinationCoordinates
-                          ? 'Pilih alamat dengan koordinat untuk melihat rute.'
-                          : 'Memuat peta...'}
+                            ? 'Pilih alamat dengan koordinat untuk melihat rute.'
+                            : 'Memuat peta...'}
                 </div>
             )}
 

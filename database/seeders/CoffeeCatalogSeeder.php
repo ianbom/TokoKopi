@@ -50,7 +50,7 @@ class CoffeeCatalogSeeder extends Seeder
         }
 
         Voucher::query()->updateOrCreate(['code' => 'WELCOME10'], [
-            'name' => 'Welcome to Declasse', 'description' => '10% untuk pesanan kopi pertama.', 'discount_type' => 'percentage', 'discount_value' => 10,
+            'name' => 'Welcome to Deklase', 'description' => '10% untuk pesanan kopi pertama.', 'discount_type' => 'percentage', 'discount_value' => 10,
             'max_discount' => 25000, 'min_order_amount' => 100000, 'usage_limit' => null, 'used_count' => 0,
             'starts_at' => now()->subDay(), 'ends_at' => now()->addYear(), 'is_active' => true,
         ]);

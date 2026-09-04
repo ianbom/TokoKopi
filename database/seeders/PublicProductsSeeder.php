@@ -39,7 +39,7 @@ class PublicProductsSeeder extends Seeder
                         'sku' => $data['sku'],
                         'origin' => $data['origin'],
                         'process' => $data['process'],
-                        'description' => "<p>{$data['name']} adalah kopi pilihan Declasse dengan karakter {$data['description']}.</p>",
+                        'description' => "<p>{$data['name']} adalah kopi pilihan Deklase dengan karakter {$data['description']}.</p>",
                         'status' => 'active',
                         'is_featured' => $data['is_featured'],
                         'is_new_arrival' => $data['is_new_arrival'],

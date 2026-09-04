@@ -183,7 +183,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                     <section className="grid gap-4 border bg-canvas p-5 lg:grid-cols-3">
                         <Field label="Nama produk" error={errors.name}>
                             <Input
-                                placeholder="Contoh: Declasse Gayo Natural"
+                                placeholder="Contoh: Deklase Gayo Natural"
                                 value={form.data.name}
                                 onChange={(event) =>
                                     setField('name', event.target.value)
@@ -192,7 +192,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                         </Field>
                         <Field label="Slug" error={errors.slug}>
                             <Input
-                                placeholder="declasse-gayo-natural"
+                                placeholder="Deklase-gayo-natural"
                                 value={form.data.slug}
                                 onChange={(event) =>
                                     setField('slug', event.target.value)
@@ -338,7 +338,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             label="File gambar"
                                             error={
                                                 errors[
-                                                    `images.${imageIndex}.image`
+                                                `images.${imageIndex}.image`
                                                 ]
                                             }
                                         >
@@ -359,7 +359,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             label="Urutan"
                                             error={
                                                 errors[
-                                                    `images.${imageIndex}.sort_order`
+                                                `images.${imageIndex}.sort_order`
                                                 ]
                                             }
                                         >
@@ -445,7 +445,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="SKU"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.sku`
+                                            `variants.${variantIndex}.sku`
                                             ]
                                         }
                                     >
@@ -463,7 +463,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Berat bersih"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.net_weight`
+                                            `variants.${variantIndex}.net_weight`
                                             ]
                                         }
                                     >
@@ -482,7 +482,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Grind type"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.grind_type`
+                                            `variants.${variantIndex}.grind_type`
                                             ]
                                         }
                                     >
@@ -507,7 +507,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Harga normal"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.regular_price`
+                                            `variants.${variantIndex}.regular_price`
                                             ]
                                         }
                                     >
@@ -528,7 +528,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Harga promo"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.sale_price`
+                                            `variants.${variantIndex}.sale_price`
                                             ]
                                         }
                                     >
@@ -549,7 +549,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Berat kirim (gram)"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.shipping_weight_gram`
+                                            `variants.${variantIndex}.shipping_weight_gram`
                                             ]
                                         }
                                     >
@@ -572,7 +572,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Stok"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.stock_quantity`
+                                            `variants.${variantIndex}.stock_quantity`
                                             ]
                                         }
                                     >
@@ -595,7 +595,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Batas stok rendah"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.low_stock_threshold`
+                                            `variants.${variantIndex}.low_stock_threshold`
                                             ]
                                         }
                                     >
@@ -618,7 +618,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="File gambar varian"
                                         error={
                                             errors[
-                                                `variants.${variantIndex}.image`
+                                            `variants.${variantIndex}.image`
                                             ]
                                         }
                                         className="lg:col-span-2"

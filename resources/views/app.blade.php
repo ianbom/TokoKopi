@@ -21,7 +21,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Declasse') }}</title>
+            <title>{{ config('app.name', 'Deklase') }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

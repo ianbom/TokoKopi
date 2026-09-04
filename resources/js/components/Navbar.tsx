@@ -38,10 +38,14 @@ export default function Navbar({
                 </div>
                 <Link
                     href={home.url()}
-                    aria-label="Declasse home"
-                    className="font-serif text-3xl font-normal tracking-[-0.09em] text-teal normal-case transition-opacity hover:opacity-70 sm:text-4xl lg:text-[46px]"
+                    aria-label="Deklase home"
+                    className="inline-flex items-center justify-center transition-opacity hover:opacity-70"
                 >
-                    Declasse
+                    <img
+                        src="/logo/dc-header.webp"
+                        alt="Deklase"
+                        className="h-auto w-28 sm:w-36 lg:w-40"
+                    />
                 </Link>
                 <div className="flex items-center justify-end gap-4 lg:gap-8">
                     <Link
@@ -81,9 +85,11 @@ export default function Navbar({
                 aria-hidden={!isOpen}
             >
                 <div className="mb-8 flex items-center justify-between">
-                    <span className="font-serif text-4xl tracking-[-0.09em]">
-                        Declasse
-                    </span>
+                    <img
+                        src="/logo/dc-header.webp"
+                        alt="Deklase"
+                        className="h-auto w-36"
+                    />
                     <button
                         type="button"
                         aria-label="Close menu"

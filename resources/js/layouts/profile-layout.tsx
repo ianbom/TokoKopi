@@ -75,7 +75,7 @@ export default function ProfileLayout({
 }: ProfileLayoutProps) {
     return (
         <ShopLayout>
-            <Head title={`${pageTitle} | Declasse`} />
+            <Head title={`${pageTitle} Deklasee`} />
 
             <section className="border-t border-b border-hairline bg-sand">
                 <div className="grid min-h-[220px] lg:grid-cols-[1.25fr_.75fr]">
@@ -133,11 +133,10 @@ export default function ProfileLayout({
                                     <Link
                                         key={item.id}
                                         href={item.href}
-                                        className={`group flex min-w-fit items-center gap-3 border-r border-hairline px-5 py-4 text-[10px] font-semibold tracking-[0.06em] uppercase lg:min-w-0 lg:border-r-0 lg:border-b lg:px-8 ${
-                                            isActive
-                                                ? 'bg-ink text-canvas'
-                                                : 'text-ink hover:bg-oat/55 hover:text-primary'
-                                        }`}
+                                        className={`group flex min-w-fit items-center gap-3 border-r border-hairline px-5 py-4 text-[10px] font-semibold tracking-[0.06em] uppercase lg:min-w-0 lg:border-r-0 lg:border-b lg:px-8 ${isActive
+                                            ? 'bg-ink text-canvas'
+                                            : 'text-ink hover:bg-oat/55 hover:text-primary'
+                                            }`}
                                     >
                                         <span className="text-[8px] tabular-nums opacity-55">
                                             {String(index + 1).padStart(2, '0')}

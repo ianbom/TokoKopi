@@ -144,7 +144,6 @@ const adminNavGroups: NavGroup[] = [
                 href: '/admin/vouchers',
                 icon: CircleDollarSign,
             },
-          
         ],
     },
     {
@@ -200,19 +199,25 @@ export function AppSidebar() {
     const homeHref = isAdmin ? '/admin/dashboard' : dashboard();
 
     return (
-        <Sidebar collapsible="icon" variant="sidebar" className="border-r border-ink/15">
+        <Sidebar
+            collapsible="icon"
+            variant="sidebar"
+            className="border-r border-ink/15"
+        >
             <SidebarHeader className="h-16 border-b border-ink/15 px-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
                             asChild
-                            className="h-10 rounded-[6px] text-white transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            className="h-10 justify-center rounded-[6px] text-white transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         >
                             <Link href={homeHref} prefetch>
-                                <span className="text-[15px] font-semibold tracking-[-0.03em] text-white uppercase group-data-[collapsible=icon]:hidden">
-                                    Dashboard Declasse
-                                </span>
+                                <img
+                                    src="/logo/dc-header-white.webp"
+                                    alt="Dashboard Deklase"
+                                    className="h-auto w-32 group-data-[collapsible=icon]:hidden"
+                                />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

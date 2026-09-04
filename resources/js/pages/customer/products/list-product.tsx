@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import EditorialProductGrid from '@/components/storefront/editorial-product-grid';
@@ -107,6 +107,7 @@ export default function ListProduct({ products, filters, options }: Props) {
 
     return (
         <ShopLayout>
+            <Head title="List Product" />
             <section className="border-t border-b border-hairline">
                 <div className="grid lg:h-[327px] lg:grid-cols-[48.7%_51.3%]">
                     <div className="flex min-h-[280px] flex-col justify-between bg-[#f1e8dc] px-7 py-7 sm:px-12 sm:py-10 lg:min-h-0 lg:px-12 lg:py-14">
@@ -118,7 +119,7 @@ export default function ListProduct({ products, filters, options }: Props) {
                                 Shop All Coffee
                             </h1>
                             <p className="mt-4 max-w-[460px] text-[12px] leading-[1.45] text-ink/85 sm:text-[14px]">
-                                Explore Declasse&apos;s full collection of whole
+                                Explore Deklase&apos;s full collection of whole
                                 bean coffee, ready-to-drink cans, and everyday
                                 ritual essentials. Thoughtfully roasted,
                                 beautifully packaged, and designed for modern
@@ -403,6 +404,9 @@ function ProductPagination({ products }: { products: Props['products'] }) {
         return null;
     }
 
+    const previous = products.links[0];
+    const next = products.links.at(-1);
+
     return (
         <nav
             aria-label="Product pagination"
@@ -412,35 +416,71 @@ function ProductPagination({ products }: { products: Props['products'] }) {
                 {products.from}–{products.to} of {products.total}
             </div>
             <div className="flex items-center gap-1">
-                {products.links.map((link, index) => {
-                    const isPreviousOrNext =
-                        index === 0 || index === products.links.length - 1;
+                {previous?.url ? (
+                    <Link
+                        href={previous.url}
+                        preserveScroll
+                        preserveState
+                        replace
+                        className="border border-hairline bg-white px-3 py-2 text-teal transition-colors hover:bg-sand"
+                    >
+                        Previous
+                    </Link>
+                ) : (
+                    <span
+                        aria-disabled="true"
+                        className="px-3 py-2 text-body/40"
+                    >
+                        Previous
+                    </span>
+                )}
+                {products.links.slice(1, -1).map((link, index) => {
+                    const label = link.label.replace(/<[^>]+>/g, '').trim();
 
                     if (!link.url) {
                         return (
                             <span
-                                key={`${link.label}-${index}`}
+                                key={`${label}-${index}`}
                                 aria-disabled="true"
-                                className={`px-3 py-2 text-body/40 ${isPreviousOrNext ? 'hidden sm:block' : ''}`}
+                                className="px-3 py-2 text-body/40"
                             >
-                                {link.label}
+                                {label}
                             </span>
                         );
                     }
 
                     return (
                         <Link
-                            key={`${link.label}-${index}`}
+                            key={`${label}-${index}`}
                             href={link.url}
                             preserveScroll
                             preserveState
                             replace
-                            className={`border border-hairline px-3 py-2 transition-colors hover:bg-sand ${link.active ? 'bg-teal text-white' : 'bg-white text-teal'} ${isPreviousOrNext ? 'hidden sm:block' : ''}`}
+                            aria-current={link.active ? 'page' : undefined}
+                            className={`border border-hairline px-3 py-2 transition-colors hover:bg-sand ${link.active ? 'bg-teal text-white' : 'bg-white text-teal'}`}
                         >
-                            {link.label}
+                            {label}
                         </Link>
                     );
                 })}
+                {next?.url ? (
+                    <Link
+                        href={next.url}
+                        preserveScroll
+                        preserveState
+                        replace
+                        className="border border-hairline bg-white px-3 py-2 text-teal transition-colors hover:bg-sand"
+                    >
+                        Next
+                    </Link>
+                ) : (
+                    <span
+                        aria-disabled="true"
+                        className="px-3 py-2 text-body/40"
+                    >
+                        Next
+                    </span>
+                )}
             </div>
         </nav>
     );

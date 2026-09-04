@@ -12,12 +12,12 @@ class SiteSettingSeeder extends Seeder
         $now = now();
 
         $settings = [
-            ['key' => 'store_name', 'value' => 'Declasse Roastery', 'type' => 'string'],
+            ['key' => 'store_name', 'value' => 'Deklase Roastery', 'type' => 'string'],
             ['key' => 'store_email', 'value' => 'deklaseroastery@gmail.com', 'type' => 'string'],
             ['key' => 'store_phone', 'value' => '085649529166', 'type' => 'string'],
             ['key' => 'store_address', 'value' => 'Ruko PJKA, Jl. Mastrip, Kepanjen Kidul, Sukorejo, Kota Blitar, Jawa Timur 66117, Indonesia', 'type' => 'text'],
             ['key' => 'store_maps_url', 'value' => 'https://maps.app.goo.gl/WC84rwHiPkmPm6ng7', 'type' => 'string'],
-            ['key' => 'instagram_handle', 'value' => '@declasseid', 'type' => 'string'],
+            ['key' => 'instagram_handle', 'value' => '@Deklaseid', 'type' => 'string'],
             ['key' => 'tiktok_handle', 'value' => '@deklaseroastery', 'type' => 'string'],
             ['key' => 'store_latitude', 'value' => '-8.092497', 'type' => 'number'],
             ['key' => 'store_longitude', 'value' => '112.1801619', 'type' => 'number'],

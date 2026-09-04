@@ -23,9 +23,9 @@ class UserSeeder extends Seeder
             ],
         );
         User::query()->updateOrCreate(
-            ['email' => 'customer@declassecoffee.test'],
+            ['email' => 'customer@Deklasecoffee.test'],
             [
-                'name' => 'Declasse Customer',
+                'name' => 'Deklase Customer',
                 'password' => 'password',
                 'role' => 'customer',
                 'is_active' => true,
