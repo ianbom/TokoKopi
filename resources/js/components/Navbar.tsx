@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { about, cart, home, list, login } from '@/routes';
+import { about, cart, home, list, location, login } from '@/routes';
 
 type NavbarProps = {
     cartCount?: number;
@@ -34,6 +34,12 @@ export default function Navbar({
                         className="transition-colors hover:text-primary"
                     >
                         Home
+                    </Link>
+                    <Link
+                        href={location.url()}
+                        className="transition-colors hover:text-primary"
+                    >
+                        Locations
                     </Link>
                 </div>
                 <Link
@@ -119,6 +125,13 @@ export default function Navbar({
                     className="border-b border-hairline py-5 text-lg uppercase"
                 >
                     Story
+                </Link>
+                <Link
+                    href={location.url()}
+                    onClick={closeMenu}
+                    className="border-b border-hairline py-5 text-lg uppercase"
+                >
+                    Locations
                 </Link>
                 <Link
                     href={accountHref}

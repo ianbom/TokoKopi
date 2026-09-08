@@ -49,6 +49,7 @@ Route::inertia('/about', 'about/index')->name('about');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::inertia('/contact', 'contact/index')->name('contact');
+Route::inertia('/location', 'location')->name('location');
 Route::get('/new-product', NewProductController::class)->name('new-product');
 
 Route::middleware('guest')->group(function () {
