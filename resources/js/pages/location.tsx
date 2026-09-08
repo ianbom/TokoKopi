@@ -34,9 +34,10 @@ export default function LocationPage() {
                 setMarkerIcon(
                     leaflet.divIcon({
                         className: 'deklasse-location-pin',
-                        html: '<span style="display:block;width:18px;height:18px;border:3px solid #ffffff;border-radius:9999px;background:#135d60;box-shadow:0 0 0 1px rgba(19,93,96,.35)"></span>',
-                        iconSize: [18, 18],
-                        iconAnchor: [9, 9],
+                        html: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#ffffff" stroke="#135d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 3px 3px rgba(19,93,96,.35))"><path d="M3 9l1.5-5h15L21 9"/><path d="M5 13v7h14v-7"/><path d="M9 20v-5h6v5"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg>',
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 32],
+                        popupAnchor: [0, -30],
                     }),
                 );
                 setModules({
