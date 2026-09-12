@@ -6,6 +6,7 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Features;
 
@@ -97,6 +98,12 @@ class ProductBrowsingService
         $data = $this->card($product);
         $data['origin'] = $product->origin;
         $data['process'] = $product->process;
+        $data['is_wishlisted'] = $request->user()
+            ? Wishlist::query()
+                ->where('user_id', $request->user()->id)
+                ->where('product_id', $product->id)
+                ->exists()
+            : false;
         $data['images'] = $product->images->map(fn ($image) => ['url' => $image->image_url, 'alt' => $image->alt_text ?: $product->name])->all();
 
         $relatedProducts = Product::query()

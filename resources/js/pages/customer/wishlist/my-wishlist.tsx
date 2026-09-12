@@ -13,7 +13,6 @@ type WishlistItem = {
     price: number;
     sale_price: number | null;
     image: string | null;
-    badge: string | null;
     colors: Array<{
         name: string;
         hex: string;
@@ -139,12 +138,6 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                     decoding="async"
                     className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                 />
-
-                {item.badge && (
-                    <div className="absolute top-0 left-0 z-10 flex min-h-24 w-9 [transform:rotate(180deg)] items-center justify-center bg-primary px-1 py-2 text-[10px] font-semibold tracking-[0.08em] text-white uppercase [text-orientation:mixed] [writing-mode:vertical-rl] sm:w-10 sm:text-[11px]">
-                        {item.badge}
-                    </div>
-                )}
 
                 <button
                     type="button"

@@ -16,12 +16,12 @@ export default function ShopLayout({ children }: ShopLayoutProps) {
     const { props } = usePage<SharedShopProps>();
 
     return (
-        <div className="flex min-h-screen flex-col overflow-x-hidden bg-white font-sans text-teal">
+        <div className="flex min-h-[100dvh] min-w-0 flex-col overflow-x-clip bg-white font-sans text-teal">
             <Navbar
                 cartCount={props.shop?.cart_count ?? 0}
                 isAuthenticated={Boolean(props.auth.user)}
             />
-            <main className="w-full grow bg-white">{children}</main>
+            <main className="min-w-0 grow bg-white">{children}</main>
             <Toaster />
             <Footer />
         </div>

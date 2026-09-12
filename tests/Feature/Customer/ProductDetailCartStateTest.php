@@ -6,6 +6,7 @@ use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\User;
+use App\Models\Wishlist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -91,12 +92,34 @@ it('returns coffee detail data from the catalog relations', function () {
             ->has('product.variants', 1)
             ->where('product.variants.0.id', $activeVariant->id)
             ->where('product.variants.0.available_stock', 12)
+            ->where('product.is_wishlisted', false)
             ->has('relatedProducts', 1)
             ->where('relatedProducts.0.id', $related->id)
             ->missing('relatedProducts.1')
             ->where('recentProducts', []));
 
     expect($unrelated->id)->not->toBe($related->id);
+});
+
+it('returns the authenticated users wishlist state for coffee detail', function () {
+    $user = User::factory()->create();
+    $product = Product::query()->create([
+        'name' => 'Flores Honey',
+        'slug' => 'flores-honey',
+        'sku' => 'FLORES-01',
+        'status' => 'active',
+    ]);
+    Wishlist::query()->create([
+        'user_id' => $user->id,
+        'product_id' => $product->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('detail', ['product' => $product->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('customer/products/detail-product')
+            ->where('product.is_wishlisted', true));
 });
 
 it('adds an active coffee variant to the cart using stock relation data', function () {

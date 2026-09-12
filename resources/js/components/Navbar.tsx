@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, ShoppingCart, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { about, cart, home, list, location, login } from '@/routes';
+import { cart, home, list, location, login } from '@/routes';
 
 type NavbarProps = {
     cartCount?: number;
@@ -21,7 +21,7 @@ export default function Navbar({
 
     return (
         <header className="sticky top-0 z-50 border-b border-hairline bg-white text-teal">
-            <nav className="mx-auto grid min-h-16 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center px-5 text-[10px] font-semibold tracking-[0.04em] uppercase sm:px-8 lg:min-h-[68px] lg:px-10 lg:text-[11px]">
+            <nav className="mx-auto grid min-h-14 w-full max-w-[1600px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-4 text-[10px] font-semibold tracking-[0.04em] uppercase sm:min-h-16 sm:px-6 md:px-8 lg:min-h-[68px] lg:px-10 lg:text-[11px]">
                 <div className="hidden items-center gap-5 md:flex lg:gap-9">
                     <Link
                         href={list.url()}
@@ -45,39 +45,40 @@ export default function Navbar({
                 <Link
                     href={home.url()}
                     aria-label="Deklase home"
-                    className="inline-flex items-center justify-center transition-opacity hover:opacity-70"
+                    className="col-start-2 inline-flex items-center justify-center transition-opacity hover:opacity-70"
                 >
                     <img
                         src="/logo/dc-header.webp"
                         alt="Deklase"
-                        className="h-auto w-28 sm:w-36 lg:w-40"
+                        className="h-auto w-24 sm:w-28 lg:w-40"
                     />
                 </Link>
-                <div className="flex items-center justify-end gap-4 lg:gap-8">
-                    <Link
-                        href={list.url()}
-                        aria-label="Search products"
-                        className="hidden transition-colors hover:text-primary md:inline"
-                    >
-                        Search
-                    </Link>
+                <div className="col-start-3 flex min-w-0 items-center justify-end gap-1 sm:gap-2 md:gap-4 lg:gap-8">
+
                     <Link
                         href={accountHref}
-                        className="hidden transition-colors hover:text-primary sm:inline"
+                        className="hidden transition-colors hover:text-primary md:inline"
                     >
                         Account
                     </Link>
                     <Link
                         href={cart.url()}
-                        className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
+                        aria-label={`Cart (${bagCount} items)`}
+                        className="relative inline-flex size-10 shrink-0 items-center justify-center transition-colors hover:text-primary"
                     >
-                        Bag ({bagCount})
+                        <ShoppingCart
+                            className="size-[18px]"
+                            strokeWidth={1.5}
+                        />
+                        <span className="absolute -top-0.5 -right-1 grid min-w-4 place-items-center bg-primary px-1 py-px text-[8px] leading-3 text-teal tabular-nums">
+                            {bagCount}
+                        </span>
                     </Link>
                     <button
                         type="button"
                         aria-label="Open menu"
                         onClick={() => setIsOpen(true)}
-                        className="inline-flex size-10 items-center justify-center md:hidden"
+                        className="inline-flex size-10 shrink-0 items-center justify-center md:hidden"
                     >
                         <Menu className="size-5" strokeWidth={1.5} />
                     </button>
@@ -85,7 +86,7 @@ export default function Navbar({
             </nav>
             <div
                 className={[
-                    'fixed inset-0 z-[60] flex flex-col gap-0 bg-canvas p-5 text-ink transition-transform duration-300 md:hidden',
+                    'fixed inset-0 z-[60] flex min-h-[100dvh] flex-col gap-0 overflow-y-auto overscroll-contain bg-canvas px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] text-ink transition-transform duration-300 md:hidden',
                     isOpen ? 'translate-x-0' : 'translate-x-full',
                 ].join(' ')}
                 aria-hidden={!isOpen}
@@ -113,18 +114,11 @@ export default function Navbar({
                     Shop
                 </Link>
                 <Link
-                    href={home.url() + '#subscription'}
+                    href={home.url()}
                     onClick={closeMenu}
                     className="border-b border-hairline py-5 text-lg uppercase"
                 >
-                    Subscriptions
-                </Link>
-                <Link
-                    href={about.url()}
-                    onClick={closeMenu}
-                    className="border-b border-hairline py-5 text-lg uppercase"
-                >
-                    Story
+                    Home
                 </Link>
                 <Link
                     href={location.url()}
@@ -133,19 +127,13 @@ export default function Navbar({
                 >
                     Locations
                 </Link>
+
                 <Link
                     href={accountHref}
                     onClick={closeMenu}
                     className="border-b border-hairline py-5 text-lg uppercase"
                 >
                     Account
-                </Link>
-                <Link
-                    href={cart.url()}
-                    onClick={closeMenu}
-                    className="border-b border-hairline py-5 text-lg uppercase"
-                >
-                    Bag ({bagCount})
                 </Link>
             </div>
         </header>

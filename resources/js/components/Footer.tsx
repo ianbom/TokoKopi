@@ -39,15 +39,15 @@ export default function Footer() {
                     className="hidden min-h-36 bg-teal md:block"
                 />
             </section> */}
-            <section className="grid gap-10 border-b border-white/20 p-7 sm:grid-cols-2 lg:grid-cols-[2fr_repeat(3,1fr)] lg:gap-8 lg:p-10">
+            <section className="grid gap-8 border-b border-white/20 px-5 py-8 sm:grid-cols-2 sm:gap-10 sm:p-7 lg:grid-cols-[2fr_repeat(3,1fr)] lg:gap-8 lg:p-10">
                 <div id="newsletter">
-                    <h2 className="font-condensed text-4xl leading-[0.82] uppercase">
+                    <h2 className="font-condensed text-3xl leading-[0.82] uppercase sm:text-4xl">
                         Good coffee.
                         <br />
                         Occasional emails.
                     </h2>
                     <form
-                        className="mt-8 flex max-w-xs border-b border-oat/70"
+                        className="mt-8 flex w-full max-w-xs border-b border-oat/70"
                         onSubmit={(event) => event.preventDefault()}
                     >
                         <label htmlFor="footer-email" className="sr-only">
@@ -85,9 +85,9 @@ export default function Footer() {
                     <a href="#">Pinterest</a>
                 </FooterColumn>
             </section>
-            <div className="flex flex-col gap-3 px-7 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:items-center sm:justify-between lg:px-10">
+            <div className="flex flex-col gap-3 px-5 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-7 lg:px-10">
                 <span>© 2026 Deklase Coffee</span>
-                <span className="flex gap-6">
+                <span className="flex flex-wrap gap-x-6 gap-y-2">
                     <Link
                         href={privacy.url()}
                         className="transition-colors hover:text-primary"
