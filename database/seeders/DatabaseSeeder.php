@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             TokopediaCatalogSeeder::class,
             PublicProductsSeeder::class,
             BannerSeeder::class,
-            PageSeeder::class,
             SiteSettingSeeder::class,
         ]);
     }

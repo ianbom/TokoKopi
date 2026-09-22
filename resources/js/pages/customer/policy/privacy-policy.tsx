@@ -1,6 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import ShopLayout from '@/layouts/shop-layout';
-import { useState } from 'react';
 import {
     CheckCircle2,
     User,
@@ -24,6 +22,8 @@ import {
     FileText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import ShopLayout from '@/layouts/shop-layout';
 
 const sidebarItems = [
     { id: 'introduction', icon: CheckCircle2, label: '1. Pendahuluan' },

@@ -116,7 +116,7 @@ it('emails the customer when admin creates a shipment from an order', function (
 function seedShipmentSettings(): void
 {
     collect([
-        'store_name' => 'Anemi Store',
+        'store_name' => 'Deklase Roastery',
         'store_phone' => '080000000000',
         'store_email' => 'store@example.test',
         'store_address' => 'Jl. Store No. 1',

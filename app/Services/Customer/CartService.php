@@ -4,7 +4,6 @@ namespace App\Services\Customer;
 
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\User;
@@ -23,9 +22,6 @@ class CartService
         return [
             'cartItems' => $cartItems->values()->all(),
             'summary' => $summary,
-            'suggestedProducts' => $this->suggestedProducts(
-                $cartItems->pluck('product_id')->filter()->all(),
-            ),
         ];
     }
 
@@ -195,37 +191,6 @@ class CartService
             'discount' => $discount,
             'total' => $subtotal + $shipping - $discount,
         ];
-    }
-
-    private function suggestedProducts(array $excludedProductIds, int $limit = 4): array
-    {
-        return Product::query()
-            ->with([
-                'primaryImage:id,product_id,image_url,alt_text',
-                'variants' => fn ($query) => $query
-                    ->select('id', 'product_id', 'regular_price', 'sale_price', 'is_active')
-                    ->with('stock:id,product_variant_id,quantity')
-                    ->where('is_active', true),
-            ])
-            ->where('status', 'active')
-            ->when($excludedProductIds !== [], fn ($query) => $query->whereNotIn('id', $excludedProductIds))
-            ->orderByDesc('is_featured')
-            ->orderByDesc('is_new_arrival')
-            ->latest()
-            ->limit($limit)
-            ->get()
-            ->map(fn (Product $product) => [
-                'id' => $product->id,
-                'slug' => $product->slug,
-                'title' => $product->name,
-                'price' => (float) ($product->variants->first()?->sale_price ?? $product->variants->first()?->regular_price ?? 0),
-                'image' => $product->primaryImage?->image_url,
-                'available_stock' => $product->variants->sum(
-                    fn (ProductVariant $variant) => max(0, (int) ($variant->stock?->quantity ?? 0)),
-                ),
-            ])
-            ->values()
-            ->all();
     }
 
     private function variantName(ProductVariant $variant): string

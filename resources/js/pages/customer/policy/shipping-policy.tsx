@@ -1,6 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import ShopLayout from '@/layouts/shop-layout';
-import { useState } from 'react';
 import {
     Box,
     Calendar,
@@ -16,6 +14,8 @@ import {
     Truck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import ShopLayout from '@/layouts/shop-layout';
 
 const sidebarItems = [
     { id: 'processing', icon: Clock, label: '1. Waktu Pemrosesan Pesanan' },

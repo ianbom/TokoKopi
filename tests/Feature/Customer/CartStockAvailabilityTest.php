@@ -34,11 +34,9 @@ it('returns coffee cart metadata and marks excessive quantity unavailable', func
             ->where('cartItems.0.variant.sku', $variant->sku));
 });
 
-it('returns an available coffee cart item and database-backed suggestions', function () {
+it('returns an available coffee cart item', function () {
     $user = User::factory()->create();
     [$product, $variant] = createCoffeeCartProduct(stock: 4);
-    [$suggestedProduct] = createCoffeeCartProduct(stock: 6, name: 'Toraja Midnight');
-
     createCoffeeCartItem($user, $product, $variant, quantity: 2);
 
     $this->actingAs($user)
@@ -49,10 +47,7 @@ it('returns an available coffee cart item and database-backed suggestions', func
             ->where('cartItems.0.available_stock', 4)
             ->where('cartItems.0.is_available', true)
             ->where('summary.item_count', 2)
-            ->where('summary.subtotal', 170000)
-            ->where('suggestedProducts.0.id', $suggestedProduct->id)
-            ->where('suggestedProducts.0.available_stock', 6)
-            ->where('suggestedProducts.0.image', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085'));
+            ->where('summary.subtotal', 170000));
 });
 
 it('updates coffee cart quantity using stock relation data', function () {

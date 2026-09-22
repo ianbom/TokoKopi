@@ -34,19 +34,9 @@ type CartSummary = {
     total: number;
 };
 
-type SuggestedProduct = {
-    id: number;
-    slug: string;
-    title: string;
-    price: number;
-    image: string | null;
-    available_stock: number;
-};
-
 type Props = {
     cartItems: CartItem[];
     summary: CartSummary;
-    suggestedProducts: SuggestedProduct[];
 };
 
 const formatPrice = (price: number) =>
@@ -78,7 +68,6 @@ const stockIssueMessage = (item: CartItem) => {
 export default function MyCart({
     cartItems,
     summary,
-    suggestedProducts,
 }: Props) {
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
     const [processingItemId, setProcessingItemId] = useState<number | null>(
@@ -416,54 +405,6 @@ function SummaryRow({
                 {value}
             </dd>
         </div>
-    );
-}
-
-function SuggestedProducts({ products }: { products: SuggestedProduct[] }) {
-    return (
-        <section className="border-b border-hairline bg-canvas">
-            <div className="border-b border-hairline px-7 py-7 sm:px-10 lg:px-16">
-                <p className="text-[9px] font-semibold tracking-[0.1em] uppercase">
-                    Continue exploring
-                </p>
-                <h2 className="mt-2 font-condensed text-[clamp(36px,4.5vw,64px)] leading-[0.82] font-semibold tracking-[-0.045em] uppercase">
-                    Add another ritual.
-                </h2>
-            </div>
-            <div className="grid grid-cols-2 border-l border-hairline md:grid-cols-4">
-                {products.slice(0, 4).map((product, index) => (
-                    <Link
-                        key={product.id}
-                        href={detail.url({ query: { product: product.slug } })}
-                        className="group border-r border-b border-hairline p-3 sm:p-4"
-                    >
-                        <span className="text-[8px] font-semibold tracking-[0.08em] uppercase">
-                            {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <div className="mt-3 aspect-[.85] overflow-hidden bg-oat">
-                            {product.image ? (
-                                <img
-                                    src={product.image}
-                                    alt={product.title}
-                                    loading="lazy"
-                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                                />
-                            ) : (
-                                <span className="flex h-full items-center justify-center px-3 text-center text-[8px] font-semibold tracking-[0.08em] text-ink/55 uppercase">
-                                    Image unavailable
-                                </span>
-                            )}
-                        </div>
-                        <h3 className="mt-3 text-[10px] font-semibold tracking-[0.04em] uppercase">
-                            {product.title}
-                        </h3>
-                        <p className="mt-1 text-[10px] text-ink/70">
-                            {formatPrice(product.price)}
-                        </p>
-                    </Link>
-                ))}
-            </div>
-        </section>
     );
 }
 

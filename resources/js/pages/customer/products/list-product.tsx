@@ -1,6 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import EditorialProductGrid from '@/components/storefront/editorial-product-grid';
 import ShopLayout from '@/layouts/shop-layout';
 import { detail, list } from '@/routes';
@@ -13,11 +12,6 @@ type ProductCard = {
     price: number;
     sale_price: number | null;
     image_url: string | null;
-};
-
-type FilterOption = {
-    value: string;
-    label: string;
 };
 
 type Filters = {
@@ -44,13 +38,6 @@ type Props = {
         }>;
     };
     filters: Filters;
-    options: {
-        categories: Array<{ id: number; name: string; slug: string }>;
-        grindTypes: string[];
-        processes: string[];
-        priceRanges: FilterOption[];
-        sorts: FilterOption[];
-    };
 };
 
 type QuickLink = {
@@ -67,8 +54,6 @@ const quickLinks = [
     { label: 'Best Sellers', filters: { type: 'best_seller' } },
 ] satisfies QuickLink[];
 
-const humanize = (value: string) => value.replaceAll('_', ' ');
-
 const cleanQuery = (filters: Filters) =>
     Object.fromEntries(
         Object.entries(filters).filter(
@@ -77,14 +62,12 @@ const cleanQuery = (filters: Filters) =>
         ),
     );
 
-export default function ListProduct({ products, filters, options }: Props) {
+export default function ListProduct({ products, filters }: Props) {
     const [isFiltering, setIsFiltering] = useState(false);
-    const [openFilter, setOpenFilter] = useState<string | null>(null);
 
     const visit = (changes: Partial<Filters>) => {
         const next = { ...filters, ...changes };
 
-        setOpenFilter(null);
         setIsFiltering(true);
 
         router.get(list.url(), cleanQuery(next), {
@@ -94,16 +77,6 @@ export default function ListProduct({ products, filters, options }: Props) {
             replace: true,
         });
     };
-
-    const selectedCategory = options.categories.find(
-        (category) => category.slug === filters.category,
-    );
-    const selectedPrice = options.priceRanges.find(
-        (price) => price.value === filters.price,
-    );
-    const selectedSort = options.sorts.find(
-        (sort) => sort.value === filters.sort,
-    );
 
     return (
         <ShopLayout>
@@ -251,115 +224,6 @@ export default function ListProduct({ products, filters, options }: Props) {
             />
             <ProductPagination products={products} />
         </ShopLayout>
-    );
-}
-
-function FilterMenu({
-    id,
-    isOpen,
-    label,
-    onOpenChange,
-    options,
-    value,
-    onChange,
-}: {
-    id: string;
-    isOpen: boolean;
-    label: string;
-    onOpenChange: (id: string | null) => void;
-    options: FilterOption[];
-    value: string;
-    onChange: (value: string) => void;
-}) {
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!isOpen) {
-            return;
-        }
-
-        const closeOnOutsideClick = (event: PointerEvent) => {
-            if (!menuRef.current?.contains(event.target as Node)) {
-                onOpenChange(null);
-            }
-        };
-        const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                onOpenChange(null);
-            }
-        };
-
-        document.addEventListener('pointerdown', closeOnOutsideClick);
-        document.addEventListener('keydown', closeOnEscape);
-
-        return () => {
-            document.removeEventListener('pointerdown', closeOnOutsideClick);
-            document.removeEventListener('keydown', closeOnEscape);
-        };
-    }, [isOpen, onOpenChange]);
-
-    const selectOption = (nextValue: string) => {
-        onOpenChange(null);
-        onChange(nextValue);
-    };
-
-    return (
-        <div
-            ref={menuRef}
-            className={`relative border-r border-hairline ${isOpen ? 'z-50' : ''}`}
-        >
-            <button
-                type="button"
-                aria-expanded={isOpen}
-                aria-haspopup="menu"
-                onClick={() => onOpenChange(isOpen ? null : id)}
-                className="flex h-[49px] w-full cursor-pointer items-center justify-center gap-6 px-5 transition-colors duration-200 hover:bg-canvas/70 motion-reduce:transition-none"
-            >
-                <span className="truncate">{label}</span>
-                <ArrowRight
-                    size={13}
-                    strokeWidth={1.8}
-                    className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${isOpen ? 'rotate-90' : ''}`}
-                />
-            </button>
-            <div
-                role="menu"
-                aria-hidden={!isOpen}
-                className={`absolute top-full left-0 z-50 max-h-72 min-w-full origin-top overflow-y-auto border border-hairline bg-canvas py-2 shadow-xl transition duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${
-                    isOpen
-                        ? 'pointer-events-auto translate-y-0 scale-y-100 opacity-100'
-                        : 'pointer-events-none -translate-y-1 scale-y-95 opacity-0'
-                }`}
-            >
-                <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={value === ''}
-                    tabIndex={isOpen ? 0 : -1}
-                    onClick={() => selectOption('')}
-                    className={`block w-full px-4 py-2 text-left text-[10px] tracking-[0.06em] uppercase hover:bg-sand ${
-                        value === '' ? 'bg-sand' : ''
-                    }`}
-                >
-                    All
-                </button>
-                {options.map((option) => (
-                    <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={value === option.value}
-                        tabIndex={isOpen ? 0 : -1}
-                        onClick={() => selectOption(option.value)}
-                        className={`block w-full px-4 py-2 text-left text-[10px] tracking-[0.06em] uppercase hover:bg-sand ${
-                            value === option.value ? 'bg-sand' : ''
-                        }`}
-                    >
-                        {option.label}
-                    </button>
-                ))}
-            </div>
-        </div>
     );
 }
 

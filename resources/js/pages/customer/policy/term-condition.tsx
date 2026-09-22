@@ -1,6 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import ShopLayout from '@/layouts/shop-layout';
-import { useState } from 'react';
 import {
     Box,
     Calendar,
@@ -15,6 +13,8 @@ import {
     UserCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import ShopLayout from '@/layouts/shop-layout';
 
 const sidebarItems = [
     { id: 'agreement', icon: Scale, label: '1. Persetujuan Ketentuan' },

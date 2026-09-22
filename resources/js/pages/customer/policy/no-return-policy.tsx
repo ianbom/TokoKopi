@@ -1,11 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import ShopLayout from '@/layouts/shop-layout';
-import { useState } from 'react';
 import {
     AlertTriangle,
     Ban,
-    Box,
-    CheckCircle2,
     ChevronDown,
     Clock,
     FileText,
@@ -17,6 +13,8 @@ import {
     Truck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import ShopLayout from '@/layouts/shop-layout';
 
 const sidebarItems = [
     { id: 'final-sales', icon: Ban, label: '1. Semua Penjualan Final' },

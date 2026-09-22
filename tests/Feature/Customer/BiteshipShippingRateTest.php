@@ -39,7 +39,7 @@ test('shipping rates use store and destination postal codes', function () {
 
     $rates = (new BiteshipService($settings))->shippingRates('40123', [
         [
-            'name' => 'Khimar',
+            'name' => 'Arabica House Blend',
             'description' => 'SKU-1',
             'value' => 150000,
             'quantity' => 1,

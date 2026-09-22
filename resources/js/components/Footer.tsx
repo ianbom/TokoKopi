@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 
-import { about, home, list } from '@/routes';
+import { home, list } from '@/routes';
 import { privacy, shipping } from '@/routes/policy';
 
 export default function Footer() {
@@ -73,11 +73,11 @@ export default function Footer() {
                     <a href="#rituals">Bundles</a>
                     <a href={home.url()}>Merchandise</a>
                 </FooterColumn>
-                <FooterColumn title="About">
-                    <Link href={about.url()}>Our story</Link>
-                    <a href="#story">Roasting</a>
-                    <a href="#">Journal</a>
-                    <a href="#">Wholesale</a>
+                <FooterColumn title="Deklase">
+                    <a href="#newsletter">Newsletter</a>
+                    <a href={home.url()}>Tentang kopi kami</a>
+                    <a href={list.url()}>Semua kopi</a>
+                    <a href="https://instagram.com/declasseid">Instagram</a>
                 </FooterColumn>
                 <FooterColumn title="Follow">
                     <a href="#">Instagram</a>
