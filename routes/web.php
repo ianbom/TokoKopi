@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CustomerAddressController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\HomeSettingController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentLogController;
@@ -20,17 +21,16 @@ use App\Http\Controllers\Admin\ShipmentController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\WishlistInsightController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Customer\AddressController;
 use App\Http\Controllers\Customer\BiteshipAreaController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\CheckoutController;
 use App\Http\Controllers\Customer\HomeController as CustomerHomeController;
 use App\Http\Controllers\Customer\MidtransFinishController;
-use App\Http\Controllers\Customer\MidtransWebhookController;
 use App\Http\Controllers\Customer\NotificationController as CustomerNotificationController;
 use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Customer\ProductController as CustomerProductController;
-use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Customer\WishlistController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Http\Request;
@@ -123,7 +123,6 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
     Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-
     Route::get('stock', [StockController::class, 'index'])->name('stock.index');
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
@@ -175,6 +174,8 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
     Route::put('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
     Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
 
+    Route::get('home-settings', [HomeSettingController::class, 'index'])->name('home-settings.index');
+    Route::put('home-settings', [HomeSettingController::class, 'update'])->name('home-settings.update');
 
     Route::get('settings', [SettingController::class, 'index'])->defaults('section', 'store')->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
@@ -193,6 +194,5 @@ Route::middleware(['auth', 'admin', 'admin.activity'])->prefix('admin')->name('a
     Route::get('reports/{type}/export', [ReportController::class, 'export'])->whereIn('type', ['sales', 'products', 'customers', 'shipments', 'vouchers'])->name('reports.export');
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 });
-
 
 require __DIR__.'/settings.php';

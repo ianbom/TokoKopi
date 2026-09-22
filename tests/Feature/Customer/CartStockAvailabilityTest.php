@@ -103,7 +103,7 @@ function createCoffeeCartProduct(int $stock, string $name = 'Espresso No. 01'): 
         'sku' => 'COFFEE-'.Str::upper(Str::random(8)),
         'origin' => 'Dataran Tinggi Gayo',
         'process' => 'washed',
-        'description' => '<p>Manis, bersih, dan seimbang.</p>',
+        'description' => '<p>Manis dan seimbang.</p>',
         'status' => 'active',
         'is_featured' => true,
     ]);

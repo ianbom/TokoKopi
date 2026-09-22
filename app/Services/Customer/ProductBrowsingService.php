@@ -7,11 +7,14 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Wishlist;
+use App\Services\Settings\SiteSettingService;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Features;
 
 class ProductBrowsingService
 {
+    public function __construct(private readonly SiteSettingService $settings) {}
+
     public function homeData(): array
     {
         $banners = $this->activeBanners('homepage')->get();
@@ -28,6 +31,8 @@ class ProductBrowsingService
             'recentAdditions' => $this->section('new', 6),
             'mostLoved' => $this->section('best', 4),
             'journalPosts' => [],
+            'welcomeText' => $this->settings->get('welcome_text', "Coffee\nwithout\nthe routine."),
+            'welcomeCarousel' => $this->welcomeCarousel(),
         ];
     }
 
@@ -157,7 +162,7 @@ class ProductBrowsingService
             'hover_image_url' => $product->images->skip(1)->first()?->image_url,
             'badge' => $product->is_new_arrival ? 'NEW' : ($product->is_best_seller ? 'BEST SELLER' : null), 'label' => null, 'is_wishlisted' => false,
             'available_stock' => (int) $product->variants->sum(fn ($item) => $item->stock?->quantity ?? 0),
-            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => trim(($item->net_weight ?? '').' '.str_replace('_', ' ', $item->grind_type ?? '')), 'net_weight' => $item->net_weight, 'grind_type' => $item->grind_type, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
+            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => trim(($item->net_weight ?? '').' '.str_replace('_', ' ', $item->grind_type ?? '')), 'net_weight' => $item->net_weight, 'grind_type' => $item->grind_type, 'tasting_notes' => $item->tasting_notes, 'image_url' => $item->image_url, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
         ];
     }
 
@@ -169,5 +174,26 @@ class ProductBrowsingService
     private function banner(?Banner $banner): ?array
     {
         return $banner ? ['id' => $banner->id, 'title' => $banner->title, 'subtitle' => $banner->subtitle, 'image_desktop_url' => $banner->image_desktop_url, 'image_mobile_url' => $banner->image_mobile_url, 'button_text' => $banner->button_text, 'button_url' => $banner->button_url] : null;
+    }
+
+    private function welcomeCarousel(): array
+    {
+        $slides = json_decode((string) $this->settings->get('welcome_carousel', '[]'), true);
+
+        if (! is_array($slides)) {
+            return [];
+        }
+
+        return collect($slides)
+            ->filter(fn ($slide) => is_array($slide) && filled($slide['image_url'] ?? null) && ($slide['is_active'] ?? true))
+            ->sortBy(fn (array $slide) => (int) ($slide['sort_order'] ?? 0))
+            ->map(fn (array $slide) => [
+                'image_url' => (string) $slide['image_url'],
+                'alt_text' => (string) ($slide['alt_text'] ?? 'Deklase coffee'),
+                'sort_order' => (int) ($slide['sort_order'] ?? 0),
+                'is_active' => true,
+            ])
+            ->values()
+            ->all();
     }
 }

@@ -30,6 +30,7 @@ it('seeds one active coffee product for every local product image', function () 
             ->and(file_exists(public_path(urldecode(ltrim($imageUrl, '/')))))->toBeTrue()
             ->and($product->variants)->toHaveCount(1)
             ->and($product->variants->sole()->is_active)->toBeTrue()
+            ->and($product->variants->sole()->tasting_notes)->toBe('Manis dan seimbang')
             ->and($product->variants->sole()->stock?->quantity)->toBe(24);
     }
 });

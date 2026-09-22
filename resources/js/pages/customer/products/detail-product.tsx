@@ -19,6 +19,7 @@ type Variant = {
     sku: string;
     net_weight: string | null;
     grind_type: string | null;
+    tasting_notes: string | null;
     regular_price: number;
     sale_price: number | null;
     image_url?: string | null;
@@ -94,15 +95,32 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
         product.price;
     const description =
         product.short_description || stripHtml(product.description);
-    const selectedImage = product.images[activeImageIndex];
+    const gallery = [
+        ...product.images,
+        ...product.variants.flatMap((variant) =>
+            variant.image_url
+                ? [
+                      {
+                          url: variant.image_url,
+                          alt: `${product.title} ${humanize(variant.grind_type) ?? variant.sku}`,
+                      },
+                  ]
+                : [],
+        ),
+    ].filter(
+        (image, index, images) =>
+            images.findIndex((candidate) => candidate.url === image.url) ===
+            index,
+    );
+    const selectedImage = gallery[activeImageIndex];
     const meta = [
         ['ORIGIN', product.origin],
         ['PROCESS', humanize(product.process)],
         [
-            'FORMAT',
+            'PRODUCER',
             humanize(selectedVariant?.grind_type ?? null) ?? product.category,
         ],
-        ['WEIGHT', selectedVariant?.net_weight ?? null],
+        ['TASTING NOTES', selectedVariant?.tasting_notes ?? null],
     ].filter(([, value]) => value) as Array<[string, string]>;
 
     const selectVariant = (variant: Variant) => {
@@ -111,7 +129,7 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
         cartForm.setData('quantity', 1);
 
         if (variant.image_url) {
-            const variantImageIndex = product.images.findIndex(
+            const variantImageIndex = gallery.findIndex(
                 (image) => image.url === variant.image_url,
             );
 
@@ -156,12 +174,12 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
             <main className="min-w-0 border-t border-hairline bg-canvas text-ink">
                 <section className="grid min-w-0 border-b border-hairline lg:grid-cols-2">
                     <ProductGallery
-                        gallery={product.images}
+                        gallery={gallery}
                         activeIndex={activeImageIndex}
                         mainImage={selectedImage}
                         onNext={() =>
                             setActiveImageIndex((current) =>
-                                current === product.images.length - 1
+                                current === gallery.length - 1
                                     ? 0
                                     : current + 1,
                             )
@@ -169,10 +187,11 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                         onPrevious={() =>
                             setActiveImageIndex((current) =>
                                 current === 0
-                                    ? product.images.length - 1
+                                    ? gallery.length - 1
                                     : current - 1,
                             )
                         }
+                        onSelect={setActiveImageIndex}
                         productTitle={product.title}
                     />
 
@@ -218,9 +237,14 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                                 variant.id ===
                                                 selectedVariant?.id;
                                             const label =
-                                                humanize(variant.grind_type) ??
-                                                variant.net_weight ??
-                                                variant.sku;
+                                                [
+                                                    humanize(
+                                                        variant.grind_type,
+                                                    ),
+                                                    variant.net_weight,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ') || 'Variant';
 
                                             return (
                                                 <button
@@ -363,6 +387,7 @@ function ProductGallery({
     mainImage,
     onNext,
     onPrevious,
+    onSelect,
     productTitle,
 }: {
     gallery: ProductImage[];
@@ -370,6 +395,7 @@ function ProductGallery({
     mainImage?: ProductImage;
     onNext: () => void;
     onPrevious: () => void;
+    onSelect: (index: number) => void;
     productTitle: string;
 }) {
     return (
@@ -411,6 +437,31 @@ function ProductGallery({
                     </>
                 )}
             </div>
+            {gallery.length > 0 ? (
+                <div className="flex snap-x gap-3 overflow-x-auto border-b border-hairline bg-oat px-4 py-4 [scrollbar-width:thin] sm:px-5">
+                    {gallery.map((image, index) => (
+                        <button
+                            key={`${image.url}-${index}`}
+                            type="button"
+                            aria-label={`Show image ${index + 1} for ${productTitle}`}
+                            aria-pressed={index === activeIndex}
+                            onClick={() => onSelect(index)}
+                            className={`relative aspect-square w-24 shrink-0 snap-start overflow-hidden border transition-all sm:w-28 ${
+                                index === activeIndex
+                                    ? 'border-ink opacity-100'
+                                    : 'border-hairline opacity-55 hover:opacity-100'
+                            }`}
+                        >
+                            <img
+                                src={image.url}
+                                alt={image.alt}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                            />
+                        </button>
+                    ))}
+                </div>
+            ) : null}
         </section>
     );
 }
@@ -432,10 +483,9 @@ function CoffeeStory({ product }: { product: ProductDetail }) {
                         Stock details
                     </p>
                     <div className="mt-3 overflow-x-auto border-y border-ink/20">
-                        <table className="w-full min-w-[520px] text-left text-[9px]">
+                        <table className="w-full min-w-[440px] text-left text-[9px]">
                             <thead className="border-b border-ink/20 text-ink/60 uppercase">
                                 <tr>
-                                    <th className="py-2.5 pr-3">SKU</th>
                                     <th className="py-2.5 pr-3">Grind</th>
                                     <th className="py-2.5 pr-3">Weight</th>
                                     <th className="py-2.5 pr-3">Price</th>
@@ -448,9 +498,6 @@ function CoffeeStory({ product }: { product: ProductDetail }) {
                                         key={variant.id}
                                         className="border-b border-ink/15 last:border-b-0"
                                     >
-                                        <td className="py-3 pr-3 font-semibold">
-                                            {variant.sku}
-                                        </td>
                                         <td className="py-3 pr-3 capitalize">
                                             {humanize(variant.grind_type) ??
                                                 '-'}

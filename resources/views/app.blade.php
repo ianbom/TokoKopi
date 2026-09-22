@@ -12,8 +12,8 @@
             }
         </style>
 
-        <link rel="icon" href="favicon.ico" type="image/png">
-        <link rel="apple-touch-icon" href="favicon.ico">
+        <link rel="icon" href="favicon.svg" type="image/png">
+        <link rel="apple-touch-icon" href="favicon.svg">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=jost:400,500,600|fraunces:300,400" rel="stylesheet" />

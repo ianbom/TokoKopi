@@ -84,7 +84,7 @@ class CoffeeCatalogSeeder extends Seeder
             ]
             : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'grind_type' => null, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
 
-        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'description' => "<p>{$name} dengan karakter manis, bersih, dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
+        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'description' => "<p>{$name} dengan karakter Manis dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
     }
 
     private function images(string $primary): array

@@ -24,7 +24,7 @@ it('returns coffee detail data from the catalog relations', function () {
         'sku' => 'ESPRESSO-01',
         'origin' => 'Dataran Tinggi Gayo',
         'process' => 'washed',
-        'description' => '<p>Manis, bersih, dan seimbang.</p>',
+        'description' => '<p>Manis dan seimbang.</p>',
         'status' => 'active',
     ]);
     $product->categories()->attach($category);
@@ -48,6 +48,8 @@ it('returns coffee detail data from the catalog relations', function () {
         'sku' => 'ESPRESSO-01-200-WB',
         'net_weight' => '200gram',
         'grind_type' => 'whole_bean',
+        'tasting_notes' => 'Brown sugar dan citrus',
+        'image_url' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93',
         'regular_price' => 85000,
         'shipping_weight_gram' => 250,
         'is_active' => true,
@@ -91,6 +93,8 @@ it('returns coffee detail data from the catalog relations', function () {
             ->where('product.images.1.alt', 'Espresso No. 01 brewing')
             ->has('product.variants', 1)
             ->where('product.variants.0.id', $activeVariant->id)
+            ->where('product.variants.0.tasting_notes', 'Brown sugar dan citrus')
+            ->where('product.variants.0.image_url', 'https://images.unsplash.com/photo-1509042239860-f550ce710b93')
             ->where('product.variants.0.available_stock', 12)
             ->where('product.is_wishlisted', false)
             ->has('relatedProducts', 1)

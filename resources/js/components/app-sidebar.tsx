@@ -182,6 +182,11 @@ const adminNavGroups: NavGroup[] = [
                 icon: Settings,
             },
             {
+                title: 'Home Setting',
+                href: '/admin/home-settings',
+                icon: Home,
+            },
+            {
                 title: 'Pengguna Admin',
                 href: '/admin/admin-users',
                 icon: UserCog,

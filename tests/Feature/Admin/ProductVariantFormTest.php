@@ -39,6 +39,7 @@ it('creates a product variant from an uploaded image', function () {
         'sku' => 'TORAJA-250-WB',
         'net_weight' => '250gram',
         'grind_type' => 'whole_bean',
+        'tasting_notes' => 'Melati dan peach',
         'regular_price' => 95000,
         'sale_price' => null,
         'shipping_weight_gram' => 300,
@@ -49,5 +50,6 @@ it('creates a product variant from an uploaded image', function () {
     ])->assertRedirect();
 
     $variant = ProductVariant::query()->where('sku', 'TORAJA-250-WB')->firstOrFail();
+    expect($variant->tasting_notes)->toBe('Melati dan peach');
     Storage::disk('public')->assertExists(str($variant->image_url)->after('/storage/')->toString());
 });

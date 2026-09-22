@@ -15,6 +15,7 @@ type Variant = {
     sku: string;
     net_weight: string | null;
     grind_type: string | null;
+    tasting_notes: string | null;
     regular_price: string | number;
     sale_price: string | number | null;
     shipping_weight_gram: number;
@@ -34,6 +35,7 @@ type Data = {
     sku: string;
     net_weight: string;
     grind_type: string;
+    tasting_notes: string;
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -55,6 +57,7 @@ export default function VariantForm({
         sku: variant?.sku ?? '',
         net_weight: String(variant?.net_weight ?? ''),
         grind_type: variant?.grind_type ?? 'whole_bean',
+        tasting_notes: variant?.tasting_notes ?? '',
         regular_price: String(variant?.regular_price ?? ''),
         sale_price: String(variant?.sale_price ?? ''),
         shipping_weight_gram: variant?.shipping_weight_gram ?? '',
@@ -155,6 +158,15 @@ export default function VariantForm({
                                 ),
                             )}
                         </select>
+                    </Field>
+                    <Field label="Tasting Notes" error={errors.tasting_notes}>
+                        <Input
+                            placeholder="Cokelat, jeruk, gula aren"
+                            value={form.data.tasting_notes}
+                            onChange={(event) =>
+                                setField('tasting_notes', event.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Harga normal" error={errors.regular_price}>
                         <Input

@@ -37,6 +37,7 @@ type VariantRow = {
     sku: string;
     net_weight: string;
     grind_type: string;
+    tasting_notes: string;
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -82,6 +83,7 @@ const blankVariant = (): VariantRow => ({
     sku: '',
     net_weight: '',
     grind_type: 'whole_bean',
+    tasting_notes: '',
     regular_price: '',
     sale_price: '',
     shipping_weight_gram: '',
@@ -114,6 +116,7 @@ export default function ProductForm({ mode, product, options }: Props) {
             ...variant,
             net_weight: value(variant.net_weight),
             grind_type: value(variant.grind_type),
+            tasting_notes: value(variant.tasting_notes),
             regular_price: value(variant.regular_price),
             sale_price: value(variant.sale_price),
             shipping_weight_gram: value(variant.shipping_weight_gram),
@@ -338,7 +341,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             label="File gambar"
                                             error={
                                                 errors[
-                                                `images.${imageIndex}.image`
+                                                    `images.${imageIndex}.image`
                                                 ]
                                             }
                                         >
@@ -359,7 +362,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             label="Urutan"
                                             error={
                                                 errors[
-                                                `images.${imageIndex}.sort_order`
+                                                    `images.${imageIndex}.sort_order`
                                                 ]
                                             }
                                         >
@@ -445,7 +448,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="SKU"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.sku`
+                                                `variants.${variantIndex}.sku`
                                             ]
                                         }
                                     >
@@ -463,7 +466,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Berat bersih"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.net_weight`
+                                                `variants.${variantIndex}.net_weight`
                                             ]
                                         }
                                     >
@@ -482,7 +485,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Grind type"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.grind_type`
+                                                `variants.${variantIndex}.grind_type`
                                             ]
                                         }
                                     >
@@ -504,10 +507,29 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         </select>
                                     </Field>
                                     <Field
+                                        label="Tasting Notes"
+                                        error={
+                                            errors[
+                                                `variants.${variantIndex}.tasting_notes`
+                                            ]
+                                        }
+                                    >
+                                        <Input
+                                            placeholder="Cokelat, jeruk, gula aren"
+                                            value={variant.tasting_notes}
+                                            onChange={(event) =>
+                                                patchVariant(variantIndex, {
+                                                    tasting_notes:
+                                                        event.target.value,
+                                                })
+                                            }
+                                        />
+                                    </Field>
+                                    <Field
                                         label="Harga normal"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.regular_price`
+                                                `variants.${variantIndex}.regular_price`
                                             ]
                                         }
                                     >
@@ -528,7 +550,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Harga promo"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.sale_price`
+                                                `variants.${variantIndex}.sale_price`
                                             ]
                                         }
                                     >
@@ -549,7 +571,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Berat kirim (gram)"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.shipping_weight_gram`
+                                                `variants.${variantIndex}.shipping_weight_gram`
                                             ]
                                         }
                                     >
@@ -572,7 +594,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Stok"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.stock_quantity`
+                                                `variants.${variantIndex}.stock_quantity`
                                             ]
                                         }
                                     >
@@ -595,7 +617,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="Batas stok rendah"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.low_stock_threshold`
+                                                `variants.${variantIndex}.low_stock_threshold`
                                             ]
                                         }
                                     >
@@ -618,7 +640,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         label="File gambar varian"
                                         error={
                                             errors[
-                                            `variants.${variantIndex}.image`
+                                                `variants.${variantIndex}.image`
                                             ]
                                         }
                                         className="lg:col-span-2"

@@ -49,6 +49,7 @@ class ProductRequest extends FormRequest
             'variants.*.sku' => ['required', 'string', 'max:100'],
             'variants.*.net_weight' => ['nullable', 'string', 'max:100'],
             'variants.*.grind_type' => ['nullable', Rule::in(['whole_bean', 'fine', 'medium', 'coarse'])],
+            'variants.*.tasting_notes' => ['nullable', 'string', 'max:255'],
             'variants.*.regular_price' => ['required', 'numeric', 'min:0'],
             'variants.*.sale_price' => ['nullable', 'numeric', 'min:0', 'lte:variants.*.regular_price'],
             'variants.*.shipping_weight_gram' => ['required', 'integer', 'min:0'],

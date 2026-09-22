@@ -72,6 +72,7 @@ class PublicProductsSeeder extends Seeder
                     [
                         'net_weight' => '200gram',
                         'grind_type' => 'whole_bean',
+                        'tasting_notes' => $data['tasting_notes'],
                         'regular_price' => $data['price'],
                         'sale_price' => null,
                         'shipping_weight_gram' => 250,
@@ -134,7 +135,8 @@ class PublicProductsSeeder extends Seeder
             'categories' => explode(' ', $categories),
             'price' => $price,
             'stock' => 24,
-            'description' => 'manis, bersih, dan seimbang',
+            'description' => 'Manis dan seimbang',
+            'tasting_notes' => 'Manis dan seimbang',
             'is_featured' => $featured,
             'is_new_arrival' => $newArrival,
             'is_best_seller' => $bestSeller,

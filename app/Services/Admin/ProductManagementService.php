@@ -127,7 +127,7 @@ class ProductManagementService
             }
             foreach ($product->variants as $variant) {
                 $variantCopy = $copy->variants()->create([
-                    ...$variant->only(['net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+                    ...$variant->only(['net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
                     'sku' => $variant->sku.'-COPY-'.Str::upper(Str::random(4)),
                 ]);
                 $variantCopy->stock()->create([
@@ -174,7 +174,7 @@ class ProductManagementService
             'category_ids' => $product->categories->modelKeys(),
             'images' => $product->images->map->only(['id', 'image_url', 'alt_text', 'sort_order', 'is_primary'])->values(),
             'variants' => $product->variants->map(fn (ProductVariant $variant): array => [
-                ...$variant->only(['id', 'sku', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+                ...$variant->only(['id', 'sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
                 'stock_quantity' => $variant->stock?->quantity ?? 0,
                 'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             ])->values(),
@@ -210,7 +210,7 @@ class ProductManagementService
         $kept = [];
         foreach ($variants as $index => $data) {
             $variant = isset($data['id']) ? $product->variants()->whereKey($data['id'])->firstOrFail() : new ProductVariant(['product_id' => $product->id]);
-            $payload = collect($data)->only(['sku', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url'])->all();
+            $payload = collect($data)->only(['sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url'])->all();
             $payload['is_active'] = (bool) ($data['is_active'] ?? false);
 
             if ($request->hasFile("variants.{$index}.image")) {

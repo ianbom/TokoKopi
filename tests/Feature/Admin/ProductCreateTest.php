@@ -30,7 +30,7 @@ it('creates a coffee product with categories, variants, images, and stock', func
     $image = $product->images()->firstOrFail();
     expect($image->alt_text)->toBe('Gayo Natural');
     Storage::disk('public')->assertExists(str($image->image_url)->after('/storage/')->toString());
-    $this->assertDatabaseHas('product_variants', ['product_id' => $product->id, 'sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean']);
+    $this->assertDatabaseHas('product_variants', ['product_id' => $product->id, 'sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean', 'tasting_notes' => 'Cokelat, jeruk, gula aren']);
     $this->assertDatabaseHas('stocks', ['quantity' => 20, 'low_stock_threshold' => 5]);
 });
 
@@ -60,6 +60,6 @@ function productPayload(array $categoryIds): array
     return [
         'name' => 'Gayo Natural', 'slug' => 'gayo-natural', 'sku' => 'GAYO', 'origin' => 'Aceh Gayo', 'process' => 'Natural', 'description' => '<h2>Gayo Natural</h2><p>Kopi arabika dengan rasa buah tropis.</p>', 'status' => 'active', 'category_ids' => $categoryIds,
         'images' => [['image' => UploadedFile::fake()->image('gayo-natural.jpg'), 'sort_order' => 0, 'is_primary' => true]],
-        'variants' => [['sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean', 'regular_price' => 95000, 'sale_price' => 85000, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 20, 'low_stock_threshold' => 5]],
+        'variants' => [['sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'grind_type' => 'whole_bean', 'tasting_notes' => 'Cokelat, jeruk, gula aren', 'regular_price' => 95000, 'sale_price' => 85000, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 20, 'low_stock_threshold' => 5]],
     ];
 }

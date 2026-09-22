@@ -19,7 +19,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-FRKSB |
-| `description` | <p>Fine Robusta Kopi Susu Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Fine Robusta Kopi Susu Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | fine-robusta-kopi-susu-blend |
 | `updated_at` | 09/04/2026 02:05:36 |
@@ -116,7 +116,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-EKSB |
-| `description` | <p>Espresso Kopi Susu Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Espresso Kopi Susu Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | espresso-kopi-susu-blend |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -213,7 +213,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-GAYO-WINE |
-| `description` | <p>Gayo Wine adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Gayo Wine adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | gayo-wine |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -310,7 +310,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RGK |
-| `description` | <p>Robusta Gunung Kawi adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Robusta Gunung Kawi adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | robusta-gunung-kawi |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -407,7 +407,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RKFW |
-| `description` | <p>Robusta Kelud Fully Washed adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Robusta Kelud Fully Washed adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | robusta-kelud-fully-washed |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -504,7 +504,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RGKRI |
-| `description` | <p>Robusta Gunung Kerinci adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Robusta Gunung Kerinci adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | robusta-gunung-kerinci |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -601,7 +601,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RKM |
-| `description` | <p>Robusta Komersil adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Robusta Komersil adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | robusta-komersil |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -698,7 +698,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RKB |
-| `description` | <p>Requiem Karo Blueberry adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Requiem Karo Blueberry adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | requiem-karo-blueberry |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -795,7 +795,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RTN |
-| `description` | <p>Requiem Toraja Natural adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Requiem Toraja Natural adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | requiem-toraja-natural |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -892,7 +892,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-EAB |
-| `description` | <p>Espresso Amore Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Espresso Amore Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | espresso-amore-blend |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -989,7 +989,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RBKP |
-| `description` | <p>Requiem Bali Kala Patra adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Requiem Bali Kala Patra adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | requiem-bali-kala-patra |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1086,7 +1086,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-EEB |
-| `description` | <p>Espresso Elegante Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Espresso Elegante Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | espresso-elegante-blend |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1183,7 +1183,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-LBIRA |
-| `description` | <p>Luxury Blend Italian Roast Arabika adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Luxury Blend Italian Roast Arabika adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | luxury-blend-italian-roast-arabika |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1280,7 +1280,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-EMB |
-| `description` | <p>Espresso Mano Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Espresso Mano Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | espresso-mano-blend |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1377,7 +1377,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-AW |
-| `description` | <p>Argopuro Walida adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Argopuro Walida adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | argopuro-walida |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1474,7 +1474,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-BKP |
-| `description` | <p>Bali Kala Patra adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Bali Kala Patra adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | bali-kala-patra |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1571,7 +1571,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-EAA |
-| `description` | <p>Ethiopia Aricha Adori adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Ethiopia Aricha Adori adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | ethiopia-aricha-adori |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1668,7 +1668,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-IL |
-| `description` | <p>Ijen Lestari adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Ijen Lestari adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | ijen-lestari |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1765,7 +1765,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-ELB |
-| `description` | <p>Espresso Ladies Blend adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Espresso Ladies Blend adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | espresso-ladies-blend |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1862,7 +1862,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-MAN |
-| `description` | <p>Malabar Anaerob Natural adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Malabar Anaerob Natural adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | malabar-anaerob-natural |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -1959,7 +1959,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-NKM |
-| `description` | <p>Nusantara Karo Melon adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Nusantara Karo Melon adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | nusantara-karo-melon |
 | `updated_at` | 09/04/2026 02:05:37 |
@@ -2056,7 +2056,7 @@
 | Field | Value |
 | --- | --- |
 | `sku` | DCL-RB |
-| `description` | <p>Robusta Bali adalah kopi pilihan Declasse dengan karakter manis, bersih, dan seimbang.</p> |
+| `description` | <p>Robusta Bali adalah kopi pilihan Declasse dengan karakter Manis dan seimbang.</p> |
 | `status` | active |
 | `slug` | robusta-bali |
 | `updated_at` | 09/04/2026 02:05:37 |

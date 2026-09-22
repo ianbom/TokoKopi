@@ -139,6 +139,7 @@ class TokopediaCatalogSeeder extends Seeder
                 'product_id' => $product->id,
                 'net_weight' => $data['net_weight'] ?? null,
                 'grind_type' => $data['grind_type'] ?? null,
+                'tasting_notes' => $data['tasting_notes'] ?? null,
                 'regular_price' => $regularPrice,
                 'sale_price' => $salePrice,
                 'shipping_weight_gram' => $this->grams($data['net_weight'] ?? null),

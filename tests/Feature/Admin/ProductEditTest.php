@@ -19,10 +19,10 @@ it('updates coffee product categories and variant stock', function () {
 
     $this->actingAs($admin)->put(route('admin.products.update', $product), [
         'name' => 'Java Espresso', 'slug' => 'java-espresso', 'sku' => 'JAVA', 'origin' => 'Java', 'process' => 'Washed', 'description' => '', 'status' => 'draft', 'category_ids' => [$newCategory->id], 'images' => [],
-        'variants' => [['id' => $variant->id, 'sku' => 'JAVA-250', 'net_weight' => '250g', 'grind_type' => 'fine', 'regular_price' => 70000, 'sale_price' => null, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 11, 'low_stock_threshold' => 3]],
+        'variants' => [['id' => $variant->id, 'sku' => 'JAVA-250', 'net_weight' => '250g', 'grind_type' => 'fine', 'tasting_notes' => 'Karamel dan almond', 'regular_price' => 70000, 'sale_price' => null, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 11, 'low_stock_threshold' => 3]],
     ])->assertRedirect();
 
     expect($product->fresh()->name)->toBe('Java Espresso');
     expect($product->fresh()->categories->modelKeys())->toBe([$newCategory->id]);
-    expect($variant->fresh()->stock->quantity)->toBe(11)->and($variant->fresh()->stock->low_stock_threshold)->toBe(3);
+    expect($variant->fresh()->stock->quantity)->toBe(11)->and($variant->fresh()->stock->low_stock_threshold)->toBe(3)->and($variant->fresh()->tasting_notes)->toBe('Karamel dan almond');
 });

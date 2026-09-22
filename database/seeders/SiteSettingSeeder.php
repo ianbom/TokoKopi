@@ -25,6 +25,12 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'shipping_couriers', 'value' => 'jne,jnt,sicepat,anteraja', 'type' => 'string'],
             ['key' => 'payment_expiry_duration', 'value' => '1440', 'type' => 'integer'],
             ['key' => 'payment_service_fee', 'value' => '0', 'type' => 'integer'],
+            ['key' => 'welcome_text', 'value' => "Coffee\nwithout\nthe routine.", 'type' => 'text'],
+            ['key' => 'welcome_carousel', 'value' => json_encode([
+                ['image_url' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1800&q=90', 'alt_text' => 'Deklase coffee ritual', 'sort_order' => 1, 'is_active' => true],
+                ['image_url' => 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=1800&q=90', 'alt_text' => 'Fresh roasted coffee', 'sort_order' => 2, 'is_active' => true],
+                ['image_url' => 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1800&q=90', 'alt_text' => 'Coffee beans from Deklase', 'sort_order' => 3, 'is_active' => true],
+            ], JSON_THROW_ON_ERROR), 'type' => 'json'],
         ];
 
         foreach ($settings as &$setting) {
