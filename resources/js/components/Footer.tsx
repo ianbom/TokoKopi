@@ -82,7 +82,9 @@ export default function Footer() {
                 <FooterColumn title="Follow">
                     <a href="#">Instagram</a>
                     <a href="#">TikTok</a>
-                    <a href="#">Pinterest</a>
+                    <a href="#">Tokopedia</a>
+                    <a href="#">Shopee</a>
+                   
                 </FooterColumn>
             </section>
             <div className="flex flex-col gap-3 px-5 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-7 lg:px-10">

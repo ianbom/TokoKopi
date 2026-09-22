@@ -21,7 +21,7 @@ export const storeLocations: StoreLocation[] = [
     },
     {
         id: 'bendogerit-blitar',
-        name: 'de CLASSE Gelato & Coffee — Bendogerit',
+        name: 'Roastery & HQ — Bendogerit',
         address:
             'Jalan Sudanco Supriyadi, Bendogerit, Blitar, Jawa Timur 66131',
         latitude: -8.0926464,

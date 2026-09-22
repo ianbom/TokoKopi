@@ -141,7 +141,7 @@ export default function ListProduct({ products, filters, options }: Props) {
             </section>
 
             <section className="relative z-40 bg-canvas">
-                <div className="relative z-40 grid grid-cols-2 border-b border-hairline text-[9px] font-semibold tracking-[0.06em] text-ink uppercase sm:grid-cols-3 lg:grid-cols-[1.15fr_.9fr_1.1fr_.8fr_1.2fr_1.45fr_1.4fr]">
+                {/* <div className="relative z-40 grid grid-cols-2 border-b border-hairline text-[9px] font-semibold tracking-[0.06em] text-ink uppercase sm:grid-cols-3 lg:grid-cols-[1.15fr_.9fr_1.1fr_.8fr_1.2fr_1.45fr_1.4fr]">
                     <FilterMenu
                         id="category"
                         isOpen={openFilter === 'category'}
@@ -206,7 +206,7 @@ export default function ListProduct({ products, filters, options }: Props) {
                     <span className="flex min-h-[49px] items-center justify-center border-r border-hairline px-4 text-[10px] font-normal tracking-normal text-ink/70 normal-case sm:border-r-0">
                         Showing {products.total} products
                     </span>
-                </div>
+                </div> */}
 
                 <nav className="relative z-10 flex min-w-max items-center justify-center gap-10 overflow-x-auto border-b border-hairline px-8 py-[17px] text-[10px] font-semibold tracking-[0.06em] text-ink uppercase sm:gap-16">
                     {quickLinks.map((link) => {

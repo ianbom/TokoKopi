@@ -45,11 +45,6 @@ export default function Welcome({ wePresent, mostLoved }: Props) {
             <div className="overflow-x-clip bg-canvas text-ink">
                 <section className="grid min-h-[500px] grid-cols-1 border-b border-hairline lg:grid-cols-2">
                     <div className="flex min-h-[430px] flex-col justify-between bg-white p-7 sm:p-12 lg:min-h-0 lg:p-14">
-                        <p className="max-w-[220px] text-xs leading-5 text-teal sm:text-sm">
-                            Roasted slowly. Made deliberately.
-                            <br />
-                            Coffee for everyday rituals.
-                        </p>
                         <Link href={list.url()} className="w-max">
                             <OutlineLink>Shop coffee</OutlineLink>
                         </Link>
@@ -68,12 +63,12 @@ export default function Welcome({ wePresent, mostLoved }: Props) {
                         className="h-full min-h-[300px] w-full object-cover contrast-95 saturate-75"
                     />
                 </section>
-                <div className="flex min-h-8 items-center justify-center gap-4 overflow-hidden bg-teal px-4 text-[10px] font-semibold tracking-[0.12em] whitespace-nowrap text-white uppercase">
+                {/* <div className="flex min-h-8 items-center justify-center gap-4 overflow-hidden bg-teal px-4 text-[10px] font-semibold tracking-[0.12em] whitespace-nowrap text-white uppercase">
                     Slow roasted <i className="h-px w-4 bg-primary" /> Daily
                     rituals <i className="h-px w-4 bg-primary" /> Specialty
                     coffee <i className="h-px w-4 bg-primary" /> Good mornings
                     <i className="h-px w-4 bg-primary" /> Brew different
-                </div>
+                </div> */}
                 <EditorialProductGrid
                     products={wePresent.slice(0, 4).map((product) => ({
                         id: product.id,
