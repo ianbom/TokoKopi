@@ -81,9 +81,9 @@ function EditorialProductGrid({
                         />
                     </div>
                     <div className="pt-5 text-center text-teal">
-                        <span className="text-[10px] font-semibold tracking-[0.12em]">
+                        {/* <span className="text-[10px] font-semibold tracking-[0.12em]">
                             {String(index + 1).padStart(2, '0')}
-                        </span>
+                        </span> */}
                         <h3 className="mt-2 text-xs font-semibold tracking-[0.04em] uppercase sm:text-sm">
                             {product.name}
                         </h3>
