@@ -7,6 +7,7 @@ import {
     destroyProduct as destroyWishlistProductRoute,
     store as storeWishlistProductRoute,
 } from '@/actions/App/Http/Controllers/Customer/WishlistController';
+import HTMLRender from '@/components/HTMLRender';
 import ShopLayout from '@/layouts/shop-layout';
 
 type ProductImage = {
@@ -64,12 +65,6 @@ const formatPrice = (value: number) =>
 const humanize = (value: string | null) =>
     value ? value.replaceAll('_', ' ') : null;
 
-const stripHtml = (value: string | null) =>
-    value
-        ?.replace(/<[^>]*>/g, '')
-        .replaceAll('&nbsp;', ' ')
-        .trim() ?? '';
-
 export default function DetailProduct({ product }: Props) {
     return <DetailProductPage key={product.id} product={product} />;
 }
@@ -93,8 +88,6 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
         selectedVariant?.regular_price ??
         product.sale_price ??
         product.price;
-    const description =
-        product.short_description || stripHtml(product.description);
     const gallery = [
         ...product.images,
         ...product.variants.flatMap((variant) =>
@@ -203,9 +196,13 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                             <h1 className="mt-2 max-w-xl font-condensed text-[clamp(40px,12vw,64px)] leading-[0.84] font-semibold tracking-[-0.045em] break-words uppercase sm:text-[clamp(46px,5.3vw,82px)]">
                                 {product.title}
                             </h1>
-                            <p className="mt-3 max-w-prose text-[11px] leading-5 text-ink/80 sm:text-[12px]">
-                                {description}
-                            </p>
+                            <HTMLRender
+                                html={
+                                    product.description ||
+                                    product.short_description
+                                }
+                                className="mt-3 max-w-prose text-[11px] leading-5 text-ink/80 sm:text-[12px]"
+                            />
                             <p className="mt-4 text-[19px] font-medium tracking-[-0.02em]">
                                 {formatPrice(price)}
                             </p>

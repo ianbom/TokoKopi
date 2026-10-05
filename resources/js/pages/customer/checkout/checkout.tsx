@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import type { Icon, LatLngBoundsExpression, Map as LeafletMap } from 'leaflet';
 import { Lock, MapPinned, ShieldCheck, Ticket, Truck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type * as ReactLeaflet from 'react-leaflet';
 import { toast } from 'sonner';
 import { CheckoutProvider, useCheckout } from '@/contexts/checkout-context';
@@ -63,12 +63,12 @@ const formatWeight = (grams: number) => {
 const formatDistance = (meters: number) =>
     meters >= 1000
         ? `${new Intl.NumberFormat('id-ID', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 0,
-        }).format(meters / 1000)} km`
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 0,
+          }).format(meters / 1000)} km`
         : `${new Intl.NumberFormat('id-ID', {
-            maximumFractionDigits: 0,
-        }).format(meters)} m`;
+              maximumFractionDigits: 0,
+          }).format(meters)} m`;
 
 const checkoutStockAlertKey = 'checkout.stock_alert';
 
@@ -114,13 +114,13 @@ const distanceMeters = (from: Coordinates, to: Coordinates) => {
     const haversine =
         Math.sin(latitudeDelta / 2) ** 2 +
         Math.cos(fromLatitude) *
-        Math.cos(toLatitude) *
-        Math.sin(longitudeDelta / 2) ** 2;
+            Math.cos(toLatitude) *
+            Math.sin(longitudeDelta / 2) ** 2;
 
     return Math.round(
         earthRadiusMeters *
-        2 *
-        Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)),
+            2 *
+            Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)),
     );
 };
 
@@ -164,10 +164,13 @@ function CheckoutScreen() {
         shippingRatesLoading,
         storeLocation,
         summary,
+        voucherUpdating,
     } = useCheckout();
     const [voucherCode, setVoucherCode] = useState(appliedVoucher?.code ?? '');
     const [notes, setNotes] = useState('');
     const [agreed, setAgreed] = useState(false);
+    const initialRatesRequested = useRef(false);
+    const checkoutUpdating = shippingRatesLoading || voucherUpdating;
     const totalWeight = cartItems.reduce(
         (total, item) => total + item.weight,
         0,
@@ -186,12 +189,13 @@ function CheckoutScreen() {
     const hasUnavailableItems = unavailableItems.length > 0;
 
     useEffect(() => {
-        if (selectedAddressId && shippingRates.length === 0) {
+        if (selectedAddressId && !initialRatesRequested.current) {
+            initialRatesRequested.current = true;
             void loadShippingRates(selectedAddressId, {
                 preserveSelectedRate: true,
             });
         }
-    }, [loadShippingRates, selectedAddressId, shippingRates.length]);
+    }, [loadShippingRates, selectedAddressId]);
 
     useEffect(() => {
         const message = window.sessionStorage.getItem(checkoutStockAlertKey);
@@ -299,6 +303,10 @@ function CheckoutScreen() {
                                             <button
                                                 key={address.id}
                                                 type="button"
+                                                disabled={
+                                                    checkoutUpdating ||
+                                                    placingOrder
+                                                }
                                                 onClick={() =>
                                                     void selectAddress(
                                                         address.id,
@@ -329,12 +337,12 @@ function CheckoutScreen() {
                                                 {(!address.postal_code ||
                                                     !address.latitude ||
                                                     !address.longitude) && (
-                                                        <p className="mt-2 text-[11px] font-semibold text-error">
-                                                            Lengkapi kode pos dan
-                                                            koordinat di buku
-                                                            alamat.
-                                                        </p>
-                                                    )}
+                                                    <p className="mt-2 text-[11px] font-semibold text-error">
+                                                        Lengkapi kode pos dan
+                                                        koordinat di buku
+                                                        alamat.
+                                                    </p>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -356,13 +364,21 @@ function CheckoutScreen() {
                                             {errors.shipping}
                                         </p>
                                     )}
+                                    {errors.shipping_rate_id && (
+                                        <p className="mb-3 text-[12px] font-semibold text-error">
+                                            {errors.shipping_rate_id}
+                                        </p>
+                                    )}
                                     {errors.customer_address_id && (
                                         <p className="mb-3 text-[12px] font-semibold text-error">
                                             {errors.customer_address_id}
                                         </p>
                                     )}
-                                    {shippingRatesLoading ? (
-                                        <div className="border border-dashed border-hairline bg-surface-soft p-6 text-[12px] font-medium text-muted-soft">
+                                    {checkoutUpdating ? (
+                                        <div
+                                            role="status"
+                                            className="border border-dashed border-hairline bg-surface-soft p-6 text-[12px] font-medium text-muted-soft"
+                                        >
                                             Memuat harga ongkir...
                                         </div>
                                     ) : shippingRates.length === 0 ? (
@@ -377,6 +393,10 @@ function CheckoutScreen() {
                                                 <button
                                                     key={rate.id}
                                                     type="button"
+                                                    disabled={
+                                                        checkoutUpdating ||
+                                                        placingOrder
+                                                    }
                                                     onClick={() =>
                                                         void selectShippingRate(
                                                             rate,
@@ -425,6 +445,9 @@ function CheckoutScreen() {
                                                 )
                                             }
                                             placeholder="Masukkan kode voucher"
+                                            disabled={
+                                                checkoutUpdating || placingOrder
+                                            }
                                             className="h-12 min-w-[180px] flex-1 border border-hairline bg-canvas px-4 text-[13px] text-ink placeholder:text-muted-soft focus:border-ink focus:outline-none"
                                         />
                                         <button
@@ -432,7 +455,10 @@ function CheckoutScreen() {
                                             onClick={() =>
                                                 void applyVoucher(voucherCode)
                                             }
-                                            className="h-12 bg-primary px-6 text-[11px] font-semibold tracking-[0.08em] text-canvas uppercase hover:bg-primary-hover active:bg-primary-active"
+                                            disabled={
+                                                checkoutUpdating || placingOrder
+                                            }
+                                            className="h-12 bg-primary px-6 text-[11px] font-semibold tracking-[0.08em] text-canvas uppercase hover:bg-primary-hover active:bg-primary-active disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Pakai
                                         </button>
@@ -442,7 +468,11 @@ function CheckoutScreen() {
                                                 onClick={() =>
                                                     void removeVoucher()
                                                 }
-                                                className="h-12 border border-ink px-4 text-[11px] font-semibold tracking-[0.08em] text-ink uppercase hover:bg-ink hover:text-canvas"
+                                                disabled={
+                                                    checkoutUpdating ||
+                                                    placingOrder
+                                                }
+                                                className="h-12 border border-ink px-4 text-[11px] font-semibold tracking-[0.08em] text-ink uppercase hover:bg-ink hover:text-canvas disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 Hapus
                                             </button>
@@ -504,7 +534,7 @@ function CheckoutScreen() {
                                 </section>
                             </div>
 
-                            <aside className="w-full min-w-0">
+                            <aside className="w-full min-w-0 p-6 sm:p-8 lg:p-10">
                                 <div className="sticky top-24 lg:top-32">
                                     <h2 className="mb-6 font-condensed text-3xl leading-none font-semibold tracking-[-0.035em] text-ink uppercase">
                                         Ringkasan Pesanan
@@ -575,6 +605,7 @@ function CheckoutScreen() {
                                     <SummaryRow
                                         label="Ongkir"
                                         value={summary.shipping}
+                                        loading={checkoutUpdating}
                                     />
                                     <SummaryRow
                                         label="Biaya Layanan"
@@ -598,7 +629,11 @@ function CheckoutScreen() {
                                                 Total Pembayaran
                                             </span>
                                             <span className="text-right font-condensed text-3xl font-semibold tracking-[-0.03em] text-ink tabular-nums">
-                                                {formatPrice(summary.total)}
+                                                {checkoutUpdating
+                                                    ? 'Memuat...'
+                                                    : formatPrice(
+                                                          summary.total,
+                                                      )}
                                             </span>
                                         </div>
                                     </div>
@@ -607,6 +642,7 @@ function CheckoutScreen() {
                                         onClick={() => void submitOrder()}
                                         disabled={
                                             placingOrder ||
+                                            checkoutUpdating ||
                                             !selectedShippingRate ||
                                             !agreed
                                         }
@@ -757,8 +793,8 @@ function CheckoutRouteMap({
                     {!storeCoordinates
                         ? 'Koordinat toko belum dikonfigurasi.'
                         : !destinationCoordinates
-                            ? 'Pilih alamat dengan koordinat untuk melihat rute.'
-                            : 'Memuat peta...'}
+                          ? 'Pilih alamat dengan koordinat untuk melihat rute.'
+                          : 'Memuat peta...'}
                 </div>
             )}
 
@@ -849,10 +885,12 @@ function SummaryRow({
     label,
     value,
     danger = false,
+    loading = false,
 }: {
     label: string;
     value: number;
     danger?: boolean;
+    loading?: boolean;
 }) {
     return (
         <div
@@ -860,8 +898,9 @@ function SummaryRow({
         >
             <span>{label}</span>
             <span className="text-right font-semibold break-words tabular-nums">
-                {value < 0 ? '-' : ''}
-                {formatPrice(Math.abs(value))}
+                {loading
+                    ? 'Memuat...'
+                    : (value < 0 ? '-' : '') + formatPrice(Math.abs(value))}
             </span>
         </div>
     );

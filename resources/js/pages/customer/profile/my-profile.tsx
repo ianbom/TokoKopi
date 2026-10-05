@@ -183,16 +183,16 @@ export default function MyProfile() {
             ]}
         >
             <div className="mb-8 flex flex-col gap-6 border-b border-hairline pb-8 md:flex-row md:items-end md:justify-between">
-                <div className="flex items-center gap-8">
+                <div className="flex min-w-0 items-center gap-4 sm:gap-8">
                     <AvatarFrame avatarSrc={avatarSrc} name={user.name} />
-                    <div>
+                    <div className="min-w-0">
                         <p className="text-[9px] font-semibold tracking-[0.1em] text-primary uppercase">
                             Member profile
                         </p>
-                        <h2 className="mt-2 font-condensed text-[clamp(36px,4vw,54px)] leading-[0.82] font-semibold tracking-[-0.04em] uppercase">
+                        <h2 className="mt-2 font-condensed text-[clamp(28px,6vw,36px)] leading-[0.95] font-semibold tracking-[-0.04em] break-words uppercase sm:text-[clamp(36px,4vw,54px)] sm:leading-[0.82]">
                             {user.name}
                         </h2>
-                        <p className="mt-3 text-[12px] text-ink/80">
+                        <p className="mt-3 text-[12px] break-all text-ink/80">
                             {user.email}
                         </p>
                         {user.member_since && (
@@ -206,7 +206,7 @@ export default function MyProfile() {
                 {isAdmin && (
                     <Link
                         href={adminDashboard()}
-                        className="inline-flex h-10 items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas"
+                        className="inline-flex min-h-11 items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas sm:h-10 sm:min-h-0"
                     >
                         Dashboard
                     </Link>
@@ -253,7 +253,7 @@ function AvatarFrame({
     name: string;
 }) {
     return (
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hairline-strong bg-oat text-ink">
+        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hairline-strong bg-oat text-ink sm:size-24">
             {avatarSrc ? (
                 <img
                     src={avatarSrc}
@@ -296,7 +296,7 @@ function ProfileInfoCard({
     return (
         <form
             onSubmit={submitProfile}
-            className="border-r border-b border-hairline bg-canvas px-6 py-7 sm:px-8"
+            className="min-w-0 border-r border-b border-hairline bg-canvas px-4 py-6 sm:px-8 sm:py-7"
         >
             <SectionTitle icon={User} title="Informasi Pribadi" />
 
@@ -438,7 +438,7 @@ function PasswordCard({
     return (
         <form
             onSubmit={submitPassword}
-            className="border-b border-hairline bg-sand px-6 py-7 sm:px-8"
+            className="min-w-0 border-b border-hairline bg-sand px-4 py-6 sm:px-8 sm:py-7"
         >
             <SectionTitle icon={Lock} title="Ubah Kata Sandi" />
             <div className="mt-5 grid gap-4">
@@ -517,7 +517,7 @@ function AddressCard({
     defaultAddress: AddressProp | null;
 }) {
     return (
-        <section className="border-b border-hairline bg-canvas px-6 py-7 sm:px-8">
+        <section className="min-w-0 border-b border-hairline bg-canvas px-4 py-6 sm:px-8 sm:py-7">
             <SectionTitle icon={MapPin} title="Alamat Utama" />
             <div className="mt-4 sm:items-center">
                 <div>
@@ -551,7 +551,7 @@ function AddressCard({
                     )}
                     <Link
                         href="/address"
-                        className="mt-5 inline-flex h-10 min-w-[160px] items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas"
+                        className="mt-5 inline-flex min-h-11 min-w-[160px] items-center justify-center rounded-none border border-ink px-5 text-[10px] font-semibold tracking-[0.08em] uppercase hover:bg-ink hover:text-canvas sm:h-10 sm:min-h-0"
                     >
                         {defaultAddress ? 'Kelola Alamat' : 'Tambah Alamat'}
                     </Link>
@@ -607,7 +607,7 @@ function TextField({
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={placeholder}
-                    className={`h-10 w-full border bg-canvas px-4 text-[12px] text-ink outline-none focus:border-ink ${
+                    className={`h-11 w-full min-w-0 border bg-canvas px-4 text-base text-ink outline-none focus:border-ink sm:h-10 sm:text-[12px] ${
                         error ? 'border-error' : 'border-hairline-strong'
                     }`}
                 />
@@ -650,14 +650,14 @@ function PasswordField({
                         value={value}
                         onChange={(event) => onChange(event.target.value)}
                         autoComplete={autoComplete}
-                        className={`h-10 w-full border bg-canvas px-4 pr-11 text-[12px] text-ink outline-none focus:border-ink ${
+                        className={`h-11 w-full min-w-0 border bg-canvas px-4 pr-11 text-base text-ink outline-none focus:border-ink sm:h-10 sm:text-[12px] ${
                             error ? 'border-error' : 'border-hairline-strong'
                         }`}
                     />
                     <button
                         type="button"
                         onClick={onToggle}
-                        className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-ink hover:text-primary"
+                        className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center text-ink hover:text-primary sm:right-3 sm:size-7"
                         aria-label={show ? 'Hide password' : 'Show password'}
                     >
                         {show ? <EyeOff size={18} /> : <Eye size={18} />}

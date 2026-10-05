@@ -197,7 +197,7 @@ export default function ListOrder({ orders, filters }: Props) {
                             }))
                         }
                         placeholder="Cari nomor pesanan atau nama produk"
-                        className="w-full border-b border-hairline-strong bg-transparent py-3 pr-4 pl-11 text-[13px] text-ink transition-colors focus:border-ink focus:outline-none"
+                        className="w-full min-w-0 border-b border-hairline-strong bg-transparent py-3 pr-4 pl-11 text-base text-ink transition-colors focus:border-ink focus:outline-none sm:text-[13px]"
                     />
                 </div>
                 <button
@@ -236,10 +236,10 @@ export default function ListOrder({ orders, filters }: Props) {
                     {orders.data.map((order, idx) => (
                         <article
                             key={order.id}
-                            className="py-6 transition-colors duration-300 hover:bg-surface-soft md:py-7"
+                            className="min-w-0 py-6 transition-colors duration-300 hover:bg-surface-soft md:py-7"
                             style={{ animationDelay: `${idx * 50}ms` }}
                         >
-                            <div className="grid grid-cols-2 gap-4 px-1 md:grid-cols-4">
+                            <div className="grid min-w-0 grid-cols-2 gap-3 px-1 md:grid-cols-4 md:gap-4">
                                 <div className="col-span-2 md:col-span-1">
                                     <p className="mb-1 text-[13px] text-ink">
                                         Pesanan #{order.order_number}
@@ -288,7 +288,7 @@ export default function ListOrder({ orders, filters }: Props) {
                             </div>
 
                             <div className="flex flex-col items-start justify-between gap-6 px-1 pt-5 lg:flex-row lg:items-center">
-                                <div className="hide-scrollbar flex w-full flex-1 gap-4 overflow-x-auto pb-2 lg:pb-0">
+                                <div className="hide-scrollbar flex w-full min-w-0 flex-1 gap-4 overflow-x-auto overscroll-x-contain pb-2 lg:pb-0">
                                     {order.items.map((item) => (
                                         <div
                                             key={item.id}
@@ -333,7 +333,7 @@ export default function ListOrder({ orders, filters }: Props) {
                                     )}
                                 </div>
 
-                                <div className="mt-4 flex w-full shrink-0 flex-row gap-3 lg:mt-0 lg:w-[200px] lg:flex-col">
+                                <div className="mt-4 grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-3 lg:mt-0 lg:w-[200px] lg:flex-col">
                                     {order.order_status ===
                                         'pending_payment' && (
                                         <a
@@ -354,7 +354,7 @@ export default function ListOrder({ orders, filters }: Props) {
                                                     ? 'noreferrer'
                                                     : undefined
                                             }
-                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
+                                            className="flex min-h-11 flex-1 items-center justify-center rounded-none bg-primary px-2 py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Bayar Sekarang
                                         </a>
@@ -362,21 +362,21 @@ export default function ListOrder({ orders, filters }: Props) {
                                     {order.order_status === 'shipped' && (
                                         <Link
                                             href={orderShow.url(order.id)}
-                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
+                                            className="flex min-h-11 flex-1 items-center justify-center rounded-none bg-primary px-2 py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Lacak Pesanan
                                         </Link>
                                     )}
                                     <Link
                                         href={orderShow.url(order.id)}
-                                        className="flex-1 rounded-none border border-ink bg-transparent py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-oat lg:w-full"
+                                        className="flex min-h-11 flex-1 items-center justify-center rounded-none border border-ink bg-transparent px-2 py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-oat lg:w-full"
                                     >
                                         Lihat Detail
                                     </Link>
                                     {canBuyAgain(order.order_status) && (
                                         <Link
                                             href={productList.url()}
-                                            className="flex-1 rounded-none bg-primary py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
+                                            className="flex min-h-11 flex-1 items-center justify-center rounded-none bg-primary px-2 py-2.5 text-center text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover lg:w-full"
                                         >
                                             Beli Lagi
                                         </Link>
@@ -470,7 +470,7 @@ function PaginationButton({ link }: { link: PaginationLink }) {
         ) : (
             label
         );
-    const className = `flex h-8 min-w-8 items-center justify-center border-b px-2 font-medium transition-colors ${link.active ? 'border-ink text-ink' : 'border-transparent text-muted-foreground hover:border-hairline-strong hover:text-ink'}`;
+    const className = `flex h-11 min-w-11 items-center justify-center border-b px-2 font-medium transition-colors sm:h-8 sm:min-w-8 ${link.active ? 'border-ink text-ink' : 'border-transparent text-muted-foreground hover:border-hairline-strong hover:text-ink'}`;
 
     if (!link.url) {
         return <span className={`${className} opacity-40`}>{content}</span>;

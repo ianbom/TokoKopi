@@ -102,14 +102,14 @@ export default function ListNotification({ notifications }: Props) {
                     {' '}
                     <button
                         onClick={() => setActiveTab('all')}
-                        className={`rounded-md px-4 py-2 text-[13px] font-medium transition-all ${activeTab === 'all' ? 'bg-surface-soft text-ink' : 'text-muted-foreground hover:text-ink'}`}
+                        className={`min-h-11 rounded-md px-4 py-2 text-[13px] font-medium transition-all sm:min-h-0 ${activeTab === 'all' ? 'bg-surface-soft text-ink' : 'text-muted-foreground hover:text-ink'}`}
                     >
                         {' '}
                         All{' '}
                     </button>{' '}
                     <button
                         onClick={() => setActiveTab('unread')}
-                        className={`flex items-center rounded-md px-4 py-2 text-[13px] font-medium transition-all ${activeTab === 'unread' ? 'bg-surface-soft text-ink' : 'text-muted-foreground hover:text-ink'}`}
+                        className={`flex min-h-11 items-center rounded-md px-4 py-2 text-[13px] font-medium transition-all sm:min-h-0 ${activeTab === 'unread' ? 'bg-surface-soft text-ink' : 'text-muted-foreground hover:text-ink'}`}
                     >
                         {' '}
                         Unread{' '}
@@ -124,7 +124,7 @@ export default function ListNotification({ notifications }: Props) {
                 {unreadCount > 0 && (
                     <button
                         onClick={markAllAsRead}
-                        className="flex items-center text-[12px] font-semibold text-ink transition-colors hover:text-primary"
+                        className="flex min-h-11 items-center text-[12px] font-semibold text-ink transition-colors hover:text-primary sm:min-h-0"
                     >
                         {' '}
                         <Check size={14} className="mr-1.5" /> Mark all as
@@ -162,7 +162,7 @@ export default function ListNotification({ notifications }: Props) {
                     </p>{' '}
                     <Link href="/">
                         {' '}
-                        <button className="rounded-none bg-primary px-8 py-3 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover active:scale-[0.98]">
+                        <button className="min-h-11 rounded-none bg-primary px-8 py-3 text-[10px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-primary-hover active:scale-[0.98]">
                             {' '}
                             Continue Shopping{' '}
                         </button>{' '}
@@ -184,7 +184,7 @@ export default function ListNotification({ notifications }: Props) {
                                     key={notification.id}
                                     type="button"
                                     onClick={() => markAsRead(notification.id)}
-                                    className={`group relative flex w-full items-start gap-4 p-5 text-left transition-all duration-300 hover:bg-white md:p-6 ${!notification.isRead ? 'bg-white/50' : 'bg-white'}`}
+                                    className={`group relative flex w-full items-start gap-3 p-4 text-left transition-all duration-300 hover:bg-white sm:gap-4 sm:p-5 md:p-6 ${!notification.isRead ? 'bg-white/50' : 'bg-white'}`}
                                 >
                                     {' '}
                                     {/* Unread indicator line */}{' '}
@@ -200,12 +200,12 @@ export default function ListNotification({ notifications }: Props) {
                                             className="md:h-6 md:w-6"
                                         />{' '}
                                     </div>{' '}
-                                    <div className="min-w-0 flex-1 pr-4">
+                                    <div className="min-w-0 flex-1 sm:pr-4">
                                         {' '}
                                         <div className="mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between">
                                             {' '}
                                             <h3
-                                                className={`truncate text-[14px] font-bold md:text-[15px] ${!notification.isRead ? 'text-ink' : 'text-muted-foreground'}`}
+                                                className={`text-[14px] font-bold break-words md:text-[15px] ${!notification.isRead ? 'text-ink' : 'text-muted-foreground'}`}
                                             >
                                                 {' '}
                                                 {notification.title}{' '}
@@ -216,7 +216,7 @@ export default function ListNotification({ notifications }: Props) {
                                             </span>{' '}
                                         </div>{' '}
                                         <p
-                                            className={`text-[12px] leading-relaxed md:text-[13px] ${!notification.isRead ? 'font-medium text-muted-foreground' : 'text-muted-foreground'}`}
+                                            className={`text-[12px] leading-relaxed break-words md:text-[13px] ${!notification.isRead ? 'font-medium text-muted-foreground' : 'text-muted-foreground'}`}
                                         >
                                             {' '}
                                             {notification.message}{' '}

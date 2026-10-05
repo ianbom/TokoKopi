@@ -4,7 +4,6 @@ import {
     Box,
     CalendarDays,
     Check,
-    ChevronDown,
     FileDown,
     Mail,
     MapPin,
@@ -25,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { show as shipmentShow } from '@/routes/admin/shipments';
 
 interface OrderItem {
     id: number;
@@ -224,23 +224,9 @@ export default function OrderShow({ order }: Props) {
     return (
         <>
             <Head title={`Order Detail - ${order.order_number}`} />
-            <main className="min-h-full bg-[#fafafa] px-4 py-5 text-[#171717] sm:px-6 lg:px-7">
+            <div className="bg-[#fafafa] px-4 py-5 text-[#171717] sm:px-6 lg:px-7">
                 <div className="mx-auto flex max-w-[1440px] flex-col gap-5">
-                    <PageHeader
-                        availableStatuses={availableStatuses}
-                        processing={processing}
-                        onStatusChange={(nextStatus) => {
-                            setProcessing(true);
-                            router.post(
-                                updateStatus.url(order.id),
-                                { status: nextStatus },
-                                {
-                                    preserveScroll: true,
-                                    onFinish: () => setProcessing(false),
-                                },
-                            );
-                        }}
-                    />
+                    <PageHeader shipment={order.shipment} />
                     <OrderBanner order={order} />
 
                     <nav
@@ -285,22 +271,12 @@ export default function OrderShow({ order }: Props) {
                         <ActivityList activities={activities} expanded />
                     )}
                 </div>
-            </main>
+            </div>
         </>
     );
 }
 
-function PageHeader({
-    availableStatuses,
-    processing,
-    onStatusChange,
-}: {
-    availableStatuses: string[];
-    processing: boolean;
-    onStatusChange: (status: string) => void;
-}) {
-    const headerStatuses = ['cancelled', 'ready_to_ship', 'completed'];
-
+function PageHeader({ shipment }: { shipment: Shipment | null }) {
     return (
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
@@ -333,41 +309,24 @@ function PageHeader({
                 >
                     <ArrowLeft className="size-4" /> Back to Orders
                 </Link>
-                <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="inline-flex h-10 items-center gap-2 rounded-md border border-[#d8d8d8] bg-white px-5 text-sm font-medium shadow-sm transition hover:bg-[#f5f5f5]"
-                >
-                    <FileDown className="size-4" /> Export
-                </button>
-                <div className="relative">
-                    <select
-                        aria-label="Update order status"
-                        value=""
-                        disabled={processing}
-                        onChange={(event) => {
-                            if (event.target.value) {
-                                onStatusChange(event.target.value);
-                            }
-                        }}
-                        className="h-10 cursor-pointer appearance-none rounded-md bg-[#f0440b] py-0 pr-10 pl-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d93a08] focus:ring-2 focus:ring-[#f0440b]/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+
+                {shipment?.id ? (
+                    <Link
+                        href={shipmentShow.url(shipment.id)}
+                        className="inline-flex h-10 items-center rounded-md bg-[#f0440b] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d93a08] focus:ring-2 focus:ring-[#f0440b]/30 focus:outline-none"
                     >
-                        <option value="" className="bg-white text-[#171717]">
-                            Update Order
-                        </option>
-                        {headerStatuses.map((value) => (
-                            <option
-                                key={value}
-                                value={value}
-                                disabled={!availableStatuses.includes(value)}
-                                className="bg-white text-[#171717] disabled:text-[#999]"
-                            >
-                                {label(value)}
-                            </option>
-                        ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute top-3 right-3 size-4 text-white" />
-                </div>
+                        Atur Pengiriman
+                    </Link>
+                ) : (
+                    <Button
+                        type="button"
+                        disabled
+                        title="Pengiriman belum tersedia"
+                        className="h-10 rounded-md bg-[#f0440b] px-5 text-sm font-semibold text-white shadow-sm"
+                    >
+                        Atur Pengiriman
+                    </Button>
+                )}
             </div>
         </header>
     );
@@ -662,12 +621,6 @@ function AddressCard({ order }: { order: Order }) {
                     <p>{order.customer_phone}</p>
                 </div>
             </div>
-            <button
-                type="button"
-                className="mt-4 h-9 rounded-md border border-[#d8d8d8] bg-white px-5 text-xs font-medium hover:bg-[#f5f5f5]"
-            >
-                View Full Address
-            </button>
         </Panel>
     );
 }
@@ -919,14 +872,6 @@ function ActivityList({
         <Panel className="p-5">
             <PanelTitle>Order Activity {expanded ? '' : '(Latest)'}</PanelTitle>
             <div className="mt-5">{content}</div>
-            {!expanded && (
-                <button
-                    type="button"
-                    className="mt-1 h-9 rounded-md border border-[#d8d8d8] bg-white px-8 text-xs font-medium hover:bg-[#f5f5f5]"
-                >
-                    View All Activity
-                </button>
-            )}
         </Panel>
     );
 }

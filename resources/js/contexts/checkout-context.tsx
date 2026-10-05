@@ -3,6 +3,7 @@ import {
     useCallback,
     useContext,
     useMemo,
+    useRef,
     useState,
 } from 'react';
 import type { ReactNode } from 'react';
@@ -101,6 +102,7 @@ type CheckoutContextValue = {
     shippingRatesLoading: boolean;
     storeLocation: CheckoutStoreLocation;
     summary: CheckoutSummary;
+    voucherUpdating: boolean;
 };
 
 const CheckoutContext = createContext<CheckoutContextValue | null>(null);
@@ -190,15 +192,21 @@ export function CheckoutProvider({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [shippingRatesLoading, setShippingRatesLoading] = useState(false);
     const [placingOrder, setPlacingOrder] = useState(false);
+    const [voucherUpdating, setVoucherUpdating] = useState(false);
+    const shippingRequestInProgress = useRef(false);
+    const voucherRequestInProgress = useRef(false);
     const [idempotencyKey] = useState(checkoutIdempotencyKey);
 
-    const resetShippingSummary = useCallback(() => {
+    const updateShippingSummary = useCallback((price = 0) => {
         setCurrentSummary((current) => ({
             ...current,
-            shipping: 0,
+            shipping: price,
             total: Math.max(
                 0,
-                current.subtotal + current.service_fee - current.discount,
+                current.subtotal +
+                    price +
+                    current.service_fee -
+                    current.discount,
             ),
         }));
     }, []);
@@ -208,6 +216,11 @@ export function CheckoutProvider({
             addressId: number,
             options: { preserveSelectedRate?: boolean } = {},
         ) => {
+            if (shippingRequestInProgress.current) {
+                return;
+            }
+
+            shippingRequestInProgress.current = true;
             const preserveSelectedRate = options.preserveSelectedRate ?? false;
 
             setErrors({});
@@ -215,7 +228,7 @@ export function CheckoutProvider({
 
             if (!preserveSelectedRate) {
                 setCurrentRate(null);
-                resetShippingSummary();
+                updateShippingSummary();
             }
 
             setShippingRatesLoading(true);
@@ -224,98 +237,160 @@ export function CheckoutProvider({
                 const payload = await jsonRequest(shippingRates.url(), 'POST', {
                     customer_address_id: addressId,
                 });
-                const nextRates = payload.rates ?? [];
+                const nextRates: ShippingRate[] = payload.rates ?? [];
 
                 setRates(nextRates);
 
                 if (preserveSelectedRate) {
-                    setCurrentRate((currentRate) => {
-                        if (!currentRate) {
-                            return null;
+                    const preservedRate = currentRate
+                        ? nextRates.find(
+                              (rate) =>
+                                  (
+                                      [
+                                          'courier_company',
+                                          'courier_type',
+                                          'courier_service_name',
+                                          'duration',
+                                      ] as const
+                                  ).every(
+                                      (key) =>
+                                          String(rate[key] ?? '') ===
+                                          String(currentRate[key] ?? ''),
+                                  ) &&
+                                  Number(rate.price) ===
+                                      Number(currentRate.price),
+                          )
+                        : null;
+
+                    if (preservedRate) {
+                        await jsonRequest(shippingRate.url(), 'POST', {
+                            shipping_rate_id: preservedRate.id,
+                        });
+                        setCurrentRate(preservedRate);
+                        updateShippingSummary(preservedRate.price);
+                    } else {
+                        setCurrentRate(null);
+                        updateShippingSummary();
+
+                        if (currentRate) {
+                            setErrors({
+                                shipping_rate_id:
+                                    'Ongkir berubah. Pilih ulang ongkir.',
+                            });
                         }
-
-                        const stillAvailable = nextRates.some(
-                            (rate: ShippingRate) => rate.id === currentRate.id,
-                        );
-
-                        if (stillAvailable) {
-                            return currentRate;
-                        }
-
-                        resetShippingSummary();
-
-                        return null;
-                    });
+                    }
                 }
             } catch (error) {
                 setRates([]);
                 setErrors(error as Record<string, string>);
-
-                if (!preserveSelectedRate) {
-                    setCurrentRate(null);
-                }
+                setCurrentRate(null);
+                updateShippingSummary();
             } finally {
+                shippingRequestInProgress.current = false;
                 setShippingRatesLoading(false);
             }
         },
-        [resetShippingSummary],
+        [currentRate, updateShippingSummary],
     );
 
     const selectAddress = useCallback(
         async (addressId: number) => {
+            if (voucherRequestInProgress.current || placingOrder) {
+                return;
+            }
+
             await loadShippingRates(addressId);
         },
-        [loadShippingRates],
+        [loadShippingRates, placingOrder],
     );
 
-    const selectShippingRate = useCallback(async (rate: ShippingRate) => {
-        setErrors({});
+    const selectShippingRate = useCallback(
+        async (rate: ShippingRate) => {
+            if (
+                shippingRequestInProgress.current ||
+                voucherRequestInProgress.current ||
+                placingOrder
+            ) {
+                return;
+            }
 
-        try {
-            await jsonRequest(shippingRate.url(), 'POST', {
-                shipping_rate_id: rate.id,
-            });
-            setCurrentRate(rate);
-            setCurrentSummary((current) => ({
-                ...current,
-                shipping: rate.price,
-                total: Math.max(
-                    0,
-                    current.subtotal +
-                        rate.price +
-                        current.service_fee -
-                        current.discount,
-                ),
-            }));
-        } catch (error) {
-            setErrors(error as Record<string, string>);
-        }
-    }, []);
+            shippingRequestInProgress.current = true;
+            setShippingRatesLoading(true);
+            setErrors({});
 
-    const applyVoucher = useCallback(async (code: string) => {
-        setErrors({});
+            try {
+                await jsonRequest(shippingRate.url(), 'POST', {
+                    shipping_rate_id: rate.id,
+                });
+                setCurrentRate(rate);
+                updateShippingSummary(rate.price);
+            } catch (error) {
+                setErrors(error as Record<string, string>);
+                setCurrentRate(null);
+                updateShippingSummary();
+            } finally {
+                shippingRequestInProgress.current = false;
+                setShippingRatesLoading(false);
+            }
+        },
+        [placingOrder, updateShippingSummary],
+    );
 
-        try {
-            const payload = await jsonRequest(applyVoucherRoute.url(), 'POST', {
-                voucher_code: code,
-            });
-            setCurrentVoucher(payload.voucher);
-            setCurrentSummary(payload.summary);
-        } catch (error) {
-            setErrors(error as Record<string, string>);
-        }
-    }, []);
+    const updateVoucher = useCallback(
+        async (code?: string) => {
+            if (
+                voucherRequestInProgress.current ||
+                shippingRequestInProgress.current ||
+                placingOrder
+            ) {
+                return;
+            }
 
-    const removeVoucher = useCallback(async () => {
-        setErrors({});
-        const payload = await jsonRequest(removeVoucherRoute.url(), 'DELETE');
-        setCurrentVoucher(payload.voucher);
-        setCurrentSummary(payload.summary);
-    }, []);
+            voucherRequestInProgress.current = true;
+            setVoucherUpdating(true);
+            setErrors({});
+
+            try {
+                const payload =
+                    code === undefined
+                        ? await jsonRequest(removeVoucherRoute.url(), 'DELETE')
+                        : await jsonRequest(applyVoucherRoute.url(), 'POST', {
+                              voucher_code: code,
+                          });
+                setCurrentVoucher(payload.voucher);
+                setCurrentSummary(payload.summary);
+
+                if (currentAddressId) {
+                    await loadShippingRates(currentAddressId, {
+                        preserveSelectedRate: true,
+                    });
+                } else {
+                    setCurrentRate(null);
+                    setRates([]);
+                }
+            } catch (error) {
+                setErrors(error as Record<string, string>);
+            } finally {
+                voucherRequestInProgress.current = false;
+                setVoucherUpdating(false);
+            }
+        },
+        [currentAddressId, loadShippingRates, placingOrder],
+    );
+
+    const applyVoucher = useCallback(
+        (code: string) => updateVoucher(code),
+        [updateVoucher],
+    );
+    const removeVoucher = useCallback(() => updateVoucher(), [updateVoucher]);
 
     const placeOrder = useCallback(
         async (notes: string, agreed: boolean) => {
-            if (placingOrder) {
+            if (
+                placingOrder ||
+                shippingRequestInProgress.current ||
+                voucherRequestInProgress.current
+            ) {
                 return null;
             }
 
@@ -392,6 +467,7 @@ export function CheckoutProvider({
             shippingRatesLoading,
             storeLocation,
             summary: currentSummary,
+            voucherUpdating,
         }),
         [
             addresses,
@@ -411,6 +487,7 @@ export function CheckoutProvider({
             selectShippingRate,
             shippingRatesLoading,
             storeLocation,
+            voucherUpdating,
         ],
     );
 

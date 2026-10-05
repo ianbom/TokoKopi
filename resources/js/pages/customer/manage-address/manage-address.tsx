@@ -456,7 +456,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                         return (
                             <div
                                 key={address.id}
-                                className={`group relative border bg-canvas p-6 transition-all duration-300 hover:bg-surface-soft md:p-8 ${
+                                className={`group relative min-w-0 border bg-canvas p-4 transition-all duration-300 hover:bg-surface-soft sm:p-6 md:p-8 ${
                                     address.is_default
                                         ? 'border-primary'
                                         : 'border-hairline-strong'
@@ -501,7 +501,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                             onClick={() =>
                                                 openModal(address.id)
                                             }
-                                            className="flex h-8 w-8 items-center justify-center border border-hairline text-ink/60 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex size-11 shrink-0 items-center justify-center border border-hairline text-ink/60 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 sm:size-8"
                                         >
                                             <Edit2 size={14} />
                                         </button>
@@ -511,7 +511,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                             onClick={() =>
                                                 setShowDeleteConfirm(address.id)
                                             }
-                                            className="flex h-8 w-8 items-center justify-center border border-hairline text-primary transition-colors hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex size-11 shrink-0 items-center justify-center border border-hairline text-primary transition-colors hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-60 sm:size-8"
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -535,7 +535,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                         type="button"
                                         disabled={!canMutateCard}
                                         onClick={() => setAsDefault(address)}
-                                        className="w-full rounded-[6px] border border-hairline-strong py-2.5 text-[12px] font-bold text-muted-foreground transition-colors hover:border-primary hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="min-h-11 w-full rounded-[6px] border border-hairline-strong py-2.5 text-[12px] font-bold text-muted-foreground transition-colors hover:border-primary hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0"
                                     >
                                         {defaultingThis
                                             ? 'Menjadikan utama...'
@@ -561,7 +561,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                                 onClick={() =>
                                                     setShowDeleteConfirm(null)
                                                 }
-                                                className="flex-1 rounded-[6px] border border-hairline-strong py-2 text-[12px] font-bold text-muted-foreground transition-colors hover:bg-white"
+                                                className="min-h-11 flex-1 rounded-[6px] border border-hairline-strong py-2 text-[12px] font-bold text-muted-foreground transition-colors hover:bg-white sm:min-h-0"
                                             >
                                                 Batal
                                             </button>
@@ -571,7 +571,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                                 onClick={() =>
                                                     handleDelete(address.id)
                                                 }
-                                                className="flex-1 rounded-[6px] bg-red-500 py-2 text-[12px] font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                                className="min-h-11 flex-1 rounded-[6px] bg-red-500 py-2 text-[12px] font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70 sm:min-h-0"
                                             >
                                                 {deletingThis
                                                     ? 'Menghapus...'
@@ -589,14 +589,14 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
             {isModalOpen &&
                 typeof document !== 'undefined' &&
                 createPortal(
-                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4">
                         <div
                             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
                             onClick={closeModal}
                         />
-                        <div className="relative z-[10001] flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden border border-hairline-strong bg-canvas">
-                            <div className="flex items-center justify-between border-b border-hairline-strong bg-sand px-6 py-4">
-                                <h3 className="font-condensed text-[30px] leading-none font-semibold tracking-[-0.02em] uppercase">
+                        <div className="relative z-[10001] flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden border border-hairline-strong bg-canvas sm:max-h-[90dvh]">
+                            <div className="flex shrink-0 items-center justify-between border-b border-hairline-strong bg-sand px-4 py-3 sm:px-6 sm:py-4">
+                                <h3 className="font-condensed text-[24px] leading-none font-semibold tracking-[-0.02em] uppercase sm:text-[30px]">
                                     {editingAddress
                                         ? 'Edit Alamat'
                                         : 'Tambah Alamat Baru'}
@@ -604,7 +604,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="p-1 text-muted-foreground transition-colors hover:text-ink"
+                                    className="grid size-11 place-items-center text-muted-foreground transition-colors hover:text-ink sm:size-9"
                                 >
                                     <X size={20} />
                                 </button>
@@ -614,7 +614,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                 onSubmit={submit}
                                 className="flex min-h-0 flex-1 flex-col"
                             >
-                                <div className="custom-scrollbar space-y-4 overflow-y-auto p-6">
+                                <div className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain p-4 sm:p-6">
                                     <InputBlock
                                         label="Label Alamat"
                                         value={form.data.label}
@@ -654,7 +654,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                         <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
                                             Kode Pos
                                         </label>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-col gap-2 sm:flex-row">
                                             <input
                                                 type="text"
                                                 value={areaQuery}
@@ -668,7 +668,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                                 inputMode="numeric"
                                                 pattern="[0-9]*"
                                                 placeholder="Masukkan kode pos"
-                                                className="w-full rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-[13px] text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                                className="w-full min-w-0 rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-base text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none sm:text-[13px]"
                                             />
                                             <button
                                                 type="button"
@@ -679,7 +679,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                                     areaLoading ||
                                                     areaQuery.trim().length < 3
                                                 }
-                                                className="flex items-center gap-2 rounded-md bg-surface-soft px-4 py-2.5 text-[12px] font-bold text-muted-foreground disabled:opacity-60"
+                                                className="flex min-h-11 items-center justify-center gap-2 rounded-md bg-surface-soft px-4 py-2.5 text-[12px] font-bold text-muted-foreground disabled:opacity-60 sm:min-h-0"
                                             >
                                                 <Search size={14} />
                                                 {areaLoading ? '...' : 'Cari'}
@@ -700,7 +700,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                                         onClick={() =>
                                                             chooseArea(area)
                                                         }
-                                                        className="block w-full border-b border-hairline px-4 py-2 text-left text-[12px] hover:bg-white"
+                                                        className="block min-h-11 w-full border-b border-hairline px-4 py-2 text-left text-[12px] hover:bg-white"
                                                     >
                                                         <span className="font-semibold text-ink">
                                                             {area.name ??
@@ -822,18 +822,18 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                                     </label>
                                 </div>
 
-                                <div className="flex justify-end gap-3 border-t border-hairline-strong bg-sand px-6 py-4">
+                                <div className="flex shrink-0 flex-col-reverse justify-end gap-2 border-t border-hairline-strong bg-sand px-4 py-3 sm:flex-row sm:gap-3 sm:px-6 sm:py-4">
                                     <button
                                         type="button"
                                         onClick={closeModal}
-                                        className="rounded-none border border-ink px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-ink hover:text-canvas"
+                                        className="min-h-11 rounded-none border border-ink px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:bg-ink hover:text-canvas sm:min-h-0"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={form.processing}
-                                        className="rounded-none bg-primary px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
+                                        className="min-h-11 rounded-none bg-primary px-6 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-white uppercase hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70 sm:min-h-0"
                                     >
                                         {form.processing
                                             ? 'Menyimpan...'
@@ -941,7 +941,7 @@ function LocationPicker({
                 <button
                     type="button"
                     onClick={onUseCurrentLocation}
-                    className="inline-flex items-center justify-center gap-2 rounded-[6px] border border-hairline-strong bg-white px-3 py-2 text-[11px] font-bold text-muted-foreground transition-colors hover:border-primary hover:bg-white"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-hairline-strong bg-white px-3 py-2 text-[11px] font-bold text-muted-foreground transition-colors hover:border-primary hover:bg-white sm:min-h-0"
                 >
                     <LocateFixed size={14} /> Gunakan Lokasi Saat Ini
                 </button>
@@ -1081,7 +1081,7 @@ function InputBlock({
                 readOnly={readOnly}
                 inputMode={inputMode}
                 pattern={pattern}
-                className={`w-full rounded-[6px] border border-hairline-strong px-4 py-2.5 text-[13px] text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none ${
+                className={`w-full min-w-0 rounded-[6px] border border-hairline-strong px-4 py-2.5 text-base text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none sm:text-[13px] ${
                     readOnly ? 'bg-white text-muted-foreground' : 'bg-white'
                 }`}
             />
@@ -1111,7 +1111,7 @@ function TextareaBlock({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={placeholder}
-                className="w-full resize-none rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-[13px] text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                className="w-full min-w-0 resize-none rounded-[6px] border border-hairline-strong bg-white px-4 py-2.5 text-base text-ink transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none sm:text-[13px]"
             />
             {error && (
                 <p className="mt-1.5 text-[11px] font-medium text-red-600">

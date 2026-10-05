@@ -66,7 +66,7 @@ export default function MyWishlist({ wishlistItems, summary }: Props) {
             ]}
         >
             <div className="min-w-0">
-                <div className="mb-6 flex items-end justify-between border-b border-hairline-strong pb-4">
+                <div className="mb-6 flex flex-col items-start justify-between gap-3 border-b border-hairline-strong pb-4 sm:flex-row sm:items-end">
                     <div>
                         <p className="mb-1 text-[10px] font-semibold tracking-[0.24em] text-muted-foreground uppercase">
                             Item Tersimpan
@@ -126,8 +126,8 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
     };
 
     return (
-        <Link href={productHref} className="group flex h-full flex-col">
-            <div className="relative aspect-square overflow-hidden border border-hairline bg-oat p-5 sm:p-6">
+        <Link href={productHref} className="group flex h-full min-w-0 flex-col">
+            <div className="relative aspect-square overflow-hidden border border-hairline bg-oat p-3 sm:p-6">
                 <img
                     src={
                         item.image ??
@@ -143,7 +143,7 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                     type="button"
                     aria-label="Hapus dari wishlist"
                     onClick={removeItem}
-                    className="absolute top-3 right-3 z-10 grid size-9 place-items-center border border-hairline-strong bg-canvas text-ink transition hover:border-primary hover:text-primary"
+                    className="absolute top-2 right-2 z-10 grid size-11 place-items-center border border-hairline-strong bg-canvas text-ink transition hover:border-primary hover:text-primary sm:top-3 sm:right-3 sm:size-9"
                 >
                     <Heart size={18} fill="currentColor" strokeWidth={1.8} />
                 </button>
@@ -165,7 +165,7 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
             <p className="mt-2 text-[9px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                 {item.category}
             </p>
-            <h3 className="mt-1 text-[11px] leading-[1.4] font-semibold text-ink uppercase transition-colors group-hover:text-primary">
+            <h3 className="mt-1 text-[11px] leading-[1.4] font-semibold break-words text-ink uppercase transition-colors group-hover:text-primary">
                 {item.title}
             </h3>
 

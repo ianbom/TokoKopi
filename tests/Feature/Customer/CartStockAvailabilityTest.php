@@ -8,9 +8,12 @@ use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\User;
+use App\Models\Voucher;
+use App\Services\Integrations\BiteshipService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Mockery\MockInterface;
 
 uses(RefreshDatabase::class);
 
@@ -89,6 +92,73 @@ it('renders checkout with coffee variant metadata and stock availability', funct
             ->where('cartItems.0.is_available', true)
             ->where('cartItems.0.net_weight', '200gram')
             ->where('cartItems.0.grind_type', 'whole_bean'));
+});
+
+it('refreshes shipping bindings and totals after applying and removing a voucher', function () {
+    $user = User::factory()->create();
+    [$product, $variant] = createCoffeeCartProduct(stock: 2);
+    createCoffeeCartItem($user, $product, $variant, quantity: 1);
+    $address = createCoffeeCartAddress($user);
+    $address->update(['latitude' => '-6.8915000', 'longitude' => '107.6107000']);
+    Voucher::query()->create([
+        'code' => 'KOPI10',
+        'name' => 'Kopi 10%',
+        'discount_type' => 'percentage',
+        'discount_value' => 10,
+        'is_active' => true,
+    ]);
+    $rate = [
+        'id' => 'jne-reg',
+        'courier_company' => 'jne',
+        'courier_type' => 'reg',
+        'courier_service_name' => 'Reguler',
+        'description' => 'Layanan reguler',
+        'duration' => '2 - 3 days',
+        'price' => 16000,
+    ];
+    $this->mock(BiteshipService::class, function (MockInterface $mock) use ($rate): void {
+        $mock->shouldReceive('shippingRates')->times(3)->andReturn([$rate]);
+    });
+    $this->actingAs($user);
+    $addressPayload = ['customer_address_id' => $address->id];
+    $ratePayload = ['shipping_rate_id' => $rate['id']];
+
+    $this->postJson(route('checkout.shipping-rates'), $addressPayload)->assertSuccessful();
+    $this->postJson(route('checkout.shipping-rate'), $ratePayload)->assertSuccessful();
+    $originalHash = session('checkout.cart_hash');
+
+    $this->postJson(route('checkout.voucher.apply'), ['voucher_code' => 'KOPI10'])
+        ->assertSuccessful()
+        ->assertJsonPath('voucher.discount', 8500)
+        ->assertSessionMissing('checkout.selected_rate_binding');
+    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('shipping_rate_id');
+    $this->postJson(route('checkout.shipping-rates'), $addressPayload)->assertSuccessful();
+    $voucherHash = session('checkout.cart_hash');
+    expect($voucherHash)->not->toBe($originalHash);
+    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
+        ->assertSuccessful()
+        ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $voucherHash);
+    $this->get(route('checkout'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.shipping', 16000)
+            ->where('summary.discount', 8500)
+            ->where('summary.total', 92500));
+
+    $this->deleteJson(route('checkout.voucher.remove'))
+        ->assertSuccessful()
+        ->assertSessionMissing('checkout.selected_rate_binding');
+    $this->postJson(route('checkout.shipping-rates'), $addressPayload)->assertSuccessful();
+    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
+        ->assertSuccessful()
+        ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $originalHash);
+    $this->get(route('checkout'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('appliedVoucher', null)
+            ->where('summary.shipping', 16000)
+            ->where('summary.discount', 0)
+            ->where('summary.total', 101000));
 });
 
 /**

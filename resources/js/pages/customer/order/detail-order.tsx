@@ -247,7 +247,7 @@ function ActionButton({
     tone?: 'default' | 'danger';
 }) {
     const base =
-        'group flex w-full items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase transition-all duration-150 active:scale-[0.98]';
+        'group flex min-h-11 w-full items-center justify-center gap-2 rounded-none border px-3 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase transition-all duration-150 active:scale-[0.98] sm:min-h-0 sm:px-4';
     const toneClass =
         tone === 'danger'
             ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
@@ -312,16 +312,16 @@ function InfoLine({
     value: ReactNode;
 }) {
     return (
-        <div className="flex items-start gap-3 py-2.5 text-sm">
+        <div className="grid min-w-0 grid-cols-[15px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2.5 text-sm sm:flex sm:gap-3">
             <Icon
                 className="mt-0.5 shrink-0 text-muted-foreground"
                 size={15}
                 strokeWidth={1.65}
             />
-            <span className="w-28 shrink-0 text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground sm:w-28 sm:shrink-0">
                 {label}
             </span>
-            <span className="min-w-0 text-sm font-medium break-words text-ink">
+            <span className="col-start-2 min-w-0 text-sm font-medium [overflow-wrap:anywhere] break-words text-ink">
                 {value || '-'}
             </span>
         </div>
@@ -339,21 +339,23 @@ function SectionCard({
 }) {
     return (
         <div className="overflow-hidden border border-hairline-strong bg-canvas">
-            <div className="border-b border-hairline-strong px-5 py-4 sm:px-6">
+            <div className="border-b border-hairline-strong px-4 py-4 sm:px-6">
                 <h2 className="text-lg text-ink sm:text-xl">{title}</h2>
             </div>
-            <div className={noPad ? '' : 'p-5 sm:p-6'}>{children}</div>
+            <div className={noPad ? '' : 'p-4 sm:p-6'}>{children}</div>
         </div>
     );
 }
 
 function MetaChip({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                 {label}
             </span>
-            <div className="text-sm font-semibold text-ink">{children}</div>
+            <div className="text-sm font-semibold break-words text-ink">
+                {children}
+            </div>
         </div>
     );
 }
@@ -750,8 +752,7 @@ export default function DetailOrder({ order }: Props) {
                                                                 <span className="font-semibold text-ink">
                                                                     {humanize(
                                                                         item.grind_type,
-                                                                    ) ??
-                                                                        '-'}
+                                                                    ) ?? '-'}
                                                                 </span>
                                                             </p>
                                                             <p>
@@ -845,11 +846,13 @@ export default function DetailOrder({ order }: Props) {
                                                     <span>
                                                         Berat Kirim:{' '}
                                                         <strong className="text-ink">
-                                                            {item.shipping_weight_gram}{' '}
+                                                            {
+                                                                item.shipping_weight_gram
+                                                            }{' '}
                                                             gr
                                                         </strong>
                                                     </span>
-                                                    )}
+                                                )}
                                             </div>
                                             <p className="mt-0.5 text-[11px] text-muted-foreground">
                                                 SKU:{' '}
