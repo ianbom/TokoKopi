@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'sku',
     'origin',
     'process',
+    'grind_type',
+    'tasting_notes',
     'description',
     'status',
     'is_featured',

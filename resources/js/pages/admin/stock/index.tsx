@@ -5,7 +5,7 @@ import { stockAdjustment } from '@/routes/admin/product-variants';
 type Variant = {
     id: number;
     product: string | null;
-    sku: string;
+    sku: string | null;
     net_weight: string | null;
     grind_type: string | null;
     quantity: number;
@@ -63,7 +63,7 @@ export default function StockIndex({ variants, stats }: Props) {
                             {variants.data.map((variant) => (
                                 <tr key={variant.id} className="border-b">
                                     <td className="p-3">{variant.product}</td>
-                                    <td>{variant.sku}</td>
+                                    <td>{variant.sku ?? '-'}</td>
                                     <td>
                                         {[
                                             variant.net_weight,

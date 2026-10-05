@@ -17,10 +17,8 @@ type ProductImage = {
 
 type Variant = {
     id: number;
-    sku: string;
+    sku: string | null;
     net_weight: string | null;
-    grind_type: string | null;
-    tasting_notes: string | null;
     regular_price: number;
     sale_price: number | null;
     image_url?: string | null;
@@ -41,6 +39,8 @@ type ProductDetail = ProductCard & {
     category: string | null;
     origin: string | null;
     process: string | null;
+    grind_type: string | null;
+    tasting_notes: string | null;
     description: string | null;
     is_wishlisted: boolean;
     images: ProductImage[];
@@ -95,7 +95,9 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                 ? [
                       {
                           url: variant.image_url,
-                          alt: `${product.title} ${humanize(variant.grind_type) ?? variant.sku}`,
+                          alt: [product.title, variant.net_weight]
+                              .filter(Boolean)
+                              .join(' '),
                       },
                   ]
                 : [],
@@ -109,11 +111,8 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
     const meta = [
         ['ORIGIN', product.origin],
         ['PROCESS', humanize(product.process)],
-        [
-            'PRODUCER',
-            humanize(selectedVariant?.grind_type ?? null) ?? product.category,
-        ],
-        ['TASTING NOTES', selectedVariant?.tasting_notes ?? null],
+        ['PRODUCER', humanize(product.grind_type) ?? product.category],
+        ['TASTING NOTES', product.tasting_notes],
     ].filter(([, value]) => value) as Array<[string, string]>;
 
     const selectVariant = (variant: Variant) => {
@@ -226,7 +225,7 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                             {product.variants.length > 0 && (
                                 <fieldset className="mt-7">
                                     <legend className="text-[9px] font-semibold tracking-[0.08em] uppercase">
-                                        Choose your grind
+                                        Choose your weight
                                     </legend>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {product.variants.map((variant) => {
@@ -234,14 +233,9 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                                 variant.id ===
                                                 selectedVariant?.id;
                                             const label =
-                                                [
-                                                    humanize(
-                                                        variant.grind_type,
-                                                    ),
-                                                    variant.net_weight,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(' · ') || 'Variant';
+                                                variant.net_weight ||
+                                                variant.sku ||
+                                                `Variant ${variant.id}`;
 
                                             return (
                                                 <button
@@ -496,7 +490,7 @@ function CoffeeStory({ product }: { product: ProductDetail }) {
                                         className="border-b border-ink/15 last:border-b-0"
                                     >
                                         <td className="py-3 pr-3 capitalize">
-                                            {humanize(variant.grind_type) ??
+                                            {humanize(product.grind_type) ??
                                                 '-'}
                                         </td>
                                         <td className="py-3 pr-3">

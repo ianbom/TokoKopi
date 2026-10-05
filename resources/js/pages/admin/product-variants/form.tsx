@@ -12,10 +12,8 @@ type Product = { id: number; name: string; sku: string | null };
 type Variant = {
     id: number;
     product_id: number;
-    sku: string;
+    sku: string | null;
     net_weight: string | null;
-    grind_type: string | null;
-    tasting_notes: string | null;
     regular_price: string | number;
     sale_price: string | number | null;
     shipping_weight_gram: number;
@@ -34,8 +32,6 @@ type Data = {
     product_id: string | number;
     sku: string;
     net_weight: string;
-    grind_type: string;
-    tasting_notes: string;
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -56,8 +52,6 @@ export default function VariantForm({
         product_id: variant?.product_id ?? selectedProductId ?? '',
         sku: variant?.sku ?? '',
         net_weight: String(variant?.net_weight ?? ''),
-        grind_type: variant?.grind_type ?? 'whole_bean',
-        tasting_notes: variant?.tasting_notes ?? '',
         regular_price: String(variant?.regular_price ?? ''),
         sale_price: String(variant?.sale_price ?? ''),
         shipping_weight_gram: variant?.shipping_weight_gram ?? '',
@@ -124,7 +118,7 @@ export default function VariantForm({
                             ))}
                         </select>
                     </Field>
-                    <Field label="SKU" error={errors.sku}>
+                    <Field label="SKU (opsional)" error={errors.sku}>
                         <Input
                             placeholder="DCL-GAYO-250-WB"
                             value={form.data.sku}
@@ -139,32 +133,6 @@ export default function VariantForm({
                             value={form.data.net_weight}
                             onChange={(event) =>
                                 setField('net_weight', event.target.value)
-                            }
-                        />
-                    </Field>
-                    <Field label="Grind type" error={errors.grind_type}>
-                        <select
-                            className="h-9 border bg-canvas px-3 text-sm"
-                            value={form.data.grind_type}
-                            onChange={(event) =>
-                                setField('grind_type', event.target.value)
-                            }
-                        >
-                            {['whole_bean', 'fine', 'medium', 'coarse'].map(
-                                (type) => (
-                                    <option key={type} value={type}>
-                                        {type}
-                                    </option>
-                                ),
-                            )}
-                        </select>
-                    </Field>
-                    <Field label="Tasting Notes" error={errors.tasting_notes}>
-                        <Input
-                            placeholder="Cokelat, jeruk, gula aren"
-                            value={form.data.tasting_notes}
-                            onChange={(event) =>
-                                setField('tasting_notes', event.target.value)
                             }
                         />
                     </Field>

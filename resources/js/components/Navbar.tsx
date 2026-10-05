@@ -3,6 +3,7 @@ import { Menu, ShoppingCart, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { cart, home, list, location, login } from '@/routes';
+import { index as stories } from '@/routes/story';
 
 type NavbarProps = {
     cartCount?: number;
@@ -41,6 +42,12 @@ export default function Navbar({
                     >
                         Locations
                     </Link>
+                    <Link
+                        href={stories()}
+                        className="transition-colors hover:text-primary"
+                    >
+                        Stories
+                    </Link>
                 </div>
                 <Link
                     href={home.url()}
@@ -54,7 +61,6 @@ export default function Navbar({
                     />
                 </Link>
                 <div className="col-start-3 flex min-w-0 items-center justify-end gap-1 sm:gap-2 md:gap-4 lg:gap-8">
-
                     <Link
                         href={accountHref}
                         className="hidden transition-colors hover:text-primary md:inline"
@@ -126,6 +132,13 @@ export default function Navbar({
                     className="border-b border-hairline py-5 text-lg uppercase"
                 >
                     Locations
+                </Link>
+                <Link
+                    href={stories()}
+                    onClick={closeMenu}
+                    className="border-b border-hairline py-5 text-lg uppercase"
+                >
+                    Stories
                 </Link>
 
                 <Link

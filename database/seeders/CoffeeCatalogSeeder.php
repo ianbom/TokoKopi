@@ -79,12 +79,11 @@ class CoffeeCatalogSeeder extends Seeder
         $images = $this->images($photo);
         $variants = $ground
             ? [
-                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'grind_type' => 'whole_bean', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 24],
-                ['sku' => strtoupper($slug).'-200-MF', 'net_weight' => '200gram', 'grind_type' => 'medium_fine', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 16],
+                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 40],
             ]
-            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'grind_type' => null, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
+            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
 
-        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'description' => "<p>{$name} dengan karakter Manis dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
+        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'grind_type' => $ground ? 'whole_bean' : null, 'tasting_notes' => 'Manis dan seimbang', 'description' => "<p>{$name} dengan karakter Manis dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
     }
 
     private function images(string $primary): array

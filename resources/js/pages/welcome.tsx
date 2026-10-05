@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import EditorialProductGrid from '@/components/storefront/editorial-product-grid';
 import ShopLayout from '@/layouts/shop-layout';
 import { list } from '@/routes';
+import { index as stories } from '@/routes/story';
 
 type Product = {
     id: number;
@@ -211,12 +212,12 @@ export default function Welcome({
                             profiles, uncomplicated brewing. Great coffee does
                             not need to be complicated.
                         </p>
-                        <a
-                            href="#story"
+                        <Link
+                            href={stories()}
                             className="mt-6 inline-block text-xs font-semibold tracking-[0.06em] text-primary uppercase"
                         >
                             Read our story ↗
-                        </a>
+                        </Link>
                     </div>
                 </section>
 

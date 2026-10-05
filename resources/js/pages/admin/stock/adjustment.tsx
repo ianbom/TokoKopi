@@ -12,7 +12,7 @@ type Variant = {
     id: number;
     product_id: number;
     product: string | null;
-    sku: string;
+    sku: string | null;
     quantity: number;
     low_stock_threshold: number;
 };
@@ -36,7 +36,7 @@ export default function StockAdjustment({ variant }: { variant: Variant }) {
                             Penyesuaian Stok
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {variant.product ?? '-'} · {variant.sku}
+                            {variant.product ?? '-'} · {variant.sku ?? '-'}
                         </p>
                     </div>
                     <Button asChild variant="outline">

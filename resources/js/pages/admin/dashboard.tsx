@@ -52,7 +52,7 @@ type LowStockVariant = {
     id?: number;
     product_id?: number | null;
     product_name: string | null;
-    sku?: string;
+    sku?: string | null;
     net_weight?: string | null;
     grind_type?: string | null;
     available_stock: number;

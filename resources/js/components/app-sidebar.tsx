@@ -32,6 +32,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as stories } from '@/routes/admin/stories';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -136,6 +137,7 @@ const adminNavGroups: NavGroup[] = [
     {
         title: 'Pemasaran & Konten',
         items: [
+            { title: 'Stories', href: stories(), icon: FileText },
             {
                 title: 'Voucher',
                 href: '/admin/vouchers',

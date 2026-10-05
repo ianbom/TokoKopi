@@ -10,6 +10,8 @@ type Product = {
     id: number;
     name: string;
     sku: string | null;
+    grind_type: string | null;
+    tasting_notes: string | null;
     categories: string[];
     thumbnail: string | null;
     minimum_price: number;
@@ -141,11 +143,13 @@ export default function ProductsIndex({
                     </Button>
                 </form>
                 <div className="overflow-x-auto border">
-                    <table className="admin-table w-full min-w-[760px] text-sm">
+                    <table className="admin-table w-full min-w-[1100px] text-sm">
                         <thead className="border-b bg-surface-soft text-left">
                             <tr>
                                 <th className="p-3">Produk</th>
                                 <th>Kategori</th>
+                                <th>Gilingan</th>
+                                <th>Tasting Notes</th>
                                 <th>Harga mulai</th>
                                 <th>Varian</th>
                                 <th>Stok</th>
@@ -181,6 +185,13 @@ export default function ProductsIndex({
                                     <td>
                                         {product.categories.join(', ') || '-'}
                                     </td>
+                                    <td>
+                                        {product.grind_type?.replaceAll(
+                                            '_',
+                                            ' ',
+                                        ) ?? '-'}
+                                    </td>
+                                    <td>{product.tasting_notes ?? '-'}</td>
                                     <td>{money(product.minimum_price)}</td>
                                     <td>{product.variants_count}</td>
                                     <td>{product.total_stock}</td>
@@ -214,7 +225,7 @@ export default function ProductsIndex({
                             {products.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={7}
+                                        colSpan={9}
                                         className="p-10 text-center text-muted-foreground"
                                     >
                                         Produk tidak ditemukan.

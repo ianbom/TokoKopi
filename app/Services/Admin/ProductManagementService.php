@@ -127,8 +127,8 @@ class ProductManagementService
             }
             foreach ($product->variants as $variant) {
                 $variantCopy = $copy->variants()->create([
-                    ...$variant->only(['net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
-                    'sku' => $variant->sku.'-COPY-'.Str::upper(Str::random(4)),
+                    ...$variant->only(['net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+                    'sku' => filled($variant->sku) ? $variant->sku.'-COPY-'.Str::upper(Str::random(4)) : null,
                 ]);
                 $variantCopy->stock()->create([
                     'quantity' => $variant->stock?->quantity ?? 0,
@@ -170,11 +170,11 @@ class ProductManagementService
         $product->load(['categories:id,name', 'images', 'variants.stock']);
 
         return [
-            ...$product->only(['id', 'name', 'slug', 'sku', 'origin', 'process', 'description', 'status', 'is_featured', 'is_new_arrival', 'is_best_seller']),
+            ...$product->only(['id', 'name', 'slug', 'sku', 'origin', 'process', 'grind_type', 'tasting_notes', 'description', 'status', 'is_featured', 'is_new_arrival', 'is_best_seller']),
             'category_ids' => $product->categories->modelKeys(),
             'images' => $product->images->map->only(['id', 'image_url', 'alt_text', 'sort_order', 'is_primary'])->values(),
             'variants' => $product->variants->map(fn (ProductVariant $variant): array => [
-                ...$variant->only(['id', 'sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+                ...$variant->only(['id', 'sku', 'net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
                 'stock_quantity' => $variant->stock?->quantity ?? 0,
                 'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             ])->values(),
@@ -198,7 +198,7 @@ class ProductManagementService
     private function productPayload(ProductRequest $request): array
     {
         return [
-            ...collect($request->validated())->only(['name', 'slug', 'sku', 'origin', 'process', 'description', 'status'])->all(),
+            ...collect($request->validated())->only(['name', 'slug', 'sku', 'origin', 'process', 'grind_type', 'tasting_notes', 'description', 'status'])->all(),
             'is_featured' => $request->boolean('is_featured'),
             'is_new_arrival' => $request->boolean('is_new_arrival'),
             'is_best_seller' => $request->boolean('is_best_seller'),
@@ -210,7 +210,7 @@ class ProductManagementService
         $kept = [];
         foreach ($variants as $index => $data) {
             $variant = isset($data['id']) ? $product->variants()->whereKey($data['id'])->firstOrFail() : new ProductVariant(['product_id' => $product->id]);
-            $payload = collect($data)->only(['sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url'])->all();
+            $payload = collect($data)->only(['sku', 'net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url'])->all();
             $payload['is_active'] = (bool) ($data['is_active'] ?? false);
 
             if ($request->hasFile("variants.{$index}.image")) {
@@ -240,6 +240,8 @@ class ProductManagementService
             'id' => $product->id,
             'name' => $product->name,
             'sku' => $product->sku,
+            'grind_type' => $product->grind_type,
+            'tasting_notes' => $product->tasting_notes,
             'categories' => $product->categories->pluck('name')->values(),
             'thumbnail' => $product->primaryImage?->image_url,
             'minimum_price' => $prices->min() ?? 0,

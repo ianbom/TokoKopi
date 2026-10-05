@@ -136,9 +136,9 @@ class CartService
             ->with([
                 'items' => fn ($query) => $query
                     ->with([
-                        'product:id,name,slug,status',
+                        'product:id,name,slug,status,grind_type',
                         'product.primaryImage:id,product_id,image_url,alt_text',
-                        'variant:id,product_id,sku,net_weight,grind_type,regular_price,sale_price,shipping_weight_gram,image_url,is_active',
+                        'variant:id,product_id,sku,net_weight,regular_price,sale_price,shipping_weight_gram,image_url,is_active',
                         'variant.stock:id,product_variant_id,quantity',
                     ])
                     ->latest('id'),
@@ -163,7 +163,7 @@ class CartService
                 'product_slug' => $product?->slug,
                 'title' => $product?->name ?? 'Produk tidak tersedia',
                 'net_weight' => $variant?->net_weight,
-                'grind_type' => $variant?->grind_type,
+                'grind_type' => $product?->grind_type,
                 'image' => $variant?->image_url ?? $product?->primaryImage?->image_url,
                 'price' => (float) $item->price_snapshot,
                 'quantity' => $item->quantity,
@@ -195,7 +195,7 @@ class CartService
 
     private function variantName(ProductVariant $variant): string
     {
-        return collect([$variant->net_weight, $variant->grind_type])
+        return collect([$variant->net_weight, $variant->product?->grind_type])
             ->filter()
             ->map(fn (string $value): string => str($value)->replace('_', ' ')->title()->toString())
             ->implode(' / ');

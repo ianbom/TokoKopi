@@ -51,7 +51,8 @@ it('imports a coffee catalog idempotently', function () {
         ->and($product->sku)->toBe('TKP-1736029086044161055')
         ->and($variant->regular_price)->toBe('80000.00')
         ->and($variant->sale_price)->toBe('40000.00')
-        ->and($variant->tasting_notes)->toBe('Cokelat, karamel, dan buah merah')
+        ->and($product->grind_type)->toBe('whole_beans')
+        ->and($product->tasting_notes)->toBe('Cokelat, karamel, dan buah merah')
         ->and($variant->shipping_weight_gram)->toBe(200)
         ->and(Stock::query()->where('product_variant_id', $variant->id)->value('quantity'))->toBe(0);
 });

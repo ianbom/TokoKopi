@@ -12,9 +12,9 @@ Project declasse_coffee_ecommerce {
   - Collections dan product_collections dihapus.
   - Product reviews dihapus.
   - Semua produk menggunakan product_variants, termasuk produk tanpa pilihan khusus.
-    Untuk produk tanpa pilihan, tetap buat satu variant dengan SKU, harga, dan stock.
+    Untuk produk tanpa pilihan, tetap buat satu variant dengan harga dan stock; SKU opsional.
   - Variant kopi fokus pada:
-    net_weight fleksibel, grind type, harga, dan stok.
+    net_weight fleksibel, harga, dan stok. Grind type dan tasting notes disimpan di products.
   - Detail produk dibuat minimal; origin dan process dapat disimpan di products.
   - Description memakai longtext untuk konten rich text dari Tiptap.js.
   - Stok dikelola langsung oleh website melalui tabel stocks.
@@ -127,10 +127,12 @@ Table products {
 
   name varchar(200) [not null]
   slug varchar(220) [not null, unique]
-  sku varchar(100) [unique, note: 'SKU induk / kode produk utama']
+  sku varchar(100) [unique, note: 'SKU induk / kode produk utama; opsional']
 
   origin varchar(180) [note: 'Contoh: Sumatera Karo, Ijen, Gayo, Toraja, Ethiopia']
   process varchar(100) [note: 'Contoh: natural, washed, anaerobic, wet hulled']
+  grind_type varchar(50) [note: 'whole_bean, fine, medium, coarse; boleh null; berlaku untuk seluruh varian produk']
+  tasting_notes varchar(255) [note: 'Karakter rasa kopi, misalnya cokelat, jeruk, gula aren; boleh null']
 
   description longtext [note: 'Konten rich text Tiptap.js: deskripsi produk, origin, karakter kopi, brewing recommendation, storage, dll']
 
@@ -146,6 +148,7 @@ Table products {
 
   indexes {
     sku
+    grind_type
     status
     is_featured
     is_new_arrival
@@ -190,11 +193,11 @@ Table product_images {
   Variant dibuat sederhana untuk kebutuhan produk kopi.
 
   Contoh:
-  - net_weight = "100gram", grind_type = "whole_bean"
-  - net_weight = "200gram", grind_type = "fine"
-  - net_weight = "1kg", grind_type = "whole_bean"
-  - net_weight = "100ml", grind_type = null
-  - net_weight = "2pcs", grind_type = null
+  - net_weight = "100gram"
+  - net_weight = "200gram"
+  - net_weight = "1kg"
+  - net_weight = "100ml"
+  - net_weight = "2pcs"
 
   net_weight menggunakan varchar agar fleksibel dan tidak terbatas
   hanya pada satuan gram.
@@ -206,10 +209,9 @@ Table product_variants {
   id bigint [pk, increment]
   product_id bigint [not null]
 
-  sku varchar(100) [not null, unique, note: 'SKU unik untuk setiap varian produk']
+  sku varchar(100) [unique, note: 'SKU unik untuk setiap varian produk; opsional']
 
   net_weight varchar(100) [note: 'Label isi/berat fleksibel. Contoh: 100gram, 250gram, 1kg, 100ml, 2pcs']
-  grind_type varchar(50) [note: 'whole_bean, fine, medium_fine, medium, medium_coarse, coarse, tubruk; boleh null']
 
   regular_price decimal(15,2) [not null]
   sale_price decimal(15,2)
@@ -227,7 +229,6 @@ Table product_variants {
     product_id
     sku
     net_weight
-    grind_type
     is_active
   }
 }
@@ -695,6 +696,28 @@ Table site_settings {
   type varchar(50) [not null, default: 'string']
   created_at timestamp
   updated_at timestamp
+}
+
+Table stories {
+  id bigint [pk, increment]
+  title varchar(180) [not null]
+  slug varchar(180) [not null, unique]
+  category varchar(100) [not null]
+  author_name varchar(100) [not null, default: 'Deklase']
+  excerpt text [not null]
+  body_html text [not null]
+  cover_image_url varchar(255) [not null]
+  pull_quote text
+  quote_attribution varchar(120)
+  cover_caption varchar(255)
+  status varchar(20) [not null, default: 'draft', note: 'draft or published']
+  published_at timestamp
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (status, published_at)
+  }
 }
 
 

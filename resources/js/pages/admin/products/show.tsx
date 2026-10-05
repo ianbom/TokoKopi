@@ -29,10 +29,8 @@ type Image = {
 
 type Variant = {
     id: number;
-    sku: string;
+    sku: string | null;
     net_weight: string | null;
-    grind_type: string | null;
-    tasting_notes: string | null;
     regular_price: string | number;
     sale_price: string | number | null;
     shipping_weight_gram: number;
@@ -49,6 +47,8 @@ type Product = {
     sku: string | null;
     origin: string | null;
     process: string | null;
+    grind_type: string | null;
+    tasting_notes: string | null;
     description: string | null;
     status: string;
     is_featured: boolean;
@@ -236,6 +236,14 @@ export default function ProductShow({ product }: { product: Product }) {
                                 value={product.process ?? '-'}
                             />
                             <Detail
+                                label="Grind type"
+                                value={humanize(product.grind_type)}
+                            />
+                            <Detail
+                                label="Tasting Notes"
+                                value={product.tasting_notes ?? '-'}
+                            />
+                            <Detail
                                 label="Total stock"
                                 value={product.total_stock}
                             />
@@ -306,15 +314,11 @@ export default function ProductShow({ product }: { product: Product }) {
 
                     {product.variants.length > 0 ? (
                         <div className="mt-5 overflow-x-auto border-y border-ink/20">
-                            <table className="w-full min-w-[980px] text-left text-xs">
+                            <table className="w-full min-w-[760px] text-left text-xs">
                                 <thead className="border-b border-ink/20 text-[9px] tracking-[0.08em] text-ink/55 uppercase">
                                     <tr>
                                         <th className="py-3 pr-4">SKU</th>
-                                        <th className="py-3 pr-4">Grind</th>
                                         <th className="py-3 pr-4">Weight</th>
-                                        <th className="py-3 pr-4">
-                                            Taste notes
-                                        </th>
                                         <th className="py-3 pr-4">Price</th>
                                         <th className="py-3 pr-4">Shipping</th>
                                         <th className="py-3 pr-4">Stock</th>
@@ -328,16 +332,10 @@ export default function ProductShow({ product }: { product: Product }) {
                                             className="border-b border-ink/15 last:border-b-0"
                                         >
                                             <td className="py-4 pr-4 font-semibold">
-                                                {variant.sku}
-                                            </td>
-                                            <td className="py-4 pr-4 capitalize">
-                                                {humanize(variant.grind_type)}
+                                                {variant.sku ?? '-'}
                                             </td>
                                             <td className="py-4 pr-4">
                                                 {variant.net_weight ?? '-'}
-                                            </td>
-                                            <td className="max-w-56 py-4 pr-4">
-                                                {variant.tasting_notes ?? '-'}
                                             </td>
                                             <td className="py-4 pr-4">
                                                 <div className="font-semibold">

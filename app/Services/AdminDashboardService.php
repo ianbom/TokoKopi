@@ -386,7 +386,7 @@ class AdminDashboardService
                 'product_variants.product_id',
                 'product_variants.sku',
                 'product_variants.net_weight',
-                'product_variants.grind_type',
+                'products.grind_type',
                 'stocks.quantity',
                 'stocks.low_stock_threshold',
                 DB::raw('stocks.quantity as available_stock'),

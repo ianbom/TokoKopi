@@ -48,7 +48,7 @@ class ProductBrowsingService
         $products = Product::query()->with($this->relations())->where('status', 'active')
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%")))
             ->when($category !== '', fn ($query) => $query->whereHas('categories', fn ($query) => $query->where('slug', $category)))
-            ->when($grindType !== '', fn ($query) => $query->whereHas('variants', fn ($query) => $query->where('is_active', true)->where('grind_type', $grindType)))
+            ->when($grindType !== '', fn ($query) => $query->where('grind_type', $grindType)->whereHas('variants', fn ($query) => $query->where('is_active', true)))
             ->when($process !== '', fn ($query) => $query->where('process', $process))
             ->when($type === 'best_seller', fn ($query) => $query->where('is_best_seller', true))
             ->when($price === 'under_100000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) < ?', [100000])))
@@ -74,7 +74,7 @@ class ProductBrowsingService
             'filters' => ['category' => $category, 'grind_type' => $grindType, 'process' => $process, 'price' => $price, 'sort' => $sort, 'type' => $type],
             'options' => [
                 'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']),
-                'grindTypes' => ProductVariant::query()->where('is_active', true)->whereNotNull('grind_type')->distinct()->orderBy('grind_type')->pluck('grind_type'),
+                'grindTypes' => Product::query()->where('status', 'active')->whereHas('variants', fn ($query) => $query->where('is_active', true))->whereNotNull('grind_type')->distinct()->orderBy('grind_type')->pluck('grind_type'),
                 'processes' => Product::query()->where('status', 'active')->whereNotNull('process')->distinct()->orderBy('process')->pluck('process'),
                 'priceRanges' => [
                     ['value' => 'under_100000', 'label' => 'Under Rp 100.000'],
@@ -155,6 +155,7 @@ class ProductBrowsingService
 
         return [
             'id' => $product->id, 'name' => $product->name, 'title' => $product->name, 'slug' => $product->slug, 'sku' => $product->sku,
+            'grind_type' => $product->grind_type, 'tasting_notes' => $product->tasting_notes,
             'description' => (string) $product->description, 'short_description' => strip_tags((string) $product->description),
             'image_url' => $product->images->firstWhere('is_primary', true)?->image_url ?? $variant?->image_url,
             'price' => (float) $price, 'regular_price' => (float) ($variant?->regular_price ?? 0), 'sale_price' => $variant?->sale_price !== null ? (float) $variant->sale_price : null,
@@ -162,7 +163,7 @@ class ProductBrowsingService
             'hover_image_url' => $product->images->skip(1)->first()?->image_url,
             'badge' => $product->is_new_arrival ? 'NEW' : ($product->is_best_seller ? 'BEST SELLER' : null), 'label' => null, 'is_wishlisted' => false,
             'available_stock' => (int) $product->variants->sum(fn ($item) => $item->stock?->quantity ?? 0),
-            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => trim(($item->net_weight ?? '').' '.str_replace('_', ' ', $item->grind_type ?? '')), 'net_weight' => $item->net_weight, 'grind_type' => $item->grind_type, 'tasting_notes' => $item->tasting_notes, 'image_url' => $item->image_url, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
+            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => $item->net_weight ?? '', 'net_weight' => $item->net_weight, 'image_url' => $item->image_url, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
         ];
     }
 

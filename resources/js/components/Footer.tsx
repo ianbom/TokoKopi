@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 
 import { home, list } from '@/routes';
 import { privacy, shipping } from '@/routes/policy';
+import { index as stories } from '@/routes/story';
 
 export default function Footer() {
     return (
@@ -74,6 +75,7 @@ export default function Footer() {
                     <a href={home.url()}>Merchandise</a>
                 </FooterColumn>
                 <FooterColumn title="Deklase">
+                    <Link href={stories()}>Stories</Link>
                     <a href="#newsletter">Newsletter</a>
                     <a href={home.url()}>Tentang kopi kami</a>
                     <a href={list.url()}>Semua kopi</a>
@@ -84,7 +86,6 @@ export default function Footer() {
                     <a href="#">TikTok</a>
                     <a href="#">Tokopedia</a>
                     <a href="#">Shopee</a>
-                   
                 </FooterColumn>
             </section>
             <div className="flex flex-col gap-3 px-5 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-7 lg:px-10">

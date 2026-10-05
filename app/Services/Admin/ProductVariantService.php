@@ -22,7 +22,6 @@ class ProductVariantService
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('sku', 'like', "%{$search}%")
                 ->orWhere('net_weight', 'like', "%{$search}%")
-                ->orWhere('grind_type', 'like', "%{$search}%")
                 ->orWhereHas('product', fn ($productQuery) => $productQuery->where('name', 'like', "%{$search}%"))))
             ->when($status !== '', fn ($query) => $query->where('is_active', $status === 'active'))
             ->latest();
@@ -89,7 +88,7 @@ class ProductVariantService
         $variant->load(['product:id,name', 'stock']);
 
         return [
-            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
             'product' => $variant->product?->name,
             'stock_quantity' => $variant->stock?->quantity ?? 0,
             'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
@@ -98,7 +97,7 @@ class ProductVariantService
 
     private function payload(ProductVariantRequest $request, ?ProductVariant $variant = null): array
     {
-        $payload = collect($request->validated())->only(['product_id', 'sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram'])->all();
+        $payload = collect($request->validated())->only(['product_id', 'sku', 'net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram'])->all();
         $payload['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
@@ -114,7 +113,7 @@ class ProductVariantService
     private function row(ProductVariant $variant): array
     {
         return [
-            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'grind_type', 'tasting_notes', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
+            ...$variant->only(['id', 'product_id', 'sku', 'net_weight', 'regular_price', 'sale_price', 'shipping_weight_gram', 'image_url', 'is_active']),
             'product' => $variant->product?->name,
             'stock_quantity' => $variant->stock?->quantity ?? 0,
             'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,

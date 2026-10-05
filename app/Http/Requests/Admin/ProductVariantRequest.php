@@ -18,10 +18,8 @@ class ProductVariantRequest extends FormRequest
 
         return [
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'sku' => ['required', 'string', 'max:100', Rule::unique('product_variants', 'sku')->ignore($variant)],
+            'sku' => ['nullable', 'string', 'max:100', Rule::unique('product_variants', 'sku')->ignore($variant)],
             'net_weight' => ['nullable', 'string', 'max:100'],
-            'grind_type' => ['nullable', Rule::in(['whole_bean', 'fine', 'medium', 'coarse'])],
-            'tasting_notes' => ['nullable', 'string', 'max:255'],
             'regular_price' => ['required', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0', 'lte:regular_price'],
             'shipping_weight_gram' => ['required', 'integer', 'min:0'],

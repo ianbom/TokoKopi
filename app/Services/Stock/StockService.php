@@ -13,7 +13,7 @@ class StockService
     {
         $search = $request->string('search')->toString();
         $availability = $request->string('availability')->toString();
-        $query = ProductVariant::query()->with(['product:id,name', 'stock'])
+        $query = ProductVariant::query()->with(['product:id,name,grind_type', 'stock'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('sku', 'like', "%{$search}%")
                 ->orWhereHas('product', fn ($productQuery) => $productQuery->where('name', 'like', "%{$search}%"))))
@@ -75,7 +75,7 @@ class StockService
             'product' => $variant->product?->name,
             'sku' => $variant->sku,
             'net_weight' => $variant->net_weight,
-            'grind_type' => $variant->grind_type,
+            'grind_type' => $variant->product?->grind_type,
             'quantity' => $variant->stock?->quantity ?? 0,
             'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             'is_active' => $variant->is_active,

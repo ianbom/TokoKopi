@@ -79,13 +79,13 @@ it('paginates the coffee catalog by twenty products', function () {
             'name' => "Extra Coffee {$index}",
             'slug' => "extra-coffee-{$index}",
             'sku' => "EXTRA-{$index}",
+            'grind_type' => 'whole_bean',
             'status' => 'active',
         ]);
         $variant = ProductVariant::query()->create([
             'product_id' => $product->id,
             'sku' => "EXTRA-{$index}-250",
             'net_weight' => '250g',
-            'grind_type' => 'whole_bean',
             'regular_price' => 90000,
         ]);
         Stock::query()->create([
@@ -113,6 +113,7 @@ it('renders active coffee products from the database for the grid', function () 
         'name' => 'Aceh Gayo',
         'slug' => 'aceh-gayo',
         'sku' => 'ACEH-GAYO-250',
+        'grind_type' => 'whole_bean',
         'status' => 'active',
     ]);
     $product->categories()->attach($category);
@@ -126,7 +127,6 @@ it('renders active coffee products from the database for the grid', function () 
         'product_id' => $product->id,
         'sku' => 'ACEH-GAYO-250-WHOLE',
         'net_weight' => '250g',
-        'grind_type' => 'whole_bean',
         'regular_price' => 125000,
     ]);
     Stock::query()->create([

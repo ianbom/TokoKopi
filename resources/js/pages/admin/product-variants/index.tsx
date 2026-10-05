@@ -11,9 +11,8 @@ import {
 type Variant = {
     id: number;
     product: string | null;
-    sku: string;
+    sku: string | null;
     net_weight: string | null;
-    grind_type: string | null;
     regular_price: string;
     sale_price: string | null;
     stock_quantity: number;
@@ -80,7 +79,6 @@ export default function ProductVariantsIndex({
                             <tr>
                                 <th className="p-3">Produk / SKU</th>
                                 <th>Berat</th>
-                                <th>Gilingan</th>
                                 <th>Harga</th>
                                 <th>Stok</th>
                                 <th>Status</th>
@@ -93,11 +91,10 @@ export default function ProductVariantsIndex({
                                     <td className="p-3">
                                         <b>{variant.product}</b>
                                         <p className="text-xs text-muted-foreground">
-                                            {variant.sku}
+                                            {variant.sku ?? '-'}
                                         </p>
                                     </td>
                                     <td>{variant.net_weight ?? '-'}</td>
-                                    <td>{variant.grind_type ?? '-'}</td>
                                     <td>
                                         Rp{' '}
                                         {Number(

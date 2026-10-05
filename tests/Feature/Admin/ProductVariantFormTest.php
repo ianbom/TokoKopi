@@ -32,14 +32,11 @@ it('adjusts variant stock without a stock log table', function () {
 it('creates a product variant from an uploaded image', function () {
     Storage::fake('public');
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
-    $product = Product::query()->create(['name' => 'Toraja Sapan', 'slug' => 'toraja-sapan', 'status' => 'draft']);
+    $product = Product::query()->create(['name' => 'Toraja Sapan', 'slug' => 'toraja-sapan', 'grind_type' => 'whole_bean', 'tasting_notes' => 'Melati dan peach', 'status' => 'draft']);
 
     $this->actingAs($admin)->post(route('admin.product-variants.store'), [
         'product_id' => $product->id,
-        'sku' => 'TORAJA-250-WB',
         'net_weight' => '250gram',
-        'grind_type' => 'whole_bean',
-        'tasting_notes' => 'Melati dan peach',
         'regular_price' => 95000,
         'sale_price' => null,
         'shipping_weight_gram' => 300,
@@ -49,7 +46,7 @@ it('creates a product variant from an uploaded image', function () {
         'low_stock_threshold' => 3,
     ])->assertRedirect();
 
-    $variant = ProductVariant::query()->where('sku', 'TORAJA-250-WB')->firstOrFail();
-    expect($variant->tasting_notes)->toBe('Melati dan peach');
+    $variant = ProductVariant::query()->where('product_id', $product->id)->firstOrFail();
+    expect($variant->sku)->toBeNull()->and($variant->product->tasting_notes)->toBe('Melati dan peach');
     Storage::disk('public')->assertExists(str($variant->image_url)->after('/storage/')->toString());
 });

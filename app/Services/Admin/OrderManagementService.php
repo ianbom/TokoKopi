@@ -72,7 +72,7 @@ class OrderManagementService
     public function detailData(Order $order): array
     {
         $order->load([
-            'items.variant:id,sku,net_weight,grind_type',
+            'items.variant:id,sku,net_weight',
             'address',
             'payment.logs' => fn ($query) => $query->latest(),
             'shipment.trackings' => fn ($query) => $query->latest('happened_at'),

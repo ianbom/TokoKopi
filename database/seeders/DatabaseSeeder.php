@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PublicProductsSeeder::class,
             BannerSeeder::class,
             SiteSettingSeeder::class,
+            StorySeeder::class,
         ]);
     }
 }

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('sku', 100)->nullable()->unique();
             $table->string('origin', 180)->nullable();
             $table->string('process', 100)->nullable();
+            $table->string('grind_type', 50)->nullable();
+            $table->string('tasting_notes')->nullable();
             $table->longText('description')->nullable();
             $table->string('status', 30)->default('draft');
             $table->boolean('is_featured')->default(false);
@@ -24,6 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('sku');
+            $table->index('grind_type');
             $table->index('status');
             $table->index('is_featured');
             $table->index('is_new_arrival');

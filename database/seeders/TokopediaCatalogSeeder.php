@@ -91,6 +91,8 @@ class TokopediaCatalogSeeder extends Seeder
                 'sku' => $sku,
                 'origin' => $data['origin'] ?? null,
                 'process' => $data['process'] ?? null,
+                'grind_type' => $data['grind_type'] ?? null,
+                'tasting_notes' => $data['tasting_notes'] ?? null,
                 'description' => (string) ($data['description'] ?? $data['title'] ?? ''),
                 'status' => 'active',
                 'is_featured' => false,
@@ -138,8 +140,6 @@ class TokopediaCatalogSeeder extends Seeder
             [
                 'product_id' => $product->id,
                 'net_weight' => $data['net_weight'] ?? null,
-                'grind_type' => $data['grind_type'] ?? null,
-                'tasting_notes' => $data['tasting_notes'] ?? null,
                 'regular_price' => $regularPrice,
                 'sale_price' => $salePrice,
                 'shipping_weight_gram' => $this->grams($data['net_weight'] ?? null),

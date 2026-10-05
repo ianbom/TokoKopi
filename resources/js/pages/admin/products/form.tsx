@@ -1,24 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import Highlight from '@tiptap/extension-highlight';
-import { EditorContent, useEditor } from '@tiptap/react';
-import type { Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import {
-    ArrowLeft,
-    Bold,
-    Highlighter,
-    Italic,
-    List,
-    ListOrdered,
-    Plus,
-    Redo2,
-    Save,
-    Trash2,
-    Undo2,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo } from 'react';
 import InputError from '@/components/input-error';
+import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,10 +19,8 @@ type ImageRow = {
 };
 type VariantRow = {
     id?: number;
-    sku: string;
+    sku: string | null;
     net_weight: string;
-    grind_type: string;
-    tasting_notes: string;
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -54,6 +37,8 @@ type Product = {
     sku: string | null;
     origin: string | null;
     process: string | null;
+    grind_type: string | null;
+    tasting_notes: string | null;
     description: string | null;
     status: string;
     is_featured: boolean;
@@ -82,8 +67,6 @@ const blankImage = (): ImageRow => ({
 const blankVariant = (): VariantRow => ({
     sku: '',
     net_weight: '',
-    grind_type: 'whole_bean',
-    tasting_notes: '',
     regular_price: '',
     sale_price: '',
     shipping_weight_gram: '',
@@ -102,6 +85,8 @@ export default function ProductForm({ mode, product, options }: Props) {
         sku: product?.sku ?? '',
         origin: product?.origin ?? '',
         process: product?.process ?? '',
+        grind_type: product?.grind_type ?? '',
+        tasting_notes: product?.tasting_notes ?? '',
         description: product?.description ?? '',
         status: product?.status ?? 'draft',
         is_featured: product?.is_featured ?? false,
@@ -115,8 +100,6 @@ export default function ProductForm({ mode, product, options }: Props) {
         variants: product?.variants?.map((variant) => ({
             ...variant,
             net_weight: value(variant.net_weight),
-            grind_type: value(variant.grind_type),
-            tasting_notes: value(variant.tasting_notes),
             regular_price: value(variant.regular_price),
             sale_price: value(variant.sale_price),
             shipping_weight_gram: value(variant.shipping_weight_gram),
@@ -184,7 +167,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                 </header>
                 <form onSubmit={submit} className="w-full space-y-6">
                     <section className="grid gap-4 border bg-canvas p-5 lg:grid-cols-3">
-                        <Field label="Nama produk" error={errors.name}>
+                        <Field label="Nama produk" error={errors.name} required>
                             <Input
                                 placeholder="Contoh: Deklase Gayo Natural"
                                 value={form.data.name}
@@ -193,7 +176,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Slug" error={errors.slug}>
+                        <Field label="Slug" error={errors.slug} required>
                             <Input
                                 placeholder="Deklase-gayo-natural"
                                 value={form.data.slug}
@@ -229,7 +212,31 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Status" error={errors.status}>
+                        <Field label="Producer" error={errors.grind_type}>
+                            <Input
+                                placeholder="Contoh: Kopi Klasik Roastery"
+                                value={form.data.grind_type ?? ''}
+                                onChange={(event) =>
+                                    setField('grind_type', event.target.value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label="Tasting Notes"
+                            error={errors.tasting_notes}
+                        >
+                            <Input
+                                placeholder="Cokelat, jeruk, gula aren"
+                                value={form.data.tasting_notes ?? ''}
+                                onChange={(event) =>
+                                    setField(
+                                        'tasting_notes',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+                        </Field>
+                        <Field label="Status" error={errors.status} required>
                             <select
                                 className="h-9 border bg-canvas px-3 text-sm"
                                 value={form.data.status}
@@ -306,14 +313,14 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             )
                                         }
                                     />
-                                    {field.replaceAll('_', ' ')}
+                                    {field.replaceAll('_', ' ')} (opsional)
                                 </label>
                             ))}
                         </div>
                     </section>
                     <section className="space-y-4 border bg-canvas p-5">
                         <SectionTitle
-                            title="Gambar produk"
+                            title="Gambar produk (opsional; minimal 1 jika status aktif)"
                             onAdd={() =>
                                 setField('images', [
                                     ...form.data.images,
@@ -403,7 +410,8 @@ export default function ProductForm({ mode, product, options }: Props) {
                                                         )
                                                     }
                                                 />
-                                                Gambar utama
+                                                Gambar utama (wajib jika produk
+                                                aktif)
                                             </label>
                                             <Button
                                                 type="button"
@@ -454,7 +462,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     >
                                         <Input
                                             placeholder="DCL-GAYO-250-WB"
-                                            value={variant.sku}
+                                            value={variant.sku ?? ''}
                                             onChange={(event) =>
                                                 patchVariant(variantIndex, {
                                                     sku: event.target.value,
@@ -482,51 +490,8 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
-                                        label="Grind type"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.grind_type`
-                                            ]
-                                        }
-                                    >
-                                        <select
-                                            className="h-9 border bg-canvas px-3 text-sm"
-                                            value={variant.grind_type}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    grind_type:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        >
-                                            {options.grindTypes.map((type) => (
-                                                <option key={type} value={type}>
-                                                    {type}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </Field>
-                                    <Field
-                                        label="Tasting Notes"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.tasting_notes`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            placeholder="Cokelat, jeruk, gula aren"
-                                            value={variant.tasting_notes}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    tasting_notes:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
                                         label="Harga normal"
+                                        required
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.regular_price`
@@ -569,6 +534,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     </Field>
                                     <Field
                                         label="Berat kirim (gram)"
+                                        required
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.shipping_weight_gram`
@@ -592,6 +558,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     </Field>
                                     <Field
                                         label="Stok"
+                                        required
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.stock_quantity`
@@ -615,6 +582,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     </Field>
                                     <Field
                                         label="Batas stok rendah"
+                                        required
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.low_stock_threshold`
@@ -670,7 +638,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                                     })
                                                 }
                                             />
-                                            Aktif
+                                            Aktif (opsional)
                                         </label>
                                         <Button
                                             type="button"
@@ -705,130 +673,6 @@ export default function ProductForm({ mode, product, options }: Props) {
     );
 }
 
-function RichTextEditor({
-    content,
-    onChange,
-}: {
-    content: string;
-    onChange: (html: string) => void;
-}) {
-    const editor = useEditor({
-        immediatelyRender: false,
-        extensions: [StarterKit, Highlight],
-        content,
-        editorProps: {
-            attributes: {
-                class: 'min-h-40 px-3 py-2 text-sm leading-6 outline-none',
-            },
-        },
-        onUpdate: ({ editor: updatedEditor }) =>
-            onChange(updatedEditor.getHTML()),
-    });
-    useEffect(() => {
-        if (editor && editor.getHTML() !== content) {
-            editor.commands.setContent(content);
-        }
-    }, [content, editor]);
-
-    if (!editor) {
-        return null;
-    }
-
-    return (
-        <div className="border bg-canvas">
-            <div className="flex flex-wrap gap-1 border-b p-2">
-                <EditorButton
-                    editor={editor}
-                    label="Bold"
-                    onClick={() => editor.chain().focus().toggleBold().run()}
-                >
-                    <Bold />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Italic"
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
-                >
-                    <Italic />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Highlight"
-                    onClick={() =>
-                        editor.chain().focus().toggleHighlight().run()
-                    }
-                >
-                    <Highlighter />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Bullets"
-                    onClick={() =>
-                        editor.chain().focus().toggleBulletList().run()
-                    }
-                >
-                    <List />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Numbered list"
-                    onClick={() =>
-                        editor.chain().focus().toggleOrderedList().run()
-                    }
-                >
-                    <ListOrdered />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Undo"
-                    onClick={() => editor.chain().focus().undo().run()}
-                >
-                    <Undo2 />
-                </EditorButton>
-                <EditorButton
-                    editor={editor}
-                    label="Redo"
-                    onClick={() => editor.chain().focus().redo().run()}
-                >
-                    <Redo2 />
-                </EditorButton>
-            </div>
-            <div className="relative">
-                <EditorContent editor={editor} />
-                {editor.isEmpty && (
-                    <span className="pointer-events-none absolute top-2 left-3 text-sm text-muted-soft">
-                        Ceritakan rasa, aroma, dan karakter kopi ini.
-                    </span>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function EditorButton({
-    editor,
-    label,
-    onClick,
-    children,
-}: {
-    editor: Editor;
-    label: string;
-    onClick: () => void;
-    children: ReactNode;
-}) {
-    return (
-        <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            aria-label={label}
-            disabled={!editor.isEditable}
-            onClick={onClick}
-        >
-            {children}
-        </Button>
-    );
-}
 function ImagePreview({
     file,
     url,
@@ -872,15 +716,19 @@ function Field({
     error,
     className = '',
     children,
+    required = false,
 }: {
     label: string;
     error?: string;
     className?: string;
     children: ReactNode;
+    required?: boolean;
 }) {
     return (
         <div className={`grid gap-1.5 ${className}`}>
-            <Label>{label}</Label>
+            <Label>
+                {label} ({required ? 'wajib' : 'opsional'})
+            </Label>
             {children}
             <InputError message={error} />
         </div>

@@ -221,6 +221,16 @@ export default function ListProduct({ products, filters }: Props) {
                 filterKey={JSON.stringify(cleanQuery(filters))}
                 isFiltering={isFiltering}
                 products={products.data}
+                onClearFilters={() =>
+                    visit({
+                        category: '',
+                        grind_type: '',
+                        process: '',
+                        price: '',
+                        sort: 'featured',
+                        type: '',
+                    })
+                }
             />
             <ProductPagination products={products} />
         </ShopLayout>
@@ -231,10 +241,12 @@ function ProductGrid({
     filterKey,
     isFiltering,
     products,
+    onClearFilters,
 }: {
     filterKey: string;
     isFiltering: boolean;
     products: ProductCard[];
+    onClearFilters: () => void;
 }) {
     return (
         <div
@@ -246,19 +258,51 @@ function ProductGrid({
                     : 'translate-y-0 opacity-100'
             }`}
         >
-            <EditorialProductGrid
-                products={products.map((product) => ({
-                    id: product.id,
-                    name: product.title,
-                    imageUrl: product.image_url,
-                    metadata: product.short_description,
-                    price: product.sale_price ?? product.price,
-                    href: detail.url({
-                        query: { product: product.slug },
-                    }),
-                }))}
-                animated
-            />
+            {products.length > 0 ? (
+                <EditorialProductGrid
+                    products={products.map((product) => ({
+                        id: product.id,
+                        name: product.title,
+                        imageUrl: product.image_url,
+                        metadata: product.short_description,
+                        price: product.sale_price ?? product.price,
+                        href: detail.url({
+                            query: { product: product.slug },
+                        }),
+                    }))}
+                    animated
+                />
+            ) : (
+                <section
+                    aria-labelledby="empty-product-title"
+                    className="flex min-h-[36vh] flex-col items-center justify-center border-b border-hairline bg-white px-6 py-16 text-center"
+                >
+                    <span
+                        aria-hidden="true"
+                        className="mb-6 h-px w-12 bg-primary"
+                    />
+                    <h2
+                        id="empty-product-title"
+                        className="font-condensed text-4xl tracking-wide text-teal uppercase sm:text-5xl"
+                    >
+                        No coffee found
+                    </h2>
+                    <p
+                        role="status"
+                        className="mt-3 max-w-sm text-sm leading-6 text-body"
+                    >
+                        Try adjusting your filters or clear them to explore the
+                        full collection.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onClearFilters}
+                        className="mt-7 inline-flex min-h-11 items-center justify-center border border-teal bg-teal px-6 text-xs font-semibold tracking-wider text-white uppercase transition-colors hover:bg-white hover:text-teal focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal motion-reduce:transition-none"
+                    >
+                        Clear all filters
+                    </button>
+                </section>
+            )}
         </div>
     );
 }

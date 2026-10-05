@@ -134,13 +134,13 @@ class ReportService
 
         $products = (clone $items)
             ->selectRaw('order_items.product_name, coalesce(order_items.product_sku, "-") as product_sku, sum(order_items.quantity) as quantity, sum(order_items.subtotal) as revenue')
-            ->groupBy('order_items.product_name', 'order_items.product_sku')
+            ->groupBy('order_items.product_id', 'order_items.product_name', 'order_items.product_sku')
             ->orderByDesc('quantity')
             ->limit(20)
             ->get();
         $variants = (clone $items)
             ->selectRaw('coalesce(order_items.variant_sku, "-") as variant_sku, order_items.product_name, order_items.net_weight, order_items.grind_type, sum(order_items.quantity) as quantity, sum(order_items.subtotal) as revenue')
-            ->groupBy('order_items.variant_sku', 'order_items.product_name', 'order_items.net_weight', 'order_items.grind_type')
+            ->groupBy('order_items.product_variant_id', 'order_items.variant_sku', 'order_items.product_name', 'order_items.net_weight', 'order_items.grind_type')
             ->orderByDesc('quantity')
             ->limit(20)
             ->get();

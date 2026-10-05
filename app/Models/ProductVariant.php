@@ -13,8 +13,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'product_id',
     'sku',
     'net_weight',
-    'grind_type',
-    'tasting_notes',
     'regular_price',
     'sale_price',
     'shipping_weight_gram',

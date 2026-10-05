@@ -18,7 +18,7 @@ class WishlistService
                 'product.primaryImage:id,product_id,image_url,alt_text',
                 'product.images:id,product_id,image_url,alt_text,sort_order',
                 'product.variants' => fn ($query) => $query
-                    ->select('id', 'product_id', 'net_weight', 'grind_type', 'regular_price', 'sale_price', 'image_url', 'is_active')
+                    ->select('id', 'product_id', 'net_weight', 'regular_price', 'sale_price', 'image_url', 'is_active')
                     ->with('stock:id,product_variant_id,quantity')
                     ->where('is_active', true)
                     ->orderBy('regular_price'),
