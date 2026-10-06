@@ -247,7 +247,7 @@ export default function Welcome({
                             <br />
                             matter.
                         </h2>
-                        <Link href={list.url()} className="w-max">
+                        <Link href={list.url()} className="w-max py-2">
                             <OutlineLink>Shop coffee</OutlineLink>
                         </Link>
                     </div>
