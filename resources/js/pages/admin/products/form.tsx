@@ -1,12 +1,15 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
-import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useMemo } from 'react';
-import InputError from '@/components/input-error';
+import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+    FormErrorSummary,
+    FormField as Field,
+} from '@/components/form-validation';
 import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { slugify } from '@/lib/slug';
 import { index, show, store, update } from '@/routes/admin/products';
 
 type Option = { id: number; name: string };
@@ -79,6 +82,7 @@ const blankVariant = (): VariantRow => ({
 const value = (item: unknown) => (item == null ? '' : String(item));
 
 export default function ProductForm({ mode, product, options }: Props) {
+    const [autoGenerateSlug, setAutoGenerateSlug] = useState(mode === 'create');
     const form = useForm<FormData>({
         name: product?.name ?? '',
         slug: product?.slug ?? '',
@@ -115,6 +119,30 @@ export default function ProductForm({ mode, product, options }: Props) {
     ) => form.setData(field, fieldValue as never);
     const submit = (event: FormEvent) => {
         event.preventDefault();
+        const oversized = [
+            ...form.data.images.map((item, index) => ({
+                file: item.image,
+                field: `images.${index}.image`,
+            })),
+            ...form.data.variants.map((item, index) => ({
+                file: item.image,
+                field: `variants.${index}.image`,
+            })),
+        ].filter((item) => item.file && item.file.size > 2 * 1024 * 1024);
+
+        if (oversized.length) {
+            form.setError(
+                Object.fromEntries(
+                    oversized.map((item) => [
+                        item.field,
+                        'Gambar terlalu besar. Maksimal 2 MB.',
+                    ]),
+                ) as typeof form.errors,
+            );
+
+            return;
+        }
+
         form.transform((data) =>
             mode === 'create' ? data : { ...data, _method: 'put' },
         );
@@ -166,26 +194,69 @@ export default function ProductForm({ mode, product, options }: Props) {
                     </Button>
                 </header>
                 <form onSubmit={submit} className="w-full space-y-6">
+                    <FormErrorSummary errors={errors} />
                     <section className="grid gap-4 border bg-canvas p-5 lg:grid-cols-3">
-                        <Field label="Nama produk" error={errors.name} required>
+                        <Field
+                            name="name"
+                            label="Nama produk"
+                            error={errors.name}
+                            required
+                            requiredIndicator="asterisk"
+                        >
                             <Input
                                 placeholder="Contoh: Deklase Gayo Natural"
                                 value={form.data.name}
-                                onChange={(event) =>
-                                    setField('name', event.target.value)
-                                }
+                                onChange={(event) => {
+                                    const name = event.target.value;
+                                    form.setData((previous) => ({
+                                        ...previous,
+                                        name,
+                                        ...(mode === 'create' &&
+                                        autoGenerateSlug
+                                            ? { slug: slugify(name) }
+                                            : {}),
+                                    }));
+                                }}
                             />
                         </Field>
-                        <Field label="Slug" error={errors.slug} required>
-                            <Input
-                                placeholder="Deklase-gayo-natural"
-                                value={form.data.slug}
-                                onChange={(event) =>
-                                    setField('slug', event.target.value)
-                                }
-                            />
+                        <Field
+                            name="slug"
+                            label="Slug"
+                            error={errors.slug}
+                            required
+                            requiredIndicator="asterisk"
+                        >
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Input
+                                    className="min-w-0 flex-1"
+                                    placeholder="deklase-gayo-natural"
+                                    value={form.data.slug}
+                                    onChange={(event) => {
+                                        setAutoGenerateSlug(false);
+                                        setField('slug', event.target.value);
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="shrink-0"
+                                    disabled={
+                                        form.processing ||
+                                        !form.data.name.trim()
+                                    }
+                                    onClick={() => {
+                                        setField(
+                                            'slug',
+                                            slugify(form.data.name),
+                                        );
+                                        setAutoGenerateSlug(mode === 'create');
+                                    }}
+                                >
+                                    Generate
+                                </Button>
+                            </div>
                         </Field>
-                        <Field label="SKU" error={errors.sku}>
+                        <Field name="sku" label="SKU" error={errors.sku}>
                             <Input
                                 placeholder="DCL-GAYO-250"
                                 value={form.data.sku ?? ''}
@@ -194,7 +265,11 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Origin" error={errors.origin}>
+                        <Field
+                            name="origin"
+                            label="Origin"
+                            error={errors.origin}
+                        >
                             <Input
                                 placeholder="Aceh Gayo"
                                 value={form.data.origin ?? ''}
@@ -203,7 +278,11 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Process" error={errors.process}>
+                        <Field
+                            name="process"
+                            label="Process"
+                            error={errors.process}
+                        >
                             <Input
                                 placeholder="Natural anaerobic"
                                 value={form.data.process ?? ''}
@@ -212,7 +291,11 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Producer" error={errors.grind_type}>
+                        <Field
+                            name="grind_type"
+                            label="Producer"
+                            error={errors.grind_type}
+                        >
                             <Input
                                 placeholder="Contoh: Kopi Klasik Roastery"
                                 value={form.data.grind_type ?? ''}
@@ -222,6 +305,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                             />
                         </Field>
                         <Field
+                            name="tasting_notes"
                             label="Tasting Notes"
                             error={errors.tasting_notes}
                         >
@@ -236,7 +320,13 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 }
                             />
                         </Field>
-                        <Field label="Status" error={errors.status} required>
+                        <Field
+                            name="status"
+                            label="Status"
+                            error={errors.status}
+                            required
+                            requiredIndicator="asterisk"
+                        >
                             <select
                                 className="h-9 border bg-canvas px-3 text-sm"
                                 value={form.data.status}
@@ -252,6 +342,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                             </select>
                         </Field>
                         <Field
+                            name="category_ids"
                             label="Kategori"
                             error={errors.category_ids}
                             className="lg:col-span-3"
@@ -280,6 +371,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                             </div>
                         </Field>
                         <Field
+                            name="description"
                             label="Deskripsi"
                             error={errors.description}
                             className="lg:col-span-3"
@@ -318,7 +410,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                             ))}
                         </div>
                     </section>
-                    <section className="space-y-4 border bg-canvas p-5">
+                    <section
+                        data-field="images"
+                        className="space-y-4 border bg-canvas p-5"
+                    >
                         <SectionTitle
                             title="Gambar produk (opsional; minimal 1 jika status aktif)"
                             onAdd={() =>
@@ -345,6 +440,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     />
                                     <div className="grid gap-3">
                                         <Field
+                                            name={`images.${imageIndex}.image`}
                                             label="File gambar"
                                             error={
                                                 errors[
@@ -366,6 +462,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             />
                                         </Field>
                                         <Field
+                                            name={`images.${imageIndex}.sort_order`}
                                             label="Urutan"
                                             error={
                                                 errors[
@@ -410,8 +507,16 @@ export default function ProductForm({ mode, product, options }: Props) {
                                                         )
                                                     }
                                                 />
-                                                Gambar utama (wajib jika produk
-                                                aktif)
+                                                Gambar utama
+                                                {form.data.status ===
+                                                    'active' && (
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="text-destructive"
+                                                    >
+                                                        *
+                                                    </span>
+                                                )}
                                             </label>
                                             <Button
                                                 type="button"
@@ -436,7 +541,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                             ))}
                         </div>
                     </section>
-                    <section className="space-y-4 border bg-canvas p-5">
+                    <section
+                        data-field="variants"
+                        className="space-y-4 border bg-canvas p-5"
+                    >
                         <SectionTitle
                             title="Varian dan stok"
                             onAdd={() =>
@@ -453,6 +561,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     className="grid gap-4 border p-4 lg:grid-cols-4"
                                 >
                                     <Field
+                                        name={`variants.${variantIndex}.sku`}
                                         label="SKU"
                                         error={
                                             errors[
@@ -471,7 +580,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.net_weight`}
                                         label="Berat bersih"
+                                        required
+                                        requiredIndicator="asterisk"
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.net_weight`
@@ -490,8 +602,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.regular_price`}
                                         label="Harga normal"
                                         required
+                                        requiredIndicator="asterisk"
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.regular_price`
@@ -512,6 +626,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.sale_price`}
                                         label="Harga promo"
                                         error={
                                             errors[
@@ -533,8 +648,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.shipping_weight_gram`}
                                         label="Berat kirim (gram)"
                                         required
+                                        requiredIndicator="asterisk"
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.shipping_weight_gram`
@@ -543,7 +660,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                     >
                                         <Input
                                             type="number"
-                                            min="0"
+                                            min="1"
                                             placeholder="300"
                                             value={value(
                                                 variant.shipping_weight_gram,
@@ -557,8 +674,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.stock_quantity`}
                                         label="Stok"
                                         required
+                                        requiredIndicator="asterisk"
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.stock_quantity`
@@ -581,8 +700,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.low_stock_threshold`}
                                         label="Batas stok rendah"
                                         required
+                                        requiredIndicator="asterisk"
                                         error={
                                             errors[
                                                 `variants.${variantIndex}.low_stock_threshold`
@@ -605,6 +726,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                         />
                                     </Field>
                                     <Field
+                                        name={`variants.${variantIndex}.image`}
                                         label="File gambar varian"
                                         error={
                                             errors[
@@ -711,29 +833,7 @@ function ImagePreview({
         </div>
     );
 }
-function Field({
-    label,
-    error,
-    className = '',
-    children,
-    required = false,
-}: {
-    label: string;
-    error?: string;
-    className?: string;
-    children: ReactNode;
-    required?: boolean;
-}) {
-    return (
-        <div className={`grid gap-1.5 ${className}`}>
-            <Label>
-                {label} ({required ? 'wajib' : 'opsional'})
-            </Label>
-            {children}
-            <InputError message={error} />
-        </div>
-    );
-}
+
 function SectionTitle({ title, onAdd }: { title: string; onAdd: () => void }) {
     return (
         <div className="flex items-center justify-between gap-4">

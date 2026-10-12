@@ -441,6 +441,35 @@ Table order_items {
   }
 }
 
+Table order_status_histories {
+  id bigint [pk, increment]
+  order_id bigint [not null]
+  actor_id bigint
+  actor varchar(255) [not null, note: 'Snapshot nama pelaku; Sistem untuk proses otomatis']
+  source varchar(30) [not null]
+  event_type varchar(30) [not null, default: 'status_changed', note: 'created, status_changed, failure_note']
+  previous_status varchar(30)
+  status varchar(30) [not null]
+  reason text
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (order_id, created_at)
+  }
+}
+
+Table order_item_stock_movements {
+  id bigint [pk, increment]
+  order_item_id bigint [not null, unique, note: 'Satu finalisasi stok per item; tanpa backfill pesanan lama']
+  product_variant_id bigint
+  quantity int [not null, note: 'Nilai negatif untuk pengurangan stok']
+  stock_before int [not null]
+  stock_after int [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
 Table order_addresses {
   id bigint [pk, increment]
   order_id bigint [not null, unique]
@@ -551,6 +580,7 @@ Table shipments {
   creating_at timestamp
   last_synced_at timestamp
   failed_reason text
+  booking_uncertain boolean [not null, default: false, note: 'Blokir retry jika hasil booking belum diketahui; verifikasi melalui Biteship']
 
   raw_rate_response json
   raw_order_response json
@@ -788,6 +818,10 @@ Ref: orders.voucher_id > vouchers.id [delete: set null]
 Ref: order_items.order_id > orders.id [delete: cascade]
 Ref: order_items.product_id > products.id [delete: set null]
 Ref: order_items.product_variant_id > product_variants.id [delete: set null]
+Ref: order_status_histories.order_id > orders.id [delete: cascade]
+Ref: order_status_histories.actor_id > users.id [delete: set null]
+Ref: order_item_stock_movements.order_item_id > order_items.id [delete: cascade]
+Ref: order_item_stock_movements.product_variant_id > product_variants.id [delete: set null]
 
 Ref: order_addresses.order_id > orders.id [delete: cascade]
 

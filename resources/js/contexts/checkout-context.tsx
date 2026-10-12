@@ -73,6 +73,7 @@ export type CheckoutSummary = {
     shipping: number;
     discount: number;
     service_fee: number;
+    rounding_adjustment: number;
     total: number;
 };
 
@@ -197,20 +198,6 @@ export function CheckoutProvider({
     const voucherRequestInProgress = useRef(false);
     const [idempotencyKey] = useState(checkoutIdempotencyKey);
 
-    const updateShippingSummary = useCallback((price = 0) => {
-        setCurrentSummary((current) => ({
-            ...current,
-            shipping: price,
-            total: Math.max(
-                0,
-                current.subtotal +
-                    price +
-                    current.service_fee -
-                    current.discount,
-            ),
-        }));
-    }, []);
-
     const loadShippingRates = useCallback(
         async (
             addressId: number,
@@ -228,7 +215,6 @@ export function CheckoutProvider({
 
             if (!preserveSelectedRate) {
                 setCurrentRate(null);
-                updateShippingSummary();
             }
 
             setShippingRatesLoading(true);
@@ -240,6 +226,7 @@ export function CheckoutProvider({
                 const nextRates: ShippingRate[] = payload.rates ?? [];
 
                 setRates(nextRates);
+                setCurrentSummary(payload.summary);
 
                 if (preserveSelectedRate) {
                     const preservedRate = currentRate
@@ -263,14 +250,17 @@ export function CheckoutProvider({
                         : null;
 
                     if (preservedRate) {
-                        await jsonRequest(shippingRate.url(), 'POST', {
-                            shipping_rate_id: preservedRate.id,
-                        });
+                        const selection = await jsonRequest(
+                            shippingRate.url(),
+                            'POST',
+                            {
+                                shipping_rate_id: preservedRate.id,
+                            },
+                        );
                         setCurrentRate(preservedRate);
-                        updateShippingSummary(preservedRate.price);
+                        setCurrentSummary(selection.summary);
                     } else {
                         setCurrentRate(null);
-                        updateShippingSummary();
 
                         if (currentRate) {
                             setErrors({
@@ -284,13 +274,12 @@ export function CheckoutProvider({
                 setRates([]);
                 setErrors(error as Record<string, string>);
                 setCurrentRate(null);
-                updateShippingSummary();
             } finally {
                 shippingRequestInProgress.current = false;
                 setShippingRatesLoading(false);
             }
         },
-        [currentRate, updateShippingSummary],
+        [currentRate],
     );
 
     const selectAddress = useCallback(
@@ -319,21 +308,24 @@ export function CheckoutProvider({
             setErrors({});
 
             try {
-                await jsonRequest(shippingRate.url(), 'POST', {
-                    shipping_rate_id: rate.id,
-                });
+                const selection = await jsonRequest(
+                    shippingRate.url(),
+                    'POST',
+                    {
+                        shipping_rate_id: rate.id,
+                    },
+                );
                 setCurrentRate(rate);
-                updateShippingSummary(rate.price);
+                setCurrentSummary(selection.summary);
             } catch (error) {
                 setErrors(error as Record<string, string>);
                 setCurrentRate(null);
-                updateShippingSummary();
             } finally {
                 shippingRequestInProgress.current = false;
                 setShippingRatesLoading(false);
             }
         },
-        [placingOrder, updateShippingSummary],
+        [placingOrder],
     );
 
     const updateVoucher = useCallback(
@@ -362,7 +354,7 @@ export function CheckoutProvider({
 
                 if (currentAddressId) {
                     await loadShippingRates(currentAddressId, {
-                        preserveSelectedRate: true,
+                        preserveSelectedRate: false,
                     });
                 } else {
                     setCurrentRate(null);

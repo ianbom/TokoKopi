@@ -57,6 +57,40 @@ it('paginates products with the requested per-page value', function () {
             ->has('products.data', 10));
 });
 
+it('generates missing slugs from product names and rejects collisions', function () {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $this->actingAs($admin)->post(route('admin.products.store'), ['name' => 'Gayo Natural 250g', 'status' => 'draft'])
+        ->assertSessionHasNoErrors()->assertRedirect();
+    $this->assertDatabaseHas('products', ['name' => 'Gayo Natural 250g', 'slug' => 'gayo-natural-250g']);
+    $this->post(route('admin.products.store'), ['name' => 'Gayo Natural 250g', 'slug' => '', 'status' => 'draft'])
+        ->assertSessionHasErrors('slug');
+});
+
+it('requires net weight for nested variants on create and edit', function ($netWeight) {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'legacy-gayo', 'status' => 'draft']);
+    $payload = ['name' => 'Gayo renamed', 'slug' => 'legacy-gayo', 'status' => 'draft', 'variants' => [[
+        'net_weight' => $netWeight, 'regular_price' => 95000, 'shipping_weight_gram' => 300,
+        'stock_quantity' => 10, 'low_stock_threshold' => 3,
+    ]]];
+    $this->actingAs($admin)->post(route('admin.products.store'), $payload)
+        ->assertSessionHasErrors(['variants.0.net_weight' => 'Berat bersih wajib diisi.']);
+    $this->put(route('admin.products.update', $product), $payload)
+        ->assertSessionHasErrors('variants.0.net_weight');
+    expect($product->refresh()->slug)->toBe('legacy-gayo');
+})->with([null, '', '   ']);
+
+it('preserves existing slugs when editing product names', function () {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'LEGACY_GAYO', 'status' => 'draft']);
+    $this->actingAs($admin)->put(route('admin.products.update', $product), [
+        'name' => 'Gayo Natural renamed', 'slug' => 'LEGACY_GAYO', 'status' => 'draft',
+    ])->assertSessionHasNoErrors();
+    expect($product->refresh()->name)->toBe('Gayo Natural renamed')->and($product->slug)->toBe('LEGACY_GAYO');
+    $this->put(route('admin.products.update', $product), ['name' => 'Gayo', 'slug' => '', 'status' => 'draft'])
+        ->assertSessionHasErrors('slug');
+});
+
 function productPayload(array $categoryIds): array
 {
     return [

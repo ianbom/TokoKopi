@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateShipmentRequest extends FormRequest
 {
@@ -17,8 +18,9 @@ class CreateShipmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'courier_company' => ['required', 'string', 'max:100'],
-            'courier_type' => ['required', 'string', 'max:100'],
+            'source' => ['nullable', Rule::in(['order_detail'])],
+            'courier_company' => ['required_unless:source,order_detail', 'nullable', 'string', 'max:100'],
+            'courier_type' => ['required_unless:source,order_detail', 'nullable', 'string', 'max:100'],
             'courier_service_name' => ['nullable', 'string', 'max:150'],
             'waybill_id' => ['nullable', 'string', 'max:150'],
             'estimated_delivery' => ['nullable', 'string', 'max:100'],

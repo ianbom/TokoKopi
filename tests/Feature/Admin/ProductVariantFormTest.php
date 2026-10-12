@@ -29,6 +29,29 @@ it('adjusts variant stock without a stock log table', function () {
     expect($variant->fresh()->stock->quantity)->toBe(10);
 });
 
+it('requires net weight when creating or updating standalone variants', function ($netWeight) {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $product = Product::query()->create(['name' => 'Toraja', 'slug' => 'toraja', 'status' => 'draft']);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'shipping_weight_gram' => 300]);
+    $payload = ['product_id' => $product->id, 'net_weight' => $netWeight, 'regular_price' => 80000,
+        'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2];
+    $this->actingAs($admin)->post(route('admin.product-variants.store'), $payload)
+        ->assertSessionHasErrors(['net_weight' => 'Berat bersih wajib diisi.']);
+    $this->put(route('admin.product-variants.update', $variant), $payload)->assertSessionHasErrors('net_weight');
+    expect($variant->refresh()->net_weight)->toBeNull();
+})->with([null, '', '   ']);
+
+it('updates legacy variants with valid net weight', function () {
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $product = Product::query()->create(['name' => 'Toraja', 'slug' => 'toraja', 'status' => 'draft']);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'shipping_weight_gram' => 300]);
+    $this->actingAs($admin)->put(route('admin.product-variants.update', $variant), [
+        'product_id' => $product->id, 'net_weight' => '100ml', 'regular_price' => 80000,
+        'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2,
+    ])->assertSessionHasNoErrors();
+    expect($variant->refresh()->net_weight)->toBe('100ml');
+});
+
 it('creates a product variant from an uploaded image', function () {
     Storage::fake('public');
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);

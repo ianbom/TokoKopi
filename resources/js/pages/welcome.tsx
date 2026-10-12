@@ -14,6 +14,7 @@ type Product = {
     title?: string;
     slug: string;
     price: number;
+    price_from?: boolean;
     image_url: string | null;
     category?: string | null;
     short_description?: string | null;
@@ -183,6 +184,7 @@ export default function Welcome({
                             product.short_description ??
                             null,
                         price: product.price,
+                        priceFrom: product.price_from,
                         href: list.url({ query: { search: product.name } }),
                     }))}
                 />
@@ -231,6 +233,7 @@ export default function Welcome({
                             product.short_description ??
                             null,
                         price: product.price,
+                        priceFrom: product.price_from,
                         href: list.url({ query: { search: product.name } }),
                     }))}
                 />

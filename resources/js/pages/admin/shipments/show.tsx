@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { PackagePlus, Printer, RefreshCw, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { FormErrorSummary } from '@/components/form-validation';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,6 +18,7 @@ import {
     PageHeader,
     StatusBadge,
 } from '@/pages/admin/sales/shared';
+import { status as updateStatus } from '@/routes/admin/shipments';
 
 type Tracking = {
     id: number;
@@ -214,7 +216,7 @@ function printBiteshipLabel(shipment: Shipment) {
 
 export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
     const form = useForm({
-        shipping_status: shipment.shipping_status,
+        shipping_status: '',
         description: '',
         location: '',
     });
@@ -231,7 +233,7 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.post(`/admin/shipments/${shipment.id}/status`, {
+        form.post(updateStatus.url(shipment.id), {
             preserveScroll: true,
         });
     };
@@ -522,6 +524,7 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <FormErrorSummary errors={form.errors} />
                         <form
                             onSubmit={submit}
                             className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)_auto]"
@@ -538,6 +541,11 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                                     }
                                     className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                                 >
+                                    <option value="">
+                                        {shippingStatuses.length
+                                            ? 'Pilih status berikutnya'
+                                            : 'Tidak ada perubahan status yang diizinkan'}
+                                    </option>
                                     {shippingStatuses.map((status) => (
                                         <option key={status} value={status}>
                                             {status}
@@ -546,7 +554,9 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                                 </select>
                             </div>
                             <div className="grid gap-2">
-                                <Label>Description</Label>
+                                <Label>
+                                    Alasan (wajib untuk kendala pengiriman)
+                                </Label>
                                 <Input
                                     value={form.data.description}
                                     onChange={(event) =>
@@ -572,7 +582,12 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                             <div className="flex items-end">
                                 <Button
                                     type="submit"
-                                    disabled={form.processing}
+                                    disabled={
+                                        form.processing ||
+                                        !shippingStatuses.includes(
+                                            form.data.shipping_status,
+                                        )
+                                    }
                                 >
                                     <Save /> Save
                                 </Button>

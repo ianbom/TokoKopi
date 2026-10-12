@@ -8,16 +8,17 @@ class SiteSettingService
 {
     public function get(string $key, ?string $default = null): ?string
     {
-        return SiteSetting::query()->where('key', $key)->value('value') ?? $default;
+        $setting = SiteSetting::query()->where('key', $key)->first();
+
+        return $setting ? $setting->value : $default;
     }
 
     public function first(array $keys, ?string $default = null): ?string
     {
         foreach ($keys as $key) {
-            $value = $this->get($key);
-
-            if (filled($value)) {
-                return $value;
+            $setting = SiteSetting::query()->where('key', $key)->first();
+            if ($setting) {
+                return $setting->value;
             }
         }
 

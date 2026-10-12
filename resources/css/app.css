@@ -114,6 +114,33 @@
 }
 
 @layer components {
+    @media (width < 64rem) {
+        .catalog-filter-scrollbar::-webkit-scrollbar {
+            height: 2px;
+        }
+
+        .catalog-filter-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .catalog-filter-scrollbar::-webkit-scrollbar-thumb {
+            border-radius: 9999px;
+            background: color-mix(in srgb, var(--color-teal) 15%, transparent);
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            .catalog-filter-scrollbar {
+                scrollbar-width: thin;
+                scrollbar-color: color-mix(
+                        in srgb,
+                        var(--color-teal) 15%,
+                        transparent
+                    )
+                    transparent;
+            }
+        }
+    }
+
     .admin-sidebar-scrollbar {
         scrollbar-color: var(--color-sidebar-accent) var(--color-sidebar);
         scrollbar-width: thin;

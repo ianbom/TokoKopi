@@ -7,6 +7,7 @@ export type EditorialProduct = {
     imageUrl: string | null;
     metadata: string | null;
     price: number;
+    priceFrom?: boolean;
     href: string;
 };
 
@@ -91,6 +92,7 @@ function EditorialProductGrid({
                             {product.metadata ?? 'Specialty coffee'}
                         </p>
                         <strong className="mt-2 block text-xs font-semibold">
+                            {product.priceFrom && <span>Mulai dari </span>}
                             {formatPrice(product.price)}
                         </strong>
                     </div>

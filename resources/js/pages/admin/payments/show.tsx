@@ -1,5 +1,6 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { RefreshCw } from 'lucide-react';
+import { FormErrorSummary } from '@/components/form-validation';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -14,6 +15,8 @@ import {
     PageHeader,
     StatusBadge,
 } from '@/pages/admin/sales/shared';
+import { show as showOrder } from '@/routes/admin/orders';
+import { sync } from '@/routes/admin/payments';
 
 type Payment = {
     id: number;
@@ -33,6 +36,9 @@ type Payment = {
     paid_at: string | null;
     expired_at: string | null;
     raw_response: unknown;
+    failure_reason: string | null;
+    last_synced_at: string | null;
+    snap_creation_uncertain: boolean;
     logs: {
         id: number;
         event_type: string | null;
@@ -45,6 +51,8 @@ type Payment = {
 type Props = { payment: Payment };
 
 export default function PaymentShow({ payment }: Props) {
+    const { errors } = usePage().props;
+
     return (
         <>
             <Head
@@ -62,7 +70,7 @@ export default function PaymentShow({ payment }: Props) {
                             type="button"
                             onClick={() =>
                                 router.post(
-                                    `/admin/payments/${payment.id}/sync`,
+                                    sync.url(payment.id),
                                     {},
                                     { preserveScroll: true },
                                 )
@@ -72,6 +80,7 @@ export default function PaymentShow({ payment }: Props) {
                         </Button>
                     }
                 />
+                <FormErrorSummary errors={errors} />
                 <div className="grid gap-4 md:grid-cols-4">
                     <Metric
                         label="Amount"
@@ -103,7 +112,7 @@ export default function PaymentShow({ payment }: Props) {
                                 value={
                                     <Link
                                         className="text-primary underline"
-                                        href={`/admin/orders/${payment.order_id}`}
+                                        href={showOrder.url(payment.order_id)}
                                     >
                                         {payment.order_number ?? '-'}
                                     </Link>
@@ -129,6 +138,21 @@ export default function PaymentShow({ payment }: Props) {
                                 label="Redirect URL"
                                 value={payment.midtrans_redirect_url ?? '-'}
                             />
+                            <Row
+                                label="Alasan pemeriksaan"
+                                value={payment.failure_reason ?? '-'}
+                            />
+                            <Row
+                                label="Sinkronisasi terakhir"
+                                value={payment.last_synced_at ?? '-'}
+                            />
+                            {payment.snap_creation_uncertain && (
+                                <p role="alert" className="text-amber-700">
+                                    Pembuatan sesi belum terkonfirmasi. Jangan
+                                    membuat pembayaran baru atau melepas voucher
+                                    sebelum status provider dipastikan.
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
                     <Card>

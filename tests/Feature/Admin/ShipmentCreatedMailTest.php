@@ -40,7 +40,7 @@ it('emails the customer when admin creates a shipment from an order', function (
         'service_fee' => 0,
         'grand_total' => 266000,
         'payment_status' => 'paid',
-        'order_status' => 'paid',
+        'order_status' => 'ready_to_ship',
         'shipping_status' => 'not_created',
         'no_return_refund_agreed' => true,
         'no_return_refund_agreed_at' => now(),

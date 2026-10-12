@@ -50,6 +50,16 @@ class BiteshipService
         $destinationPostalCode = $destination['postal_code'] ?? null;
         $destinationLatitude = $this->coordinate($destination['latitude'] ?? null);
         $destinationLongitude = $this->coordinate($destination['longitude'] ?? null);
+        foreach ([$originLatitude, $destinationLatitude] as $latitude) {
+            if ($latitude !== null && abs($latitude) > 90) {
+                throw ValidationException::withMessages(['shipping' => 'Latitude pengiriman harus berada antara -90 dan 90.']);
+            }
+        }
+        foreach ([$originLongitude, $destinationLongitude] as $longitude) {
+            if ($longitude !== null && abs($longitude) > 180) {
+                throw ValidationException::withMessages(['shipping' => 'Longitude pengiriman harus berada antara -180 dan 180.']);
+            }
+        }
 
         if (! filled($originPostalCode)) {
             throw ValidationException::withMessages(['shipping' => 'Store postal code belum dikonfigurasi.']);
@@ -85,6 +95,11 @@ class BiteshipService
         }
 
         return collect($response->json('pricing', []))
+            ->filter(function ($rate): bool {
+                $price = is_array($rate) ? ($rate['price'] ?? $rate['shipping_fee'] ?? null) : null;
+
+                return is_numeric($price) && is_finite((float) $price) && (float) $price >= 0;
+            })
             ->map(function (array $rate): array {
                 $payload = [
                     'courier_company' => $rate['courier_company'] ?? $rate['company'] ?? $rate['courier_code'] ?? null,
@@ -92,7 +107,7 @@ class BiteshipService
                     'courier_service_name' => $rate['courier_service_name'] ?? null,
                     'description' => $rate['description'] ?? null,
                     'duration' => $rate['duration'] ?? null,
-                    'price' => (float) ($rate['price'] ?? $rate['shipping_fee'] ?? 0),
+                    'price' => (float) ($rate['price'] ?? $rate['shipping_fee']),
                     'raw' => $rate,
                 ];
 
@@ -109,13 +124,10 @@ class BiteshipService
     public function createOrder(array $payload): array
     {
         $response = $this->client()
+            ->retry(1, 0, throw: false)
             ->post('/v1/orders', $payload);
 
-        if (! $response->successful()) {
-            throw ValidationException::withMessages([
-                'shipment' => $response->json('error') ?? $response->json('message') ?? 'Gagal membuat order Biteship.',
-            ]);
-        }
+        $response->throw();
 
         return $response->json();
     }
@@ -162,6 +174,6 @@ class BiteshipService
 
     private function coordinate(mixed $value): ?float
     {
-        return is_numeric($value) ? (float) $value : null;
+        return is_numeric($value) && is_finite((float) $value) ? (float) $value : null;
     }
 }

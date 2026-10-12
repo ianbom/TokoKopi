@@ -10,7 +10,12 @@ test('shipping rates use store and destination postal codes', function () {
     {
         public function get(string $key, ?string $default = null): ?string
         {
-            return $key === 'store_postal_code' ? '60111' : $default;
+            return match ($key) {
+                'store_postal_code' => '60111',
+                'store_latitude' => '-6.2',
+                'store_longitude' => '106.8',
+                default => $default,
+            };
         }
 
         public function first(array $keys, ?string $default = null): ?string
@@ -37,7 +42,7 @@ test('shipping rates use store and destination postal codes', function () {
         ]),
     ]);
 
-    $rates = (new BiteshipService($settings))->shippingRates('40123', [
+    $rates = (new BiteshipService($settings))->shippingRates(['postal_code' => '40123', 'latitude' => -6.9, 'longitude' => 107.6], [
         [
             'name' => 'Arabica House Blend',
             'description' => 'SKU-1',

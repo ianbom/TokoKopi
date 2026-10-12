@@ -2,10 +2,12 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo } from 'react';
-import InputError from '@/components/input-error';
+import {
+    FormErrorSummary,
+    FormField as Field,
+} from '@/components/form-validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { edit, index, store, update } from '@/routes/admin/product-variants';
 
 type Product = { id: number; name: string; sku: string | null };
@@ -66,6 +68,13 @@ export default function VariantForm({
         form.setData(field, value as never);
     const submit = (event: FormEvent) => {
         event.preventDefault();
+
+        if (form.data.image && form.data.image.size > 2 * 1024 * 1024) {
+            form.setError('image', 'Gambar terlalu besar. Maksimal 2 MB.');
+
+            return;
+        }
+
         form.transform((data) =>
             mode === 'create' ? data : { ...data, _method: 'put' },
         );
@@ -99,7 +108,14 @@ export default function VariantForm({
                     onSubmit={submit}
                     className="grid w-full gap-4 border bg-canvas p-5 md:grid-cols-3"
                 >
-                    <Field label="Produk" error={errors.product_id}>
+                    <FormErrorSummary errors={errors} />
+                    <Field
+                        name="product_id"
+                        label="Produk"
+                        error={errors.product_id}
+                        required
+                        requiredIndicator="asterisk"
+                    >
                         <select
                             className="h-9 border bg-canvas px-3 text-sm"
                             value={form.data.product_id}
@@ -118,7 +134,7 @@ export default function VariantForm({
                             ))}
                         </select>
                     </Field>
-                    <Field label="SKU (opsional)" error={errors.sku}>
+                    <Field name="sku" label="SKU" error={errors.sku}>
                         <Input
                             placeholder="DCL-GAYO-250-WB"
                             value={form.data.sku}
@@ -127,7 +143,13 @@ export default function VariantForm({
                             }
                         />
                     </Field>
-                    <Field label="Berat netto" error={errors.net_weight}>
+                    <Field
+                        name="net_weight"
+                        label="Berat bersih"
+                        required
+                        requiredIndicator="asterisk"
+                        error={errors.net_weight}
+                    >
                         <Input
                             placeholder="250gram"
                             value={form.data.net_weight}
@@ -136,7 +158,13 @@ export default function VariantForm({
                             }
                         />
                     </Field>
-                    <Field label="Harga normal" error={errors.regular_price}>
+                    <Field
+                        name="regular_price"
+                        label="Harga normal"
+                        error={errors.regular_price}
+                        required
+                        requiredIndicator="asterisk"
+                    >
                         <Input
                             type="number"
                             min="0"
@@ -147,7 +175,11 @@ export default function VariantForm({
                             }
                         />
                     </Field>
-                    <Field label="Harga promo" error={errors.sale_price}>
+                    <Field
+                        name="sale_price"
+                        label="Harga promo"
+                        error={errors.sale_price}
+                    >
                         <Input
                             type="number"
                             min="0"
@@ -159,12 +191,15 @@ export default function VariantForm({
                         />
                     </Field>
                     <Field
+                        name="shipping_weight_gram"
                         label="Berat kirim (gram)"
                         error={errors.shipping_weight_gram}
+                        required
+                        requiredIndicator="asterisk"
                     >
                         <Input
                             type="number"
-                            min="0"
+                            min="1"
                             placeholder="300"
                             value={form.data.shipping_weight_gram}
                             onChange={(event) =>
@@ -175,7 +210,13 @@ export default function VariantForm({
                             }
                         />
                     </Field>
-                    <Field label="Stok" error={errors.stock_quantity}>
+                    <Field
+                        name="stock_quantity"
+                        label="Stok"
+                        error={errors.stock_quantity}
+                        required
+                        requiredIndicator="asterisk"
+                    >
                         <Input
                             type="number"
                             min="0"
@@ -187,8 +228,11 @@ export default function VariantForm({
                         />
                     </Field>
                     <Field
+                        name="low_stock_threshold"
                         label="Batas stok rendah"
                         error={errors.low_stock_threshold}
+                        required
+                        requiredIndicator="asterisk"
                     >
                         <Input
                             type="number"
@@ -204,6 +248,7 @@ export default function VariantForm({
                         />
                     </Field>
                     <Field
+                        name="image"
                         label="File gambar varian"
                         error={errors.image}
                         className="md:col-span-2"
@@ -272,23 +317,4 @@ function VariantImagePreview({
             className="h-16 w-16 object-cover"
         />
     ) : null;
-}
-function Field({
-    label,
-    error,
-    className = '',
-    children,
-}: {
-    label: string;
-    error?: string;
-    className?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className={`grid gap-1.5 ${className}`}>
-            <Label>{label}</Label>
-            {children}
-            <InputError message={error} />
-        </div>
-    );
 }

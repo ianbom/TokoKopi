@@ -12,8 +12,8 @@ class MidtransWebhookController extends Controller
 {
     public function __invoke(Request $request, MidtransWebhookService $webhook): JsonResponse
     {
-        Log::info('Midtrans Webhook received', $request->all());
         $webhook->handle($request->all());
+        Log::info('midtrans_webhook_acknowledged', ['provider' => 'midtrans']);
 
         return response()->json(['ok' => true]);
     }

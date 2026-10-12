@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'creating_at',
     'failed_reason',
     'last_synced_at',
+    'booking_uncertain',
 ])]
 class Shipment extends Model
 {
@@ -46,6 +47,7 @@ class Shipment extends Model
     protected function casts(): array
     {
         return [
+            'booking_uncertain' => 'boolean',
             'cancelled_at' => 'datetime',
             'delivered_at' => 'datetime',
             'creating_at' => 'datetime',

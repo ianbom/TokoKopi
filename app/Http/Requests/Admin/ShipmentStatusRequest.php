@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\ShippingStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,8 +19,8 @@ class ShipmentStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shipping_status' => ['required', Rule::in(['confirmed', 'allocated', 'picked', 'in_transit', 'delivered', 'cancelled', 'problem'])],
-            'description' => ['nullable', 'string', 'max:500'],
+            'shipping_status' => ['required', Rule::in(array_diff(ShippingStatus::values(), ['not_created', 'creating']))],
+            'description' => ['required_if:shipping_status,cancelled,failed,problem,lost,returned,on_hold,return_in_transit,disposed', 'nullable', 'string', 'max:1000'],
             'location' => ['nullable', 'string', 'max:255'],
         ];
     }

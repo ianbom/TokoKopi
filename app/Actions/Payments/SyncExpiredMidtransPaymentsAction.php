@@ -16,8 +16,8 @@ class SyncExpiredMidtransPaymentsAction
 
         Payment::query()
             ->with('order')
-            ->whereIn('transaction_status', ['pending', 'authorize'])
-            ->where('expires_at', '<=', now())
+            ->where(fn ($query) => $query->where(fn ($query) => $query->whereIn('transaction_status', ['pending', 'authorize'])->where('expires_at', '<=', now()))
+                ->orWhere(fn ($query) => $query->where('transaction_status', 'manual_review')->where('raw_response->snap_creation_uncertain', true)))
             ->whereHas('order', fn ($query) => $query->whereIn('payment_status', [PaymentStatus::Pending->value, PaymentStatus::ManualReview->value]))
             ->orderBy('id')
             ->chunkById(50, function ($payments) use (&$stats): void {
@@ -31,7 +31,7 @@ class SyncExpiredMidtransPaymentsAction
                         $stats['failed']++;
                         Log::warning('midtrans_expiry_sync_failed', [
                             'payment_id' => $payment->id,
-                            'message' => $exception->getMessage(),
+                            'exception_type' => $exception::class,
                         ]);
                     }
                 }

@@ -39,14 +39,14 @@ class PaymentManagementService
                 ->withQueryString()
                 ->through(fn (Payment $payment): array => $this->row($payment)),
             'filters' => $filters,
-            'statuses' => ['pending', 'settlement', 'capture', 'expire', 'cancel', 'deny', 'failure'],
+            'statuses' => ['pending', 'authorize', 'settlement', 'capture', 'expire', 'cancel', 'deny', 'failure', 'manual_review', 'refund', 'partial_refund', 'snap_failed'],
             'stats' => [
                 'total' => Payment::query()->count(),
                 'settled' => Payment::query()->whereIn('transaction_status', ['settlement', 'capture', 'paid', 'success'])->count(),
                 'pending' => Payment::query()->whereIn('transaction_status', ['pending', 'authorize'])->count(),
                 'challenge' => Payment::query()->where('fraud_status', 'challenge')->count(),
                 'failed' => Payment::query()->whereIn('transaction_status', ['deny', 'cancel', 'expire', 'expired', 'failure', 'failed'])->count(),
-                'manual_review' => Payment::query()->whereIn('fraud_status', ['challenge', 'deny'])->count(),
+                'manual_review' => Payment::query()->where('transaction_status', 'manual_review')->count(),
             ],
         ];
     }
@@ -93,6 +93,9 @@ class PaymentManagementService
             'gross_amount' => $payment->gross_amount,
             'transaction_status' => $payment->transaction_status,
             'fraud_status' => $payment->fraud_status,
+            'failure_reason' => $payment->failure_reason,
+            'last_synced_at' => $payment->last_synced_at?->toDateTimeString(),
+            'snap_creation_uncertain' => (bool) ($payment->raw_response['snap_creation_uncertain'] ?? false),
             'paid_at' => $payment->paid_at?->toDateTimeString(),
             'expired_at' => $payment->expired_at?->toDateTimeString(),
             'created_at' => $payment->created_at?->toFormattedDateString(),

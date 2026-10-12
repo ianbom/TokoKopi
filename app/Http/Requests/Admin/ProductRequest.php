@@ -49,10 +49,10 @@ class ProductRequest extends FormRequest
             'variants' => ['nullable', 'array'],
             'variants.*.id' => ['nullable', 'integer', $variantId],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
-            'variants.*.net_weight' => ['nullable', 'string', 'max:100'],
+            'variants.*.net_weight' => ['required', 'string', 'max:100'],
             'variants.*.regular_price' => ['required', 'numeric', 'min:0'],
             'variants.*.sale_price' => ['nullable', 'numeric', 'min:0', 'lte:variants.*.regular_price'],
-            'variants.*.shipping_weight_gram' => ['required', 'integer', 'min:0'],
+            'variants.*.shipping_weight_gram' => ['required', 'integer', 'min:1'],
             'variants.*.image_url' => ['nullable', 'string', 'max:2048', 'not_regex:/^blob:/i'],
             'variants.*.image' => ['nullable', 'file', 'image', 'max:4096'],
             'variants.*.is_active' => ['sometimes', 'boolean'],
@@ -119,6 +119,7 @@ class ProductRequest extends FormRequest
             'variants.*.sku.unique' => 'SKU varian sudah digunakan varian lain.',
             'variants.*.sku.distinct' => 'SKU varian tidak boleh sama dalam satu produk.',
             'variants.*.sku.max' => 'SKU varian maksimal 100 karakter.',
+            'variants.*.net_weight.required' => 'Berat bersih wajib diisi.',
             'variants.*.net_weight.string' => 'Berat bersih harus berupa teks.',
             'variants.*.net_weight.max' => 'Berat bersih maksimal 100 karakter.',
             'variants.*.regular_price.required' => 'Harga normal varian wajib diisi.',
@@ -129,7 +130,7 @@ class ProductRequest extends FormRequest
             'variants.*.sale_price.lte' => 'Harga promo tidak boleh melebihi harga normal.',
             'variants.*.shipping_weight_gram.required' => 'Berat kirim varian wajib diisi.',
             'variants.*.shipping_weight_gram.integer' => 'Berat kirim harus berupa angka bulat.',
-            'variants.*.shipping_weight_gram.min' => 'Berat kirim tidak boleh kurang dari 0 gram.',
+            'variants.*.shipping_weight_gram.min' => 'Berat kirim wajib minimal 1 gram, termasuk varian draft atau nonaktif.',
             'variants.*.image_url.string' => 'Alamat gambar varian harus berupa teks.',
             'variants.*.image_url.max' => 'Alamat gambar varian terlalu panjang.',
             'variants.*.image_url.not_regex' => 'Gunakan unggah file untuk gambar varian.',
@@ -174,7 +175,10 @@ class ProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->filled('slug')) {
+        if (! $this->route('product') && ! $this->filled('slug') && is_string($this->input('name'))) {
+            $this->merge(['slug' => Str::slug($this->input('name'))]);
+        }
+        if ($this->filled('slug') && $this->input('slug') !== $this->route('product')?->slug) {
             $this->merge(['slug' => Str::slug($this->string('slug')->toString())]);
         }
     }

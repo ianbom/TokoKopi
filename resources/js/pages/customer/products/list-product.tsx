@@ -10,6 +10,7 @@ type ProductCard = {
     title: string;
     short_description: string;
     price: number;
+    price_from: boolean;
     sale_price: number | null;
     image_url: string | null;
 };
@@ -181,7 +182,7 @@ export default function ListProduct({ products, filters }: Props) {
                     </span>
                 </div> */}
 
-                <nav className="relative z-10 flex min-w-max items-center justify-center gap-10 overflow-x-auto border-b border-hairline px-8 py-[17px] text-[10px] font-semibold tracking-[0.06em] text-ink uppercase sm:gap-16">
+                <nav className="catalog-filter-scrollbar relative z-10 flex w-full min-w-0 items-center justify-start gap-6 overflow-x-auto border-b border-hairline px-8 py-[17px] text-[10px] font-semibold tracking-[0.06em] text-ink uppercase sm:gap-10 lg:justify-center lg:gap-16">
                     {quickLinks.map((link) => {
                         const isActive = link.filters.category
                             ? filters.category === link.filters.category &&
@@ -205,7 +206,7 @@ export default function ListProduct({ products, filters }: Props) {
                                         price: '',
                                     })
                                 }
-                                className={`relative border-b-2 py-1 whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none ${
+                                className={`relative shrink-0 border-b-2 py-1 whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none ${
                                     isActive
                                         ? 'border-ink font-extrabold text-ink'
                                         : 'border-transparent font-semibold text-ink/55 hover:border-ink/35 hover:text-ink'
@@ -266,6 +267,7 @@ function ProductGrid({
                         imageUrl: product.image_url,
                         metadata: product.short_description,
                         price: product.sale_price ?? product.price,
+                        priceFrom: product.price_from,
                         href: detail.url({
                             query: { product: product.slug },
                         }),

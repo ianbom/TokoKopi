@@ -50,15 +50,15 @@ class ProductBrowsingService
             ->when($category !== '', fn ($query) => $query->whereHas('categories', fn ($query) => $query->where('slug', $category)))
             ->when($grindType !== '', fn ($query) => $query->where('grind_type', $grindType)->whereHas('variants', fn ($query) => $query->where('is_active', true)))
             ->when($process !== '', fn ($query) => $query->where('process', $process))
-            ->when($type === 'best_seller', fn ($query) => $query->where('is_best_seller', true))
-            ->when($price === 'under_100000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) < ?', [100000])))
-            ->when($price === '100000_250000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) between ? and ?', [100000, 250000])))
-            ->when($price === 'above_250000', fn ($query) => $query->whereHas('variants', fn ($query) => $query->whereRaw('coalesce(sale_price, regular_price) > ?', [250000])));
+            ->when($type === 'best_seller', fn ($query) => $query->where('is_best_seller', true));
 
         $priceQuery = ProductVariant::query()
             ->selectRaw('min(coalesce(sale_price, regular_price))')
             ->whereColumn('product_id', 'products.id')
             ->where('is_active', true);
+        $products->when($price === 'under_100000', fn ($query) => $query->where($priceQuery, '<', 100000))
+            ->when($price === '100000_250000', fn ($query) => $query->where($priceQuery, '>=', 100000)->where($priceQuery, '<=', 250000))
+            ->when($price === 'above_250000', fn ($query) => $query->where($priceQuery, '>', 250000));
 
         match ($sort) {
             'latest' => $products->latest(),
@@ -68,6 +68,7 @@ class ProductBrowsingService
             'best_seller' => $products->orderByDesc('is_best_seller')->latest(),
             default => $products->orderByDesc('is_featured')->orderByDesc('is_new_arrival')->latest(),
         };
+        $products->orderBy('products.id');
 
         return [
             'products' => $products->paginate(20)->withQueryString()->through(fn (Product $product) => $this->card($product)),
@@ -150,7 +151,7 @@ class ProductBrowsingService
 
     private function card(Product $product): array
     {
-        $variant = $product->variants->firstWhere('is_active', true) ?? $product->variants->first();
+        $variant = $product->variants->where('is_active', true)->sortBy(fn ($variant): float => (float) ($variant->sale_price ?? $variant->regular_price))->first();
         $price = $variant?->sale_price ?? $variant?->regular_price ?? 0;
 
         return [
@@ -159,6 +160,7 @@ class ProductBrowsingService
             'description' => (string) $product->description, 'short_description' => strip_tags((string) $product->description),
             'image_url' => $product->images->firstWhere('is_primary', true)?->image_url ?? $variant?->image_url,
             'price' => (float) $price, 'regular_price' => (float) ($variant?->regular_price ?? 0), 'sale_price' => $variant?->sale_price !== null ? (float) $variant->sale_price : null,
+            'price_from' => $product->variants->where('is_active', true)->map(fn ($variant): float => (float) ($variant->sale_price ?? $variant->regular_price))->unique()->count() > 1,
             'category' => $product->categories->first()?->name, 'category_slug' => $product->categories->first()?->slug, 'collection' => null, 'collection_slug' => null,
             'hover_image_url' => $product->images->skip(1)->first()?->image_url,
             'badge' => $product->is_new_arrival ? 'NEW' : ($product->is_best_seller ? 'BEST SELLER' : null), 'label' => null, 'is_wishlisted' => false,

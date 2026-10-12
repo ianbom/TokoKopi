@@ -48,6 +48,10 @@ export function StatusBadge({
                         'deny',
                         'failure',
                         'problem',
+                        'lost',
+                        'returned',
+                        'disposed',
+                        'manual_review',
                     ].includes(value)
                   ? 'bad'
                   : 'info';

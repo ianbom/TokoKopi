@@ -16,12 +16,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
+import ProfileLayout from '@/layouts/profile-layout';
+import { getOrderWorkflow } from '@/lib/order-workflow';
 import {
     cancel as orderCancel,
     index as orderIndex,
 } from '@/actions/App/Http/Controllers/Customer/OrderController';
 import { show as productShow } from '@/actions/App/Http/Controllers/Customer/ProductController';
-import ProfileLayout from '@/layouts/profile-layout';
 
 type IconComponent = ComponentType<{
     className?: string;
@@ -116,6 +117,7 @@ type Order = {
     discount_amount: number;
     shipping_cost: number;
     service_fee: number;
+    rounding_adjustment: number;
     grand_total: number;
     voucher_code: string | null;
     notes: string | null;
@@ -194,11 +196,16 @@ const statusTone = (status: string | null): StatusTone => {
         case 'confirmed':
         case 'allocated':
         case 'picked':
+        case 'on_hold':
+        case 'return_in_transit':
             return 'amber';
         case 'cancelled':
         case 'expired':
         case 'failed':
         case 'problem':
+        case 'lost':
+        case 'returned':
+        case 'disposed':
             return 'red';
         default:
             return 'gray';
@@ -368,19 +375,7 @@ function buildProgress(order: Order) {
             (log) => log.transaction_status === 'settlement',
         )?.processed_at ??
         null;
-    const current = order.order_status;
-    const rank: Record<string, number> = {
-        pending_payment: 0,
-        paid: 1,
-        processing: 2,
-        ready_to_ship: 3,
-        shipped: 4,
-        delivered: 5,
-        completed: 5,
-    };
-    const currentRank =
-        rank[current] ??
-        (current === 'cancelled' || current === 'expired' ? 0 : 1);
+    const currentRank = Math.min(5, getOrderWorkflow(order).currentStep);
 
     return [
         {
@@ -445,7 +440,17 @@ function getBiteshipTrackingUrl(shipment: Shipment | null): string | null {
 
     const link = (courier as Record<string, unknown>).link;
 
-    return typeof link === 'string' && link.length > 0 ? link : null;
+    if (typeof link !== 'string') {
+        return null;
+    }
+
+    try {
+        const url = new URL(link);
+
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
 }
 
 function getMidtransReceiptUrl(payment: Payment | null): string | null {
@@ -484,6 +489,7 @@ export default function DetailOrder({ order }: Props) {
         order.payment?.midtrans_order_id ??
         '-';
     const trackingUrl = getBiteshipTrackingUrl(order.shipment);
+    const workflow = getOrderWorkflow(order);
     const isPaymentTerminal = [
         'cancelled',
         'expired',
@@ -539,6 +545,14 @@ export default function DetailOrder({ order }: Props) {
                 {/* Left column */}
                 <div className="space-y-5">
                     {/* Order Header */}
+                    {workflow.issue && (
+                        <p
+                            role="status"
+                            className="border border-hairline-strong bg-surface-soft p-4 text-sm text-ink"
+                        >
+                            {workflow.issue}
+                        </p>
+                    )}
                     <div className="overflow-hidden border border-hairline-strong bg-canvas">
                         <div className="p-5 sm:p-6">
                             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -995,6 +1009,14 @@ export default function DetailOrder({ order }: Props) {
                                 label="Biaya Layanan"
                                 value={formatPrice(order.service_fee)}
                             />
+                            {order.rounding_adjustment !== 0 && (
+                                <SummaryRow
+                                    label="Pembulatan"
+                                    value={formatPrice(
+                                        order.rounding_adjustment,
+                                    )}
+                                />
+                            )}
                         </div>
                         <div className="mt-5 rounded-[8px] bg-surface-soft px-4 py-4">
                             <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">

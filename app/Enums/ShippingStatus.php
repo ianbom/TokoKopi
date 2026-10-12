@@ -16,6 +16,9 @@ enum ShippingStatus: string
     case Problem = 'problem';
     case Lost = 'lost';
     case Returned = 'returned';
+    case OnHold = 'on_hold';
+    case ReturnInTransit = 'return_in_transit';
+    case Disposed = 'disposed';
 
     public static function activeValues(): array
     {
@@ -34,6 +37,6 @@ enum ShippingStatus: string
 
     public static function issueValues(): array
     {
-        return [self::Failed->value, self::Cancelled->value, self::Problem->value, self::Lost->value, self::Returned->value];
+        return [self::Failed->value, self::Cancelled->value, self::Problem->value, self::Lost->value, self::Returned->value, self::OnHold->value, self::ReturnInTransit->value, self::Disposed->value];
     }
 }

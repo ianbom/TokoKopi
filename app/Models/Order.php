@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 
 #[Fillable([
     'user_id',
@@ -39,6 +40,35 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 ])]
 class Order extends Model
 {
+    protected static function booted(): void
+    {
+        static::created(fn (Order $order) => $order->recordStatusHistory(null, null, 'created'));
+        static::updated(function (Order $order): void {
+            if ($order->wasChanged('order_status')) {
+                $order->recordStatusHistory($order->getRawOriginal('order_status'));
+            }
+        });
+    }
+
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class);
+    }
+
+    public function recordStatusHistory(?string $previous = null, ?string $reason = null, string $event = 'status_changed'): void
+    {
+        $actor = Auth::user();
+        $this->statusHistory()->create([
+            'actor_id' => $actor?->id,
+            'actor' => $actor?->name ?? 'Sistem',
+            'source' => $actor?->role ?? 'system',
+            'event_type' => $event,
+            'previous_status' => $previous,
+            'status' => $this->order_status ?? 'pending_payment',
+            'reason' => $reason,
+        ]);
+    }
+
     public function address(): HasOne
     {
         return $this->hasOne(OrderAddress::class);

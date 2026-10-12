@@ -42,7 +42,7 @@ const formatPrice = (price: number) =>
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        maximumFractionDigits: 2,
     })
         .format(price)
         .replace('Rp', 'Rp ');
@@ -623,17 +623,25 @@ function CheckoutScreen() {
                                             checkout.
                                         </div>
                                     )}
+                                    {summary.rounding_adjustment !== 0 && (
+                                        <SummaryRow
+                                            label="Pembulatan"
+                                            value={summary.rounding_adjustment}
+                                        />
+                                    )}
                                     <div className="mt-5 border-t border-ink pt-5">
                                         <div className="flex flex-wrap items-end justify-between gap-2">
                                             <span className="text-[11px] font-semibold tracking-[0.08em] text-ink uppercase">
                                                 Total Pembayaran
                                             </span>
                                             <span className="text-right font-condensed text-3xl font-semibold tracking-[-0.03em] text-ink tabular-nums">
-                                                {checkoutUpdating
-                                                    ? 'Memuat...'
-                                                    : formatPrice(
-                                                          summary.total,
-                                                      )}
+                                                {!selectedShippingRate
+                                                    ? 'Pilih ongkir'
+                                                    : checkoutUpdating
+                                                      ? 'Memuat...'
+                                                      : formatPrice(
+                                                            summary.total,
+                                                        )}
                                             </span>
                                         </div>
                                     </div>

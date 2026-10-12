@@ -5,38 +5,44 @@ namespace App\Actions\Stock;
 use App\Models\Order;
 use App\Models\Stock;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 class FinalizeOrderStockAction
 {
     public function execute(Order $order): void
     {
-        $order = Order::query()->with('items')->lockForUpdate()->findOrFail($order->id);
-        $quantitiesByVariant = $order->items->groupBy('product_variant_id')->map(
-            fn ($items): int => $items->sum('quantity'),
-        );
-
-        if ($quantitiesByVariant->has(null)) {
-            throw new DomainException('Varian produk pada pesanan tidak tersedia.');
-        }
-
-        $variantIds = $quantitiesByVariant->keys()->sort()->values();
-        $stocks = Stock::query()
-            ->whereIn('product_variant_id', $variantIds)
-            ->orderBy('product_variant_id')
-            ->lockForUpdate()
-            ->get()
-            ->keyBy('product_variant_id');
-
-        foreach ($quantitiesByVariant as $variantId => $quantity) {
-            $stock = $stocks->get($variantId);
-
-            if (! $stock || $stock->quantity < $quantity) {
-                throw new DomainException('Stok tidak cukup untuk menyelesaikan pembayaran pesanan ini.');
+        DB::transaction(function () use ($order): void {
+            $order = Order::query()->with('items.stockMovements')->lockForUpdate()->findOrFail($order->id);
+            if ($order->items->isEmpty() || $order->items->contains(fn ($item) => ! $item->product_variant_id || $item->quantity < 1)) {
+                throw new DomainException('Varian dan jumlah produk pada pesanan tidak valid.');
             }
-        }
-
-        foreach ($quantitiesByVariant as $variantId => $quantity) {
-            $stocks->get($variantId)->decrement('quantity', $quantity);
-        }
+            $recorded = $order->items->sum(fn ($item) => $item->stockMovements->count());
+            if ($recorded === $order->items->count()) {
+                return;
+            }
+            if ($recorded > 0) {
+                throw new DomainException('Riwayat finalisasi stok pesanan belum konsisten.');
+            }
+            $quantitiesByVariant = $order->items->groupBy('product_variant_id')->map(fn ($items): int => $items->sum('quantity'));
+            $stocks = Stock::query()->whereIn('product_variant_id', $quantitiesByVariant->keys()->sort()->values())
+                ->orderBy('product_variant_id')->lockForUpdate()->get()->keyBy('product_variant_id');
+            foreach ($quantitiesByVariant as $variantId => $quantity) {
+                $stock = $stocks->get($variantId);
+                if (! $stock || $stock->quantity < $quantity) {
+                    throw new DomainException('Stok tidak cukup untuk menyelesaikan pembayaran pesanan ini.');
+                }
+            }
+            foreach ($order->items->sortBy('id') as $item) {
+                $stock = $stocks->get($item->product_variant_id);
+                $before = $stock->quantity;
+                $stock->decrement('quantity', $item->quantity);
+                $item->stockMovements()->create([
+                    'product_variant_id' => $item->product_variant_id,
+                    'quantity' => -$item->quantity,
+                    'stock_before' => $before,
+                    'stock_after' => $before - $item->quantity,
+                ]);
+            }
+        });
     }
 }

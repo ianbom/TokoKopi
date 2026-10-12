@@ -39,6 +39,7 @@ class CheckoutController extends Controller
     {
         return response()->json([
             'rates' => $checkout->shippingRates($this->user($request), (int) $request->validated('customer_address_id')),
+            'summary' => $checkout->summaryFor($this->user($request)),
         ]);
     }
 
@@ -46,6 +47,7 @@ class CheckoutController extends Controller
     {
         return response()->json([
             'rate' => $checkout->selectShippingRate((string) $request->validated('shipping_rate_id')),
+            'summary' => $checkout->summaryFor($this->user($request)),
         ]);
     }
 
