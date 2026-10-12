@@ -17,11 +17,6 @@ type ProductCard = {
 
 type Filters = {
     category: string;
-    grind_type: string;
-    process: string;
-    price: string;
-    sort: string;
-    type: string;
 };
 
 type Props = {
@@ -39,32 +34,14 @@ type Props = {
         }>;
     };
     filters: Filters;
+    options: { categories: { id: number; name: string; slug: string }[] };
 };
 
-type QuickLink = {
-    label: string;
-    filters: Partial<Pick<Filters, 'category' | 'type'>>;
-};
+const cleanQuery = ({ category }: Filters) => (category ? { category } : {});
 
-const quickLinks = [
-    { label: 'All', filters: {} },
-    { label: 'Coffee Beans', filters: { category: 'coffee-beans' } },
-    { label: 'Espresso', filters: { category: 'espresso' } },
-    { label: 'Filter Coffee', filters: { category: 'filter-coffee' } },
-    { label: 'Ready to Drink', filters: { category: 'ready-to-drink' } },
-    { label: 'Best Sellers', filters: { type: 'best_seller' } },
-] satisfies QuickLink[];
-
-const cleanQuery = (filters: Filters) =>
-    Object.fromEntries(
-        Object.entries(filters).filter(
-            ([key, value]) =>
-                value !== '' && !(key === 'sort' && value === 'featured'),
-        ),
-    );
-
-export default function ListProduct({ products, filters }: Props) {
+export default function ListProduct({ products, filters, options }: Props) {
     const [isFiltering, setIsFiltering] = useState(false);
+    const categories = [{ name: 'All', slug: '' }, ...options.categories];
 
     const visit = (changes: Partial<Filters>) => {
         const next = { ...filters, ...changes };
@@ -115,104 +92,28 @@ export default function ListProduct({ products, filters }: Props) {
             </section>
 
             <section className="relative z-40 bg-canvas">
-                {/* <div className="relative z-40 grid grid-cols-2 border-b border-hairline text-[9px] font-semibold tracking-[0.06em] text-ink uppercase sm:grid-cols-3 lg:grid-cols-[1.15fr_.9fr_1.1fr_.8fr_1.2fr_1.45fr_1.4fr]">
-                    <FilterMenu
-                        id="category"
-                        isOpen={openFilter === 'category'}
-                        label={selectedCategory?.name ?? 'Category'}
-                        onOpenChange={setOpenFilter}
-                        options={options.categories.map((category) => ({
-                            value: category.slug,
-                            label: category.name,
-                        }))}
-                        value={filters.category}
-                        onChange={(category) => visit({ category, type: '' })}
-                    />
-                    <FilterMenu
-                        id="grind-type"
-                        isOpen={openFilter === 'grind-type'}
-                        label={
-                            filters.grind_type
-                                ? humanize(filters.grind_type)
-                                : 'Grind Type'
-                        }
-                        onOpenChange={setOpenFilter}
-                        options={options.grindTypes.map((grindType) => ({
-                            value: grindType,
-                            label: humanize(grindType),
-                        }))}
-                        value={filters.grind_type}
-                        onChange={(grindType) =>
-                            visit({ grind_type: grindType })
-                        }
-                    />
-                    <FilterMenu
-                        id="process"
-                        isOpen={openFilter === 'process'}
-                        label={filters.process || 'Process'}
-                        onOpenChange={setOpenFilter}
-                        options={options.processes.map((process) => ({
-                            value: process,
-                            label: process,
-                        }))}
-                        value={filters.process}
-                        onChange={(process) => visit({ process })}
-                    />
-                    <FilterMenu
-                        id="price"
-                        isOpen={openFilter === 'price'}
-                        label={selectedPrice?.label ?? 'Price'}
-                        onOpenChange={setOpenFilter}
-                        options={options.priceRanges}
-                        value={filters.price}
-                        onChange={(price) => visit({ price })}
-                    />
-                    <span className="hidden border-r border-hairline lg:block" />
-                    <FilterMenu
-                        id="sort"
-                        isOpen={openFilter === 'sort'}
-                        label={`Sort By: ${selectedSort?.label ?? 'Featured'}`}
-                        onOpenChange={setOpenFilter}
-                        options={options.sorts}
-                        value={filters.sort}
-                        onChange={(sort) => visit({ sort })}
-                    />
-                    <span className="flex min-h-[49px] items-center justify-center border-r border-hairline px-4 text-[10px] font-normal tracking-normal text-ink/70 normal-case sm:border-r-0">
-                        Showing {products.total} products
-                    </span>
-                </div> */}
-
-                <nav className="catalog-filter-scrollbar relative z-10 flex w-full min-w-0 items-center justify-start gap-6 overflow-x-auto border-b border-hairline px-8 py-[17px] text-[10px] font-semibold tracking-[0.06em] text-ink uppercase sm:gap-10 lg:justify-center lg:gap-16">
-                    {quickLinks.map((link) => {
-                        const isActive = link.filters.category
-                            ? filters.category === link.filters.category &&
-                              filters.type === ''
-                            : link.filters.type
-                              ? filters.type === link.filters.type &&
-                                filters.category === ''
-                              : filters.category === '' && filters.type === '';
+                <nav
+                    aria-label="Product categories"
+                    className="catalog-filter-scrollbar relative z-10 flex w-full min-w-0 items-center justify-start gap-6 overflow-x-auto border-b border-hairline px-8 py-[17px] text-[10px] font-semibold tracking-[0.06em] text-ink uppercase sm:gap-10 lg:justify-center-safe lg:gap-16"
+                >
+                    {categories.map((category) => {
+                        const isActive = filters.category === category.slug;
 
                         return (
                             <button
-                                key={link.label}
+                                key={category.slug}
                                 type="button"
                                 aria-pressed={isActive}
                                 onClick={() =>
-                                    visit({
-                                        category: link.filters.category ?? '',
-                                        type: link.filters.type ?? '',
-                                        grind_type: '',
-                                        process: '',
-                                        price: '',
-                                    })
+                                    visit({ category: category.slug })
                                 }
                                 className={`relative shrink-0 border-b-2 py-1 whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none ${
                                     isActive
                                         ? 'border-ink font-extrabold text-ink'
-                                        : 'border-transparent font-semibold text-ink/55 hover:border-ink/35 hover:text-ink'
+                                        : 'border-transparent font-semibold text-ink/80 hover:border-ink/35 hover:text-ink'
                                 }`}
                             >
-                                {link.label}
+                                {category.name}
                             </button>
                         );
                     })}
@@ -222,16 +123,7 @@ export default function ListProduct({ products, filters }: Props) {
                 filterKey={JSON.stringify(cleanQuery(filters))}
                 isFiltering={isFiltering}
                 products={products.data}
-                onClearFilters={() =>
-                    visit({
-                        category: '',
-                        grind_type: '',
-                        process: '',
-                        price: '',
-                        sort: 'featured',
-                        type: '',
-                    })
-                }
+                onClearFilters={() => visit({ category: '' })}
             />
             <ProductPagination products={products} />
         </ShopLayout>

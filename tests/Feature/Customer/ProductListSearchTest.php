@@ -35,46 +35,69 @@ it('seeds exactly twelve active coffee products', function () {
     ])->count())->toBe(12);
 });
 
-it('filters the coffee catalog through the displayed header controls', function () {
+it('filters the coffee catalog only by database categories', function () {
     $this->seed(CoffeeCatalogSeeder::class);
 
     $this->get(route('list', ['category' => 'ready-to-drink']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.category', 'ready-to-drink')
-            ->has('products.data', 3));
+            ->where('filters', ['category' => 'ready-to-drink'])
+            ->has('products.data', 3)
+            ->missing('options.grindTypes')
+            ->missing('options.processes')
+            ->missing('options.priceRanges')
+            ->missing('options.sortOptions'));
+});
 
-    $this->get(route('list', ['grind_type' => 'whole_bean']))
+it('ignores retired catalog filters and keeps the default order', function (array $query) {
+    $this->seed(CoffeeCatalogSeeder::class);
+    $ids = Product::query()->where('status', 'active')
+        ->orderByDesc('is_featured')->orderByDesc('is_new_arrival')
+        ->latest()->orderBy('products.id')->pluck('id')->all();
+
+    $this->get(route('list', $query))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.grind_type', 'whole_bean')
-            ->has('products.data', 9));
+            ->where('filters', ['category' => ''])
+            ->where('products.data', fn ($products) => collect($products)->pluck('id')->all() === $ids));
+})->with([
+    'grind' => [['grind_type' => 'missing']],
+    'process' => [['process' => 'missing']],
+    'price' => [['price' => 'under_100000']],
+    'type' => [['type' => 'best_seller']],
+    'sort' => [['sort' => 'name']],
+]);
 
-    $this->get(route('list', ['process' => 'honey']))
+it('provides active database categories alphabetically and excludes deleted categories', function () {
+    Category::query()->create(['name' => 'Zebra Coffee', 'slug' => 'zebra', 'is_active' => true]);
+    Category::query()->create(['name' => 'Artisan Coffee', 'slug' => 'artisan', 'is_active' => true]);
+    Category::query()->create(['name' => 'Hidden Coffee', 'slug' => 'hidden', 'is_active' => false]);
+    Category::query()->create(['name' => 'Deleted Coffee', 'slug' => 'deleted', 'is_active' => true])->delete();
+
+    $this->get(route('list'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.process', 'honey')
-            ->has('products.data', 2));
+            ->has('options.categories', 2)
+            ->where('options.categories.0.name', 'Artisan Coffee')
+            ->where('options.categories.0.slug', 'artisan')
+            ->where('options.categories.1.name', 'Zebra Coffee'));
+});
 
-    $this->get(route('list', ['price' => 'under_100000']))
+it('returns an empty catalog for categories without products', function () {
+    Category::query()->create(['name' => 'Empty Coffee', 'slug' => 'empty', 'is_active' => true]);
+
+    $this->get(route('list', ['category' => 'empty']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.price', 'under_100000')
-            ->has('products.data', 7));
-
-    $this->get(route('list', ['sort' => 'price_high']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.sort', 'price_high')
-            ->where('products.data.0.title', 'Papua Valley')
-            ->has('options.grindTypes')
-            ->has('options.processes'));
+            ->where('filters.category', 'empty')
+            ->has('products.data', 0));
 });
 
 it('paginates the coffee catalog by twenty products', function () {
     $this->seed(CoffeeCatalogSeeder::class);
+    $category = Category::query()->create(['name' => 'Extra Coffee', 'slug' => 'extra', 'is_active' => true]);
 
-    for ($index = 1; $index <= 9; $index++) {
+    for ($index = 1; $index <= 21; $index++) {
         $product = Product::query()->create([
             'name' => "Extra Coffee {$index}",
             'slug' => "extra-coffee-{$index}",
@@ -82,6 +105,7 @@ it('paginates the coffee catalog by twenty products', function () {
             'grind_type' => 'whole_bean',
             'status' => 'active',
         ]);
+        $product->categories()->attach($category);
         $variant = ProductVariant::query()->create([
             'product_id' => $product->id,
             'sku' => "EXTRA-{$index}-250",
@@ -95,12 +119,19 @@ it('paginates the coffee catalog by twenty products', function () {
         ]);
     }
 
-    $this->get(route('list', ['page' => 2]))
+    $this->get(route('list', ['page' => 2, 'category' => 'extra', 'search' => 'Extra', 'process' => 'missing']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('products.per_page', 20)
             ->where('products.current_page', 2)
             ->where('products.last_page', 2)
+            ->where('products.total', 21)
+            ->where('products.prev_page_url', function ($url) {
+                parse_str(parse_url($url, PHP_URL_QUERY), $query);
+
+                return $query['category'] === 'extra' && $query['search'] === 'Extra'
+                    && $query['page'] === '1' && ! array_key_exists('process', $query);
+            })
             ->has('products.data', 1));
 });
 

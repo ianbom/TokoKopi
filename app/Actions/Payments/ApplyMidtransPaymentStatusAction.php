@@ -3,6 +3,7 @@
 namespace App\Actions\Payments;
 
 use App\Actions\Stock\FinalizeOrderStockAction;
+use App\Actions\Stock\ReleaseOrderStockAction;
 use App\Actions\Vouchers\ReleaseVoucherReservationAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -17,6 +18,7 @@ class ApplyMidtransPaymentStatusAction
     public function __construct(
         private readonly FinalizeOrderStockAction $finalizeStock,
         private readonly ReleaseVoucherReservationAction $releaseVoucher,
+        private readonly ReleaseOrderStockAction $releaseStock,
         private readonly NotificationService $notifications,
     ) {}
 
@@ -127,6 +129,7 @@ class ApplyMidtransPaymentStatusAction
             return;
         }
 
+        $this->releaseStock->execute($order);
         $this->releaseVoucher->execute($order);
         $order->update([
             'payment_status' => $paymentStatus->value,

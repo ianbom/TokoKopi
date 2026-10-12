@@ -2,6 +2,8 @@
 
 namespace App\Services\Customer;
 
+use App\Actions\Stock\FinalizeOrderStockAction;
+use App\Actions\Stock\ReleaseOrderStockAction;
 use App\Actions\Vouchers\ReleaseVoucherReservationAction;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -16,6 +18,7 @@ use App\Services\Integrations\BiteshipService;
 use App\Services\Integrations\MidtransService;
 use App\Services\Settings\SiteSettingService;
 use Carbon\CarbonImmutable;
+use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +32,8 @@ class CheckoutService
         private readonly MidtransService $midtrans,
         private readonly SiteSettingService $settings,
         private readonly ReleaseVoucherReservationAction $releaseVoucher,
+        private readonly FinalizeOrderStockAction $deductStock,
+        private readonly ReleaseOrderStockAction $releaseStock,
     ) {}
 
     public function pageData(User $user): array
@@ -199,7 +204,7 @@ class CheckoutService
             }
 
             $subtotal = 0.0;
-            foreach ($items as $item) {
+            foreach ($items->sortBy('product_variant_id') as $item) {
                 $variant = ProductVariant::query()
                     ->with(['product.primaryImage:id,product_id,image_url', 'stock'])
                     ->whereKey($item->product_variant_id)
@@ -326,6 +331,12 @@ class CheckoutService
                 ]);
             }
 
+            try {
+                $this->deductStock->execute($order);
+            } catch (DomainException $exception) {
+                throw ValidationException::withMessages(['cart' => $exception->getMessage()]);
+            }
+
             $order->shipment()->create([
                 'shipping_provider' => 'biteship',
                 'courier_company' => $rate['courier_company'],
@@ -349,7 +360,7 @@ class CheckoutService
             ]);
 
             return $payment;
-        });
+        }, 3);
 
         try {
             $snap = $this->midtrans->createSnapTransaction($payment->order()->with(['items', 'address'])->firstOrFail());
@@ -380,6 +391,7 @@ class CheckoutService
 
                     return;
                 }
+                $this->releaseStock->execute($order);
                 $this->releaseVoucher->execute($order);
                 $order->update(['payment_status' => 'failed', 'order_status' => 'payment_failed', 'cancelled_at' => now()]);
                 $payment->update(['transaction_status' => 'snap_failed', 'failure_reason' => 'Pembuatan pembayaran ditolak.', 'raw_response' => ['snap_creation_rejected' => true]]);

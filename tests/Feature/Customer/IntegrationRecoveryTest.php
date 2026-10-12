@@ -221,7 +221,7 @@ test('all variant weights must be positive including inactive variants', functio
 });
 
 test('checkout persists rounded total and consistent weight after voucher requotation', function () {
-    [$user, $address, $voucher] = recoveryCheckout();
+    [$user, $address, $voucher, $variant] = recoveryCheckout();
     $payload = recoveryCheckoutPayload($this, $user, $address);
     $response = $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
     $order = Order::query()->findOrFail($response->json('order_id'));
@@ -231,11 +231,17 @@ test('checkout persists rounded total and consistent weight after voucher requot
         ->and($voucher->refresh()->used_count)->toBe(1);
     $this->assertDatabaseCount('cart_items', 0);
     $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful()->assertJsonPath('order_id', $order->id);
+    expect($variant->stock->refresh()->quantity)->toBe(8)
+        ->and($order->payment_status)->toBe('pending');
+    $this->assertDatabaseHas('order_item_stock_movements', ['order_item_id' => $order->items->first()->id, 'quantity' => -2]);
+    app(ApplyMidtransPaymentStatusAction::class)->execute($order->payment, 'settlement');
+    app(ApplyMidtransPaymentStatusAction::class)->execute($order->payment, 'settlement');
+    expect($variant->stock->refresh()->quantity)->toBe(8);
     Http::assertSent(fn ($request) => ! str_contains($request->url(), '/rates/') || ($request['items'][0]['weight'] === 300 && $request['items'][0]['quantity'] === 2));
 });
 
 test('uncertain checkout keeps cart voucher and idempotency without creating another snap', function (array $snap, int $status) {
-    [$user, $address, $voucher] = recoveryCheckout($snap, $status);
+    [$user, $address, $voucher, $variant] = recoveryCheckout($snap, $status);
     $payload = recoveryCheckoutPayload($this, $user, $address);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment');
     $order = Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->firstOrFail();
@@ -245,6 +251,7 @@ test('uncertain checkout keeps cart voucher and idempotency without creating ano
     $this->assertDatabaseCount('cart_items', 1);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable();
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/v1/transactions'))->count())->toBe(1);
+    expect($variant->stock->refresh()->quantity)->toBe(8);
 })->with([
     'malformed success' => [[], 201],
     'server error' => [['error_messages' => ['Unavailable']], 500],
@@ -252,12 +259,86 @@ test('uncertain checkout keeps cart voucher and idempotency without creating ano
 ]);
 
 test('confirmed snap rejection releases voucher but preserves cart', function () {
-    [$user, $address, $voucher] = recoveryCheckout(['error_messages' => ['Invalid data']], 422);
+    [$user, $address, $voucher, $variant] = recoveryCheckout(['error_messages' => ['Invalid data']], 422);
     $payload = recoveryCheckoutPayload($this, $user, $address);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment');
     expect(Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->firstOrFail()->payment_status)->toBe('failed')
         ->and($voucher->refresh()->used_count)->toBe(0);
     $this->assertDatabaseCount('cart_items', 1);
+    expect($variant->stock->refresh()->quantity)->toBe(10);
+    $this->assertDatabaseHas('order_item_stock_movements', ['movement_type' => 'release', 'quantity' => 2]);
+});
+
+test('closed unpaid checkout restores only its deducted stock once', function (string $status) {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $response = $this->postJson(route('checkout.place-order'), recoveryCheckoutPayload($this, $user, $address))->assertSuccessful();
+    $order = Order::query()->findOrFail($response->json('order_id'));
+    expect($variant->stock->refresh()->quantity)->toBe(8);
+    $variant->stock->increment('quantity', 3);
+    app(ApplyMidtransPaymentStatusAction::class)->execute($order->payment, $status);
+    app(ApplyMidtransPaymentStatusAction::class)->execute($order->payment, $status);
+    expect($variant->stock->refresh()->quantity)->toBe(13);
+    $this->assertDatabaseHas('order_item_stock_movements', [
+        'order_item_id' => $order->items->first()->id, 'movement_type' => 'release',
+        'quantity' => 2, 'stock_before' => 11, 'stock_after' => 13,
+    ]);
+    $this->assertDatabaseCount('order_item_stock_movements', 2);
+    app(ApplyMidtransPaymentStatusAction::class)->execute($order->payment, 'settlement');
+    expect($order->refresh()->payment_status)->toBe('manual_review')
+        ->and($variant->stock->refresh()->quantity)->toBe(13);
+})->with(['cancel', 'expire', 'deny', 'failure']);
+
+test('another checkout cannot buy stock held by an unpaid order', function () {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $variant->stock->update(['quantity' => 2]);
+    $this->postJson(route('checkout.place-order'), recoveryCheckoutPayload($this, $user, $address))->assertSuccessful();
+    expect($variant->stock->refresh()->quantity)->toBe(0);
+    $other = User::factory()->create();
+    $otherAddress = $address->replicate();
+    $otherAddress->user_id = $other->id;
+    $otherAddress->save();
+    $cart = Cart::query()->create(['user_id' => $other->id]);
+    CartItem::query()->create(['cart_id' => $cart->id, 'product_id' => $variant->product_id, 'product_variant_id' => $variant->id, 'quantity' => 2, 'price_snapshot' => 1.49]);
+    $payload = recoveryCheckoutPayload($this, $other, $otherAddress);
+    $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('cart');
+    expect(Order::query()->where('user_id', $other->id)->count())->toBe(0);
+});
+
+test('expiry scheduler closes unpaid snap or pending transaction before restoring stock', function (bool $selectedMethod) {
+    [$user, $address, , $variant] = recoveryCheckout();
+    SiteSetting::query()->create(['key' => 'payment_expiry_duration', 'value' => '30']);
+    $response = $this->postJson(route('checkout.place-order'), recoveryCheckoutPayload($this, $user, $address))->assertSuccessful();
+    $order = Order::query()->findOrFail($response->json('order_id'));
+    $payment = $order->payment;
+    expect($payment->expires_at->diffInMinutes($payment->created_at, true))->toBe(30.0);
+    Http::fake([
+        '*/status' => $selectedMethod
+            ? Http::response(['order_id' => $payment->midtrans_order_id, 'gross_amount' => '3.00', 'status_code' => '201', 'transaction_status' => 'pending'])
+            : Http::response(['status_code' => '404'], 404),
+        '*/cancel' => $selectedMethod
+            ? Http::response(['order_id' => $payment->midtrans_order_id, 'gross_amount' => '3.00', 'status_code' => '200', 'transaction_status' => 'cancel'])
+            : Http::response(['canceled_at' => now()->toISOString()]),
+    ]);
+    $this->travel(31)->minutes();
+    expect(app(SyncExpiredMidtransPaymentsAction::class)->execute())->toBe(['checked' => 1, 'synced' => 1, 'failed' => 0]);
+    expect($variant->stock->refresh()->quantity)->toBe(10)
+        ->and($order->refresh()->payment_status)->toBe('cancelled');
+    expect(app(SyncExpiredMidtransPaymentsAction::class)->execute()['checked'])->toBe(0);
+    $this->assertDatabaseCount('order_item_stock_movements', 2);
+})->with([true, false]);
+
+test('expiry cancellation failure holds stock until a successful retry', function () {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $response = $this->postJson(route('checkout.place-order'), recoveryCheckoutPayload($this, $user, $address))->assertSuccessful();
+    $order = Order::query()->findOrFail($response->json('order_id'));
+    $order->payment->update(['expires_at' => now()->subMinute()]);
+    Http::fake(['*/status' => Http::response(['status_code' => '404'], 404), '*/cancel' => Http::response([], 500)]);
+    expect(app(SyncExpiredMidtransPaymentsAction::class)->execute()['failed'])->toBe(1);
+    expect($variant->stock->refresh()->quantity)->toBe(8)
+        ->and($order->refresh()->payment_status)->toBe('pending');
+    Http::fake(['*/status' => Http::response(['status_code' => '404'], 404), '*/cancel' => Http::response(['canceled_at' => now()->toISOString()])]);
+    expect(app(SyncExpiredMidtransPaymentsAction::class)->execute()['synced'])->toBe(1);
+    expect($variant->stock->refresh()->quantity)->toBe(10);
 });
 
 test('weight changes invalidate an existing shipping binding', function () {
@@ -341,7 +422,7 @@ test('return transit and temporary hold retain lifecycle without automatic refun
     expect($shipment->refresh()->shipping_status)->toBe('disposed')->and($payment->order->refresh()->payment_status)->toBe('paid');
 });
 
-test('display sorting and price filtering use the cheapest active variant', function () {
+test('catalog cards use the cheapest active variant while retired price filters are ignored', function () {
     $first = Product::query()->create(['name' => 'Kopi A', 'slug' => 'kopi-a', 'status' => 'active']);
     foreach ([[200000, true], [80000, true], [1, false]] as [$price, $active]) {
         ProductVariant::query()->create(['product_id' => $first->id, 'regular_price' => $price, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => $active]);
@@ -349,10 +430,10 @@ test('display sorting and price filtering use the cheapest active variant', func
     $second = Product::query()->create(['name' => 'Kopi B', 'slug' => 'kopi-b', 'status' => 'active']);
     ProductVariant::query()->create(['product_id' => $second->id, 'regular_price' => 90000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => true]);
     $service = app(ProductBrowsingService::class);
-    $cards = $service->productListData(Request::create('/list', 'GET', ['sort' => 'price_low']))['products']->items();
+    $cards = $service->productListData(Request::create('/list'))['products']->items();
     expect(array_column($cards, 'id'))->toBe([$first->id, $second->id])
         ->and($cards[0]['price'])->toBe(80000.0)->and($cards[0]['price_from'])->toBeTrue();
-    expect($service->productListData(Request::create('/list', 'GET', ['price' => '100000_250000']))['products']->total())->toBe(0);
+    expect($service->productListData(Request::create('/list', 'GET', ['price' => '100000_250000']))['products']->total())->toBe(2);
 });
 
 test('valid signed webhook logs only safe acknowledgement metadata', function () {

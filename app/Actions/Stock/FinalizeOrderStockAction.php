@@ -16,7 +16,10 @@ class FinalizeOrderStockAction
             if ($order->items->isEmpty() || $order->items->contains(fn ($item) => ! $item->product_variant_id || $item->quantity < 1)) {
                 throw new DomainException('Varian dan jumlah produk pada pesanan tidak valid.');
             }
-            $recorded = $order->items->sum(fn ($item) => $item->stockMovements->count());
+            if ($order->items->contains(fn ($item) => $item->stockMovements->contains('movement_type', 'release'))) {
+                throw new DomainException('Stok pesanan sudah dikembalikan. Pesanan memerlukan rekonsiliasi admin.');
+            }
+            $recorded = $order->items->sum(fn ($item) => $item->stockMovements->where('movement_type', 'deduction')->count());
             if ($recorded === $order->items->count()) {
                 return;
             }
@@ -29,7 +32,7 @@ class FinalizeOrderStockAction
             foreach ($quantitiesByVariant as $variantId => $quantity) {
                 $stock = $stocks->get($variantId);
                 if (! $stock || $stock->quantity < $quantity) {
-                    throw new DomainException('Stok tidak cukup untuk menyelesaikan pembayaran pesanan ini.');
+                    throw new DomainException('Stok tidak cukup untuk membuat pesanan ini. Perbarui keranjang sebelum checkout.');
                 }
             }
             foreach ($order->items->sortBy('id') as $item) {
@@ -38,6 +41,7 @@ class FinalizeOrderStockAction
                 $stock->decrement('quantity', $item->quantity);
                 $item->stockMovements()->create([
                     'product_variant_id' => $item->product_variant_id,
+                    'movement_type' => 'deduction',
                     'quantity' => -$item->quantity,
                     'stock_before' => $before,
                     'stock_after' => $before - $item->quantity,
