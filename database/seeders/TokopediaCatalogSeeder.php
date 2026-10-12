@@ -91,7 +91,7 @@ class TokopediaCatalogSeeder extends Seeder
                 'sku' => $sku,
                 'origin' => $data['origin'] ?? null,
                 'process' => $data['process'] ?? null,
-                'grind_type' => $data['grind_type'] ?? null,
+                'grind_type' => filled($data['producer'] ?? null) ? $data['producer'] : 'Deklase Roastery',
                 'tasting_notes' => $data['tasting_notes'] ?? null,
                 'description' => (string) ($data['description'] ?? $data['title'] ?? ''),
                 'status' => 'active',
@@ -140,6 +140,13 @@ class TokopediaCatalogSeeder extends Seeder
             [
                 'product_id' => $product->id,
                 'net_weight' => $data['net_weight'] ?? null,
+                'grind_type' => match ($data['grind_type'] ?? null) {
+                    'whole_beans', 'whole_bean' => 'whole_bean',
+                    'fine', 'medium', 'coarse' => $data['grind_type'],
+                    default => null,
+                },
+                // Example package dimensions; measure actual packaging before live transactions.
+                'length' => 4, 'width' => 5, 'height' => 2,
                 'regular_price' => $regularPrice,
                 'sale_price' => $salePrice,
                 'shipping_weight_gram' => $this->grams($data['net_weight'] ?? null),

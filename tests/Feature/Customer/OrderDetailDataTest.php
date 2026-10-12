@@ -32,7 +32,7 @@ it('shows the latest coffee product snapshot on the order detail page', function
         'price' => 85000,
         'quantity' => 2,
         'subtotal' => 170000,
-        'shipping_weight_gram' => 300,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         'product_image_url' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085',
     ]);
 

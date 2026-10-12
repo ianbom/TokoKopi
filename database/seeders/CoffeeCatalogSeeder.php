@@ -77,13 +77,14 @@ class CoffeeCatalogSeeder extends Seeder
     private function coffee(string $slug, string $name, string $origin, string $process, array $categories, string $photo, int $price, bool $ground = true): array
     {
         $images = $this->images($photo);
+        // Example package dimensions; measure actual packaging before live transactions.
         $variants = $ground
             ? [
-                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 40],
+                ['sku' => strtoupper($slug).'-200-WB', 'net_weight' => '200gram', 'grind_type' => 'whole_bean', 'length' => 4, 'width' => 5, 'height' => 2, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 250, 'image_url' => $images[0], 'is_active' => true, 'stock' => 40],
             ]
-            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
+            : [['sku' => strtoupper($slug).'-500ML', 'net_weight' => '500ml', 'grind_type' => null, 'length' => 4, 'width' => 5, 'height' => 2, 'regular_price' => $price, 'sale_price' => null, 'shipping_weight_gram' => 650, 'image_url' => $images[0], 'is_active' => true, 'stock' => 12]];
 
-        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'grind_type' => $ground ? 'whole_bean' : null, 'tasting_notes' => 'Manis dan seimbang', 'description' => "<p>{$name} dengan karakter Manis dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
+        return ['name' => $name, 'slug' => $slug, 'sku' => strtoupper($slug), 'origin' => $origin, 'process' => $process, 'grind_type' => 'Deklase Roastery', 'tasting_notes' => 'Manis dan seimbang', 'description' => "<p>{$name} dengan karakter Manis dan seimbang.</p>", 'status' => 'active', 'is_featured' => true, 'is_new_arrival' => true, 'is_best_seller' => true, 'categories' => $categories, 'images' => $images, 'variants' => $variants];
     }
 
     private function images(string $primary): array

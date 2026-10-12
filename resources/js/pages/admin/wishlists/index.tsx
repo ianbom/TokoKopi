@@ -162,7 +162,10 @@ export default function WishlistsIndex({
                                 </tbody>
                             </table>
                         </div>
-                        <Pagination paginator={products} />
+                        <Pagination
+                            paginator={products}
+                            normalizeNavigationLabels
+                        />
                     </TableShell>
                     <TableShell
                         title="Recent Wishlist"

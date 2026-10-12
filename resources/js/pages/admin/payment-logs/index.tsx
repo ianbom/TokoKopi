@@ -178,7 +178,7 @@ export default function PaymentLogsIndex({ logs, filters }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    <Pagination paginator={logs} />
+                    <Pagination paginator={logs} normalizeNavigationLabels />
                 </TableShell>
             </div>
         </>

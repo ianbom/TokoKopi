@@ -2,6 +2,15 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Pagination } from '@/pages/admin/catalog/shared';
 import { create, destroy, edit, index, show } from '@/routes/admin/products';
@@ -57,6 +66,10 @@ export default function ProductsIndex({
     stats,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const [productToDelete, setProductToDelete] = useState<Product | null>(
+        null,
+    );
+    const [deleting, setDeleting] = useState(false);
     const apply = (next: Record<string, string>) =>
         router.get(
             index.url({ query: { ...filters, ...next } }),
@@ -143,23 +156,27 @@ export default function ProductsIndex({
                     </Button>
                 </form>
                 <div className="overflow-x-auto border">
-                    <table className="admin-table w-full min-w-[1100px] text-sm">
+                    <table className="admin-table w-full min-w-[1220px] text-sm">
                         <thead className="border-b bg-surface-soft text-left">
                             <tr>
-                                <th className="p-3">Produk</th>
+                                <th className="w-14 p-3 text-center">No.</th>
+                                <th>Produk</th>
                                 <th>Kategori</th>
-                                <th>Gilingan</th>
+                                <th>Producer</th>
                                 <th>Tasting Notes</th>
                                 <th>Harga mulai</th>
                                 <th>Varian</th>
                                 <th>Stok</th>
                                 <th>Status</th>
-                                <th />
+                                <th className="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {products.data.map((product) => (
+                            {products.data.map((product, rowIndex) => (
                                 <tr key={product.id} className="border-b">
+                                    <td className="p-3 text-center tabular-nums">
+                                        {(products.from ?? 1) + rowIndex}
+                                    </td>
                                     <td className="p-3">
                                         <div className="flex items-center gap-3">
                                             {product.thumbnail && (
@@ -185,12 +202,7 @@ export default function ProductsIndex({
                                     <td>
                                         {product.categories.join(', ') || '-'}
                                     </td>
-                                    <td>
-                                        {product.grind_type?.replaceAll(
-                                            '_',
-                                            ' ',
-                                        ) ?? '-'}
-                                    </td>
+                                    <td>{product.grind_type ?? '-'}</td>
                                     <td>{product.tasting_notes ?? '-'}</td>
                                     <td>{money(product.minimum_price)}</td>
                                     <td>{product.variants_count}</td>
@@ -199,33 +211,42 @@ export default function ProductsIndex({
                                         {product.status}
                                     </td>
                                     <td className="p-3 text-right">
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            variant="outline"
-                                        >
-                                            <Link href={edit(product)}>
-                                                Edit
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() =>
-                                                router.delete(
-                                                    destroy.url(product),
-                                                )
-                                            }
-                                        >
-                                            Hapus
-                                        </Button>
+                                        <div className="flex justify-end gap-2 whitespace-nowrap">
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                variant="outline"
+                                            >
+                                                <Link href={show(product)}>
+                                                    Detail
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                variant="outline"
+                                            >
+                                                <Link href={edit(product)}>
+                                                    Edit
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                onClick={() =>
+                                                    setProductToDelete(product)
+                                                }
+                                            >
+                                                Hapus
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
                             {products.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={9}
+                                        colSpan={10}
                                         className="p-10 text-center text-muted-foreground"
                                     >
                                         Produk tidak ditemukan.
@@ -235,8 +256,57 @@ export default function ProductsIndex({
                         </tbody>
                     </table>
                 </div>
-                <Pagination paginator={products} />
+                <Pagination paginator={products} normalizeNavigationLabels />
             </main>
+            <Dialog
+                open={productToDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open && !deleting) {
+                        setProductToDelete(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus produk?</DialogTitle>
+                        <DialogDescription>
+                            Yakin ingin menghapus {productToDelete?.name}?
+                            Produk yang pernah dipesan akan diarsipkan, bukan
+                            dihapus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={deleting}
+                            >
+                                Batal
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={!productToDelete || deleting}
+                            onClick={() => {
+                                if (!productToDelete || deleting) {
+                                    return;
+                                }
+
+                                setDeleting(true);
+                                router.delete(destroy.url(productToDelete), {
+                                    preserveScroll: true,
+                                    onSuccess: () => setProductToDelete(null),
+                                    onFinish: () => setDeleting(false),
+                                });
+                            }}
+                        >
+                            {deleting ? 'Menghapus...' : 'Hapus produk'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

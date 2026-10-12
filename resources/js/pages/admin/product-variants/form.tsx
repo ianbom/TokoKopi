@@ -16,6 +16,11 @@ type Variant = {
     product_id: number;
     sku: string | null;
     net_weight: string | null;
+    grind_type: string;
+    length: string | number;
+    width: string | number;
+    height: string | number;
+
     regular_price: string | number;
     sale_price: string | number | null;
     shipping_weight_gram: number;
@@ -34,6 +39,11 @@ type Data = {
     product_id: string | number;
     sku: string;
     net_weight: string;
+    grind_type: string;
+    length: string | number;
+    width: string | number;
+    height: string | number;
+
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -54,6 +64,10 @@ export default function VariantForm({
         product_id: variant?.product_id ?? selectedProductId ?? '',
         sku: variant?.sku ?? '',
         net_weight: String(variant?.net_weight ?? ''),
+        grind_type: variant?.grind_type ?? '',
+        length: variant?.length ?? '',
+        width: variant?.width ?? '',
+        height: variant?.height ?? '',
         regular_price: String(variant?.regular_price ?? ''),
         sale_price: String(variant?.sale_price ?? ''),
         shipping_weight_gram: variant?.shipping_weight_gram ?? '',
@@ -158,6 +172,54 @@ export default function VariantForm({
                             }
                         />
                     </Field>
+                    <Field
+                        name={'grind_type'}
+                        label="Grind Type"
+                        error={errors['grind_type']}
+                    >
+                        <select
+                            className="h-9 w-full border bg-canvas px-3 text-sm"
+                            value={form.data.grind_type}
+                            onChange={(event) =>
+                                setField('grind_type', event.target.value)
+                            }
+                        >
+                            <option value="">Tidak berlaku</option>
+                            <option value="whole_bean">whole bean</option>
+                            <option value="fine">fine</option>
+                            <option value="medium">medium</option>
+                            <option value="coarse">coarse</option>
+                        </select>
+                    </Field>
+                    {(['length', 'width', 'height'] as const).map(
+                        (dimension) => (
+                            <Field
+                                key={dimension}
+                                name={dimension}
+                                label={
+                                    {
+                                        length: 'Panjang',
+                                        width: 'Lebar',
+                                        height: 'Tinggi',
+                                    }[dimension] + ' kemasan (cm)'
+                                }
+                                required
+                                requiredIndicator="asterisk"
+                                error={errors[dimension]}
+                            >
+                                <Input
+                                    type="number"
+                                    min="0.01"
+                                    max="999999.99"
+                                    step="0.01"
+                                    value={form.data[dimension]}
+                                    onChange={(event) =>
+                                        setField(dimension, event.target.value)
+                                    }
+                                />
+                            </Field>
+                        ),
+                    )}
                     <Field
                         name="regular_price"
                         label="Harga normal"

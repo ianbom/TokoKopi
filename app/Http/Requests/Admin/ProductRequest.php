@@ -17,7 +17,7 @@ class ProductRequest extends FormRequest
     {
         $product = $this->route('product');
         $productId = $product?->id;
-        $imageId = Rule::exists('product_images', 'id');
+        $imageId = Rule::exists('product_images', 'id')->whereNull('deleted_at');
         $variantId = Rule::exists('product_variants', 'id');
 
         if ($productId) {
@@ -40,8 +40,9 @@ class ProductRequest extends FormRequest
             'is_best_seller' => ['sometimes', 'boolean'],
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
-            'images' => ['nullable', 'array'],
-            'images.*.id' => ['nullable', 'integer', $imageId],
+            'images' => ['required', 'array', 'min:1'],
+            'images.*' => ['array'],
+            'images.*.id' => $productId ? ['nullable', 'integer', $imageId] : ['prohibited'],
             'images.*.image_url' => ['nullable', 'string', 'max:2048', 'not_regex:/^blob:/i'],
             'images.*.image' => ['nullable', 'file', 'image', 'max:4096'],
             'images.*.sort_order' => ['nullable', 'integer', 'min:0'],
@@ -50,6 +51,10 @@ class ProductRequest extends FormRequest
             'variants.*.id' => ['nullable', 'integer', $variantId],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.net_weight' => ['required', 'string', 'max:100'],
+            'variants.*.grind_type' => ['nullable', Rule::in(['whole_bean', 'fine', 'medium', 'coarse'])],
+            'variants.*.length' => ['required', 'numeric', 'gt:0', 'max:999999.99', 'decimal:0,2'],
+            'variants.*.width' => ['required', 'numeric', 'gt:0', 'max:999999.99', 'decimal:0,2'],
+            'variants.*.height' => ['required', 'numeric', 'gt:0', 'max:999999.99', 'decimal:0,2'],
             'variants.*.regular_price' => ['required', 'numeric', 'min:0'],
             'variants.*.sale_price' => ['nullable', 'numeric', 'min:0', 'lte:variants.*.regular_price'],
             'variants.*.shipping_weight_gram' => ['required', 'integer', 'min:1'],
@@ -101,8 +106,12 @@ class ProductRequest extends FormRequest
             'category_ids.*.distinct' => 'Kategori yang sama tidak boleh dipilih lebih dari sekali.',
             'category_ids.*.exists' => 'Kategori yang dipilih tidak ditemukan.',
             'images.array' => 'Data gambar produk tidak valid.',
+            'images.required' => 'Galeri produk wajib memiliki minimal 1 foto.',
+            'images.min' => 'Galeri produk wajib memiliki minimal 1 foto.',
+            'images.*.array' => 'Data gambar produk tidak valid.',
             'images.*.id.integer' => 'Data gambar produk tidak valid.',
             'images.*.id.exists' => 'Gambar produk tidak ditemukan.',
+            'images.*.id.prohibited' => 'Gambar produk baru harus diunggah sebagai file.',
             'images.*.image_url.string' => 'Alamat gambar produk harus berupa teks.',
             'images.*.image_url.max' => 'Alamat gambar produk terlalu panjang.',
             'images.*.image_url.not_regex' => 'Gunakan unggah file untuk gambar produk.',
@@ -119,6 +128,22 @@ class ProductRequest extends FormRequest
             'variants.*.sku.unique' => 'SKU varian sudah digunakan varian lain.',
             'variants.*.sku.distinct' => 'SKU varian tidak boleh sama dalam satu produk.',
             'variants.*.sku.max' => 'SKU varian maksimal 100 karakter.',
+            'variants.*.length.required' => 'Panjang kemasan wajib diisi dalam cm.',
+            'variants.*.length.numeric' => 'Panjang kemasan harus berupa angka.',
+            'variants.*.length.gt' => 'Panjang kemasan harus lebih dari 0 cm.',
+            'variants.*.length.max' => 'Panjang kemasan maksimal 999999.99 cm.',
+            'variants.*.length.decimal' => 'Panjang kemasan maksimal 2 angka desimal.',
+            'variants.*.width.required' => 'Lebar kemasan wajib diisi dalam cm.',
+            'variants.*.width.numeric' => 'Lebar kemasan harus berupa angka.',
+            'variants.*.width.gt' => 'Lebar kemasan harus lebih dari 0 cm.',
+            'variants.*.width.max' => 'Lebar kemasan maksimal 999999.99 cm.',
+            'variants.*.width.decimal' => 'Lebar kemasan maksimal 2 angka desimal.',
+            'variants.*.height.required' => 'Tinggi kemasan wajib diisi dalam cm.',
+            'variants.*.height.numeric' => 'Tinggi kemasan harus berupa angka.',
+            'variants.*.height.gt' => 'Tinggi kemasan harus lebih dari 0 cm.',
+            'variants.*.height.max' => 'Tinggi kemasan maksimal 999999.99 cm.',
+            'variants.*.height.decimal' => 'Tinggi kemasan maksimal 2 angka desimal.',
+            'variants.*.grind_type.in' => 'Pilih grind type yang tersedia.',
             'variants.*.net_weight.required' => 'Berat bersih wajib diisi.',
             'variants.*.net_weight.string' => 'Berat bersih harus berupa teks.',
             'variants.*.net_weight.max' => 'Berat bersih maksimal 100 karakter.',
@@ -150,18 +175,27 @@ class ProductRequest extends FormRequest
     public function after(): array
     {
         return [function ($validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $storedImages = $this->route('product')?->images()->pluck('image_url', 'id') ?? collect();
+            $images = collect($this->all()['images'] ?? [])->filter(
+                fn (array $image, int $index): bool => $this->hasFile("images.{$index}.image")
+                    || (isset($image['id']) && filled($storedImages->get($image['id']))
+                        && $storedImages->get($image['id']) === ($image['image_url'] ?? null))
+            );
+            if ($images->isEmpty()) {
+                $validator->errors()->add('images', 'Galeri produk wajib memiliki minimal 1 foto.');
+
+                return;
+            }
+
             if ($this->input('status') !== 'active') {
                 return;
             }
 
-            $images = collect($this->input('images', []))->filter(
-                fn (array $image, int $index): bool => filled($image['image_url'] ?? null) || $this->hasFile("images.{$index}.image")
-            );
             $variants = collect($this->input('variants', []));
-
-            if ($images->isEmpty()) {
-                $validator->errors()->add('images', 'Produk aktif membutuhkan minimal satu gambar.');
-            }
 
             if (! $images->contains(fn (array $image): bool => (bool) ($image['is_primary'] ?? false))) {
                 $validator->errors()->add('images', 'Produk aktif membutuhkan satu gambar utama.');

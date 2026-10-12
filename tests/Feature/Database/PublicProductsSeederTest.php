@@ -1,12 +1,16 @@
 <?php
 
 use App\Models\Product;
+use App\Models\User;
+use Database\Seeders\CoffeeCatalogSeeder;
 use Database\Seeders\PublicProductsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
 it('seeds one active coffee product for every local product image', function () {
+    $this->seed(PublicProductsSeeder::class);
     $this->seed(PublicProductsSeeder::class);
 
     $products = collect(PublicProductsSeeder::products());
@@ -30,8 +34,26 @@ it('seeds one active coffee product for every local product image', function () 
             ->and(file_exists(public_path(urldecode(ltrim($imageUrl, '/')))))->toBeTrue()
             ->and($product->variants)->toHaveCount(1)
             ->and($product->variants->sole()->is_active)->toBeTrue()
-            ->and($product->grind_type)->toBe('whole_bean')
+            ->and($product->grind_type)->toBe('Deklase Roastery')
+            ->and($product->variants->sole()->grind_type)->toBe('whole_bean')
+            ->and($product->variants->sole()->length)->toBe('4.00')
+            ->and($product->variants->sole()->width)->toBe('5.00')
+            ->and($product->variants->sole()->height)->toBe('2.00')
             ->and($product->tasting_notes)->toBe('Manis dan seimbang')
             ->and($product->variants->sole()->stock?->quantity)->toBe(24);
     }
+});
+
+it('seeds coffee catalog producers and exposes them in the admin product list', function () {
+    $this->seed(CoffeeCatalogSeeder::class);
+    $this->seed(CoffeeCatalogSeeder::class);
+
+    expect(Product::query()->pluck('grind_type')->unique()->values()->all())->toBe(['Deklase Roastery']);
+
+    $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+    $this->actingAs($admin)->get(route('admin.products.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/products/index')
+            ->where('products.data.0.grind_type', 'Deklase Roastery'));
 });

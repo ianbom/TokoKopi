@@ -71,7 +71,7 @@ it('emails the customer when admin creates a shipment from an order', function (
         'price' => 250000,
         'quantity' => 1,
         'subtotal' => 250000,
-        'shipping_weight_gram' => 500,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 500,
     ]);
 
     Http::fake([

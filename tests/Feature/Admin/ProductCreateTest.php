@@ -58,8 +58,9 @@ it('paginates products with the requested per-page value', function () {
 });
 
 it('generates missing slugs from product names and rejects collisions', function () {
+    Storage::fake('public');
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
-    $this->actingAs($admin)->post(route('admin.products.store'), ['name' => 'Gayo Natural 250g', 'status' => 'draft'])
+    $this->actingAs($admin)->post(route('admin.products.store'), ['name' => 'Gayo Natural 250g', 'status' => 'draft', 'images' => [['image' => UploadedFile::fake()->image('gayo.jpg')]]])
         ->assertSessionHasNoErrors()->assertRedirect();
     $this->assertDatabaseHas('products', ['name' => 'Gayo Natural 250g', 'slug' => 'gayo-natural-250g']);
     $this->post(route('admin.products.store'), ['name' => 'Gayo Natural 250g', 'slug' => '', 'status' => 'draft'])
@@ -70,7 +71,7 @@ it('requires net weight for nested variants on create and edit', function ($netW
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'legacy-gayo', 'status' => 'draft']);
     $payload = ['name' => 'Gayo renamed', 'slug' => 'legacy-gayo', 'status' => 'draft', 'variants' => [[
-        'net_weight' => $netWeight, 'regular_price' => 95000, 'shipping_weight_gram' => 300,
+        'net_weight' => $netWeight, 'regular_price' => 95000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         'stock_quantity' => 10, 'low_stock_threshold' => 3,
     ]]];
     $this->actingAs($admin)->post(route('admin.products.store'), $payload)
@@ -81,10 +82,11 @@ it('requires net weight for nested variants on create and edit', function ($netW
 })->with([null, '', '   ']);
 
 it('preserves existing slugs when editing product names', function () {
+    Storage::fake('public');
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'LEGACY_GAYO', 'status' => 'draft']);
     $this->actingAs($admin)->put(route('admin.products.update', $product), [
-        'name' => 'Gayo Natural renamed', 'slug' => 'LEGACY_GAYO', 'status' => 'draft',
+        'name' => 'Gayo Natural renamed', 'slug' => 'LEGACY_GAYO', 'status' => 'draft', 'images' => [['image' => UploadedFile::fake()->image('gayo.jpg')]],
     ])->assertSessionHasNoErrors();
     expect($product->refresh()->name)->toBe('Gayo Natural renamed')->and($product->slug)->toBe('LEGACY_GAYO');
     $this->put(route('admin.products.update', $product), ['name' => 'Gayo', 'slug' => '', 'status' => 'draft'])
@@ -96,7 +98,7 @@ function productPayload(array $categoryIds): array
     return [
         'name' => 'Gayo Natural', 'slug' => 'gayo-natural', 'sku' => 'GAYO', 'origin' => 'Aceh Gayo', 'process' => 'Natural', 'grind_type' => 'Kopi Klasik Roastery', 'tasting_notes' => 'Cokelat, jeruk, gula aren', 'description' => '<h2>Gayo Natural</h2><p>Kopi arabika dengan rasa buah tropis.</p>', 'status' => 'active', 'category_ids' => $categoryIds,
         'images' => [['image' => UploadedFile::fake()->image('gayo-natural.jpg'), 'sort_order' => 0, 'is_primary' => true]],
-        'variants' => [['sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'regular_price' => 95000, 'sale_price' => 85000, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 20, 'low_stock_threshold' => 5]],
+        'variants' => [['sku' => 'GAYO-250-WB', 'net_weight' => '250g', 'regular_price' => 95000, 'sale_price' => 85000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 20, 'low_stock_threshold' => 5]],
     ];
 }
 

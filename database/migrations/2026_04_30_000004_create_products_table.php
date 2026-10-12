@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('sku', 100)->nullable()->unique();
             $table->string('origin', 180)->nullable();
             $table->string('process', 100)->nullable();
-            $table->string('grind_type', 50)->nullable();
+            $table->string('grind_type', 50)->nullable()->comment('Producer; legacy column name, not variant grind type.');
             $table->string('tasting_notes')->nullable();
             $table->longText('description')->nullable();
             $table->string('status', 30)->default('draft');

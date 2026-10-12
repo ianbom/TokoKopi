@@ -86,6 +86,7 @@ it('paginates the coffee catalog by twenty products', function () {
             'product_id' => $product->id,
             'sku' => "EXTRA-{$index}-250",
             'net_weight' => '250g',
+            'length' => 4, 'width' => 5, 'height' => 2,
             'regular_price' => 90000,
         ]);
         Stock::query()->create([
@@ -127,6 +128,7 @@ it('renders active coffee products from the database for the grid', function () 
         'product_id' => $product->id,
         'sku' => 'ACEH-GAYO-250-WHOLE',
         'net_weight' => '250g',
+        'length' => 4, 'width' => 5, 'height' => 2,
         'regular_price' => 125000,
     ]);
     Stock::query()->create([

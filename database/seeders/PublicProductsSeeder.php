@@ -39,7 +39,7 @@ class PublicProductsSeeder extends Seeder
                         'sku' => $data['sku'],
                         'origin' => $data['origin'],
                         'process' => $data['process'],
-                        'grind_type' => 'whole_bean',
+                        'grind_type' => 'Deklase Roastery',
                         'tasting_notes' => $data['tasting_notes'],
                         'description' => "<p>{$data['name']} adalah kopi pilihan Deklase dengan karakter {$data['description']}.</p>",
                         'status' => 'active',
@@ -73,6 +73,9 @@ class PublicProductsSeeder extends Seeder
                     ['sku' => $data['sku'].'-200-WB'],
                     [
                         'net_weight' => '200gram',
+                        'grind_type' => 'whole_bean',
+                        // Example package dimensions; measure actual packaging before live transactions.
+                        'length' => 4, 'width' => 5, 'height' => 2,
                         'regular_price' => $data['price'],
                         'sale_price' => null,
                         'shipping_weight_gram' => 250,

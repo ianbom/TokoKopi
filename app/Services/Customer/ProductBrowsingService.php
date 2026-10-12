@@ -48,7 +48,7 @@ class ProductBrowsingService
         $products = Product::query()->with($this->relations())->where('status', 'active')
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%")))
             ->when($category !== '', fn ($query) => $query->whereHas('categories', fn ($query) => $query->where('slug', $category)))
-            ->when($grindType !== '', fn ($query) => $query->where('grind_type', $grindType)->whereHas('variants', fn ($query) => $query->where('is_active', true)))
+            ->when($grindType !== '', fn ($query) => $query->whereHas('variants', fn ($variant) => $variant->where('is_active', true)->where('grind_type', $grindType)))
             ->when($process !== '', fn ($query) => $query->where('process', $process))
             ->when($type === 'best_seller', fn ($query) => $query->where('is_best_seller', true));
 
@@ -75,7 +75,7 @@ class ProductBrowsingService
             'filters' => ['category' => $category, 'grind_type' => $grindType, 'process' => $process, 'price' => $price, 'sort' => $sort, 'type' => $type],
             'options' => [
                 'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']),
-                'grindTypes' => Product::query()->where('status', 'active')->whereHas('variants', fn ($query) => $query->where('is_active', true))->whereNotNull('grind_type')->distinct()->orderBy('grind_type')->pluck('grind_type'),
+                'grindTypes' => ProductVariant::query()->where('is_active', true)->whereHas('product', fn ($query) => $query->where('status', 'active'))->whereNotNull('grind_type')->distinct()->orderBy('grind_type')->pluck('grind_type'),
                 'processes' => Product::query()->where('status', 'active')->whereNotNull('process')->distinct()->orderBy('process')->pluck('process'),
                 'priceRanges' => [
                     ['value' => 'under_100000', 'label' => 'Under Rp 100.000'],
@@ -165,7 +165,7 @@ class ProductBrowsingService
             'hover_image_url' => $product->images->skip(1)->first()?->image_url,
             'badge' => $product->is_new_arrival ? 'NEW' : ($product->is_best_seller ? 'BEST SELLER' : null), 'label' => null, 'is_wishlisted' => false,
             'available_stock' => (int) $product->variants->sum(fn ($item) => $item->stock?->quantity ?? 0),
-            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => $item->net_weight ?? '', 'net_weight' => $item->net_weight, 'image_url' => $item->image_url, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
+            'variants' => $product->variants->map(fn ($item) => ['id' => $item->id, 'sku' => $item->sku, 'variant_name' => trim(str_replace('_', ' ', $item->grind_type ?? '').' '.($item->net_weight ?? '')), 'net_weight' => $item->net_weight, 'grind_type' => $item->grind_type, 'length' => (float) $item->length, 'width' => (float) $item->width, 'height' => (float) $item->height, 'image_url' => $item->image_url, 'regular_price' => (float) $item->regular_price, 'sale_price' => $item->sale_price !== null ? (float) $item->sale_price : null, 'stock' => (int) ($item->stock?->quantity ?? 0), 'available_stock' => (int) ($item->stock?->quantity ?? 0), 'is_active' => $item->is_active])->all(),
         ];
     }
 

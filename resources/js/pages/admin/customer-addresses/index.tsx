@@ -423,7 +423,10 @@ export default function CustomerAddressesIndex({ addresses, filters }: Props) {
                         </table>
                     </div>
 
-                    <Pagination paginator={addresses} />
+                    <Pagination
+                        paginator={addresses}
+                        normalizeNavigationLabels
+                    />
                 </div>
             </div>
         </>

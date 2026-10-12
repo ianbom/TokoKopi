@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'sku',
     'origin',
     'process',
-    'grind_type',
+    'grind_type', // Producer stored under the legacy column name; variant grind lives on ProductVariant.
     'tasting_notes',
     'description',
     'status',

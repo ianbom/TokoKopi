@@ -427,7 +427,10 @@ export default function NotificationsIndex({
                         </table>
                     </div>
 
-                    <Pagination paginator={notifications} />
+                    <Pagination
+                        paginator={notifications}
+                        normalizeNavigationLabels
+                    />
                 </div>
             </div>
         </>

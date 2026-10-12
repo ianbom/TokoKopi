@@ -80,6 +80,7 @@ export function FormField({
     children,
     required = false,
     requiredIndicator = 'text',
+    showOptionalIndicator = true,
 }: {
     name: string;
     label: string;
@@ -88,6 +89,7 @@ export function FormField({
     children: ReactNode;
     required?: boolean;
     requiredIndicator?: 'text' | 'asterisk';
+    showOptionalIndicator?: boolean;
 }) {
     const identifier = useId();
     const field = useRef<HTMLDivElement>(null);
@@ -152,7 +154,7 @@ export function FormField({
                     <span aria-hidden="true" className="ml-1 text-destructive">
                         *
                     </span>
-                ) : required === undefined ? (
+                ) : !required && !showOptionalIndicator ? (
                     ''
                 ) : (
                     ` (${required ? 'wajib' : 'opsional'})`

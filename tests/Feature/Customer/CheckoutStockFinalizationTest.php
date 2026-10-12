@@ -27,7 +27,7 @@ test('settlement deducts order stock exactly once without reservation columns', 
         'sku' => 'VARIANT-'.Str::upper(Str::random(8)),
         'net_weight' => '250gram',
         'regular_price' => 90000,
-        'shipping_weight_gram' => 300,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         'is_active' => true,
     ]);
     $stock = Stock::query()->create([
@@ -56,7 +56,7 @@ test('settlement deducts order stock exactly once without reservation columns', 
         'price' => 90000,
         'quantity' => 1,
         'subtotal' => 90000,
-        'shipping_weight_gram' => 300,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
     ]);
     $payment = Payment::query()->create([
         'order_id' => $order->id,
@@ -83,7 +83,7 @@ test('settlement deducts order stock exactly once without reservation columns', 
 test('stock finalization audits sequential deductions for the same variant once', function () {
     $user = User::factory()->create();
     $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'audit-gayo', 'sku' => 'AUDIT-GAYO', 'status' => 'active']);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'AUDIT-250', 'net_weight' => '250g', 'regular_price' => 90000, 'is_active' => true]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'AUDIT-250', 'net_weight' => '250g', 'length' => 4, 'width' => 5, 'height' => 2, 'regular_price' => 90000, 'is_active' => true]);
     $stock = Stock::query()->create(['product_variant_id' => $variant->id, 'quantity' => 5, 'low_stock_threshold' => 1]);
     $order = Order::query()->create([
         'user_id' => $user->id, 'order_number' => 'ORD-AUDIT', 'customer_name' => $user->name,
@@ -120,7 +120,7 @@ test('settlement rejects combined quantities for the same variant when stock is 
         'sku' => 'VARIANT-'.Str::upper(Str::random(8)),
         'net_weight' => '250gram',
         'regular_price' => 90000,
-        'shipping_weight_gram' => 300,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         'is_active' => true,
     ]);
     $stock = Stock::query()->create([
@@ -151,7 +151,7 @@ test('settlement rejects combined quantities for the same variant when stock is 
             'price' => 90000,
             'quantity' => $quantity,
             'subtotal' => 90000 * $quantity,
-            'shipping_weight_gram' => 300,
+            'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         ]);
     }
 

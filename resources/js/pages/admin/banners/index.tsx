@@ -198,7 +198,7 @@ export default function BannersIndex({ banners, filters, placements }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    <Pagination paginator={banners} />
+                    <Pagination paginator={banners} normalizeNavigationLabels />
                 </TableShell>
             </div>
         </>

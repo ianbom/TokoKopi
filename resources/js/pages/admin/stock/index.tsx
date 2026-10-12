@@ -92,7 +92,7 @@ export default function StockIndex({ variants, stats }: Props) {
                         </tbody>
                     </table>
                 </div>
-                <Pagination paginator={variants} />
+                <Pagination paginator={variants} normalizeNavigationLabels />
             </main>
         </>
     );

@@ -9,6 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { cleanPageLabel } from '@/lib/pagination-label';
 import { cn } from '@/lib/utils';
 import { PerPageSelect } from '../pagination';
 
@@ -29,10 +30,6 @@ export type Paginated<T> = {
 
 export function formatPrice(value: string | number | null | undefined) {
     return `Rp ${new Intl.NumberFormat('id-ID').format(Number(value ?? 0))}`;
-}
-
-export function cleanPageLabel(label: string) {
-    return label.replace('&laquo;', '').replace('&raquo;', '').trim();
 }
 
 export function PageHeader({
@@ -84,7 +81,13 @@ export function TableShell({
     );
 }
 
-export function Pagination<T>({ paginator }: { paginator: Paginated<T> }) {
+export function Pagination<T>({
+    paginator,
+    normalizeNavigationLabels = false,
+}: {
+    paginator: Paginated<T>;
+    normalizeNavigationLabels?: boolean;
+}) {
     return (
         <div className="mt-6 flex flex-col justify-between gap-3 border-t pt-4 text-sm text-muted-foreground md:flex-row md:items-center">
             <span>
@@ -101,7 +104,10 @@ export function Pagination<T>({ paginator }: { paginator: Paginated<T> }) {
                             variant={link.active ? 'secondary' : 'outline'}
                         >
                             <Link href={link.url}>
-                                {cleanPageLabel(link.label)}
+                                {cleanPageLabel(
+                                    link.label,
+                                    normalizeNavigationLabels,
+                                )}
                             </Link>
                         </Button>
                     ) : (
@@ -111,7 +117,10 @@ export function Pagination<T>({ paginator }: { paginator: Paginated<T> }) {
                             variant="outline"
                             disabled
                         >
-                            {cleanPageLabel(link.label)}
+                            {cleanPageLabel(
+                                link.label,
+                                normalizeNavigationLabels,
+                            )}
                         </Button>
                     ),
                 )}

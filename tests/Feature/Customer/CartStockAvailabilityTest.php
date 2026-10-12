@@ -173,7 +173,7 @@ function createCoffeeCartProduct(int $stock, string $name = 'Espresso No. 01'): 
         'sku' => 'COFFEE-'.Str::upper(Str::random(8)),
         'origin' => 'Dataran Tinggi Gayo',
         'process' => 'washed',
-        'grind_type' => 'whole_bean',
+        'grind_type' => 'Gayo Cooperative',
         'description' => '<p>Manis dan seimbang.</p>',
         'status' => 'active',
         'is_featured' => true,
@@ -189,9 +189,10 @@ function createCoffeeCartProduct(int $stock, string $name = 'Espresso No. 01'): 
         'product_id' => $product->id,
         'sku' => 'VARIANT-'.Str::upper(Str::random(8)),
         'net_weight' => '200gram',
+        'grind_type' => 'whole_bean',
         'regular_price' => 85000,
         'sale_price' => null,
-        'shipping_weight_gram' => 250,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 250,
         'is_active' => true,
     ]);
     Stock::query()->create([

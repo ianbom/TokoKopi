@@ -182,7 +182,7 @@ export default function CategoriesIndex({ categories, filters, stats }: Props) {
                         </tbody>
                     </table>
                 </div>
-                <Pagination paginator={categories} />
+                <Pagination paginator={categories} normalizeNavigationLabels />
             </main>
         </>
     );

@@ -625,7 +625,10 @@ export default function PaymentsIndex({
                         </table>
                     </div>
 
-                    <Pagination paginator={payments} />
+                    <Pagination
+                        paginator={payments}
+                        normalizeNavigationLabels
+                    />
                 </div>
             </div>
         </>

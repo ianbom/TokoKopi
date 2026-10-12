@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'product_id',
     'sku',
     'net_weight',
+    'grind_type',
+    'length',
+    'width',
+    'height',
     'regular_price',
     'sale_price',
     'shipping_weight_gram',
@@ -50,6 +54,9 @@ class ProductVariant extends Model
             'regular_price' => 'decimal:2',
             'sale_price' => 'decimal:2',
             'shipping_weight_gram' => 'integer',
+            'length' => 'decimal:2',
+            'width' => 'decimal:2',
+            'height' => 'decimal:2',
         ];
     }
 }

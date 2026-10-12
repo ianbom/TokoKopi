@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Models\OrderAddress;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\Shipment;
 use App\Models\SiteSetting;
 use App\Models\User;
@@ -43,7 +44,7 @@ beforeEach(function () {
     OrderItem::query()->create([
         'order_id' => $this->order->id, 'product_name' => 'Gayo Natural',
         'net_weight' => '250g', 'grind_type' => 'whole_bean',
-        'price' => 100000, 'quantity' => 1, 'subtotal' => 100000, 'shipping_weight_gram' => 300,
+        'price' => 100000, 'quantity' => 1, 'subtotal' => 100000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
     ]);
     $this->shipment = Shipment::query()->create([
         'order_id' => $this->order->id, 'shipping_provider' => 'biteship',
@@ -256,3 +257,24 @@ test('non admins cannot mutate orders', function () {
     $this->actingAs(User::factory()->create(['role' => 'customer']))
         ->post(route('admin.orders.status', $this->order), ['status' => 'processing'])->assertForbidden();
 });
+
+test('booking uses stored unit dimensions rather than edited catalog dimensions', function () {
+    $product = Product::query()->create(['name' => 'Gayo', 'slug' => 'gayo-snapshot', 'status' => 'active']);
+    $variant = $product->variants()->create(['regular_price' => 50000, 'length' => 99, 'width' => 98, 'height' => 97]);
+    $this->order->items()->firstOrFail()->update(['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 2, 'shipping_weight_gram' => 600]);
+    $this->order->update(['order_status' => 'ready_to_ship']);
+    Http::fake(['api.biteship.com/v1/orders' => Http::response(['id' => 'snapshot-order', 'status' => 'confirmed'])]);
+    $this->actingAs($this->admin)->post(route('admin.orders.shipments.store', $this->order), ['source' => 'order_detail'])->assertSessionHasNoErrors();
+    Http::assertSent(fn ($request) => (float) $request['items'][0]['length'] === 4.0
+        && (float) $request['items'][0]['width'] === 5.0 && (float) $request['items'][0]['height'] === 2.0
+        && $request['items'][0]['quantity'] === 2 && $request['items'][0]['weight'] === 300);
+});
+
+test('incomplete or invalid snapshot dimensions prevent booking', function ($size) {
+    $this->order->items()->firstOrFail()->update(['height' => $size]);
+    $this->order->update(['order_status' => 'ready_to_ship']);
+    Http::fake();
+    $this->actingAs($this->admin)->post(route('admin.orders.shipments.store', $this->order), ['source' => 'order_detail'])->assertSessionHasErrors('shipment');
+    Http::assertNothingSent();
+    expect($this->shipment->refresh()->booking_uncertain)->toBeFalse();
+})->with([null, 0, -1]);

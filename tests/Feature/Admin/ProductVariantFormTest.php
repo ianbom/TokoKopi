@@ -21,7 +21,7 @@ it('provides coffee product options to the variant form', function () {
 it('adjusts variant stock without a stock log table', function () {
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Toraja', 'slug' => 'toraja', 'status' => 'draft']);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'TOR-250', 'regular_price' => 80000, 'shipping_weight_gram' => 300]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'TOR-250', 'regular_price' => 80000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300]);
     $variant->stock()->create(['quantity' => 4, 'low_stock_threshold' => 2]);
 
     $this->actingAs($admin)->post(route('admin.product-variants.stock-adjustment.update', $variant), ['type' => 'in', 'quantity' => 6])->assertRedirect(route('admin.stock.index'));
@@ -32,9 +32,9 @@ it('adjusts variant stock without a stock log table', function () {
 it('requires net weight when creating or updating standalone variants', function ($netWeight) {
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Toraja', 'slug' => 'toraja', 'status' => 'draft']);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'shipping_weight_gram' => 300]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300]);
     $payload = ['product_id' => $product->id, 'net_weight' => $netWeight, 'regular_price' => 80000,
-        'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2];
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2];
     $this->actingAs($admin)->post(route('admin.product-variants.store'), $payload)
         ->assertSessionHasErrors(['net_weight' => 'Berat bersih wajib diisi.']);
     $this->put(route('admin.product-variants.update', $variant), $payload)->assertSessionHasErrors('net_weight');
@@ -44,10 +44,10 @@ it('requires net weight when creating or updating standalone variants', function
 it('updates legacy variants with valid net weight', function () {
     $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Toraja', 'slug' => 'toraja', 'status' => 'draft']);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'shipping_weight_gram' => 300]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 80000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300]);
     $this->actingAs($admin)->put(route('admin.product-variants.update', $variant), [
         'product_id' => $product->id, 'net_weight' => '100ml', 'regular_price' => 80000,
-        'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'stock_quantity' => 5, 'low_stock_threshold' => 2,
     ])->assertSessionHasNoErrors();
     expect($variant->refresh()->net_weight)->toBe('100ml');
 });
@@ -62,7 +62,7 @@ it('creates a product variant from an uploaded image', function () {
         'net_weight' => '250gram',
         'regular_price' => 95000,
         'sale_price' => null,
-        'shipping_weight_gram' => 300,
+        'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300,
         'image' => UploadedFile::fake()->image('toraja-250.jpg'),
         'is_active' => true,
         'stock_quantity' => 12,

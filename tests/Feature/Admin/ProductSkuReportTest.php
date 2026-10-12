@@ -25,7 +25,7 @@ it('reports products and variants without skus separately', function () {
         $product = Product::query()->create(['name' => 'Gayo', 'slug' => $slug, 'grind_type' => 'whole_bean']);
 
         foreach (range(1, 2) as $number) {
-            $variant = $product->variants()->create(['net_weight' => '200gram', 'regular_price' => 80000]);
+            $variant = $product->variants()->create(['net_weight' => '200gram', 'length' => 4, 'width' => 5, 'height' => 2, 'regular_price' => 80000]);
             $order->items()->create([
                 'product_id' => $product->id,
                 'product_variant_id' => $variant->id,
@@ -37,7 +37,7 @@ it('reports products and variants without skus separately', function () {
                 'price' => 80000,
                 'quantity' => $number,
                 'subtotal' => 80000 * $number,
-                'shipping_weight_gram' => 250,
+                'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 250,
             ]);
         }
     }

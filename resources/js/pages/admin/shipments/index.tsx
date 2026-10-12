@@ -606,7 +606,10 @@ export default function ShipmentsIndex({
                         </table>
                     </div>
 
-                    <Pagination paginator={shipments} />
+                    <Pagination
+                        paginator={shipments}
+                        normalizeNavigationLabels
+                    />
                 </div>
             </div>
         </>

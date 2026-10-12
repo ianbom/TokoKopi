@@ -699,7 +699,7 @@ export default function OrdersIndex({
                         </table>
                     </div>
 
-                    <Pagination paginator={orders} />
+                    <Pagination paginator={orders} normalizeNavigationLabels />
                 </div>
             </div>
         </>

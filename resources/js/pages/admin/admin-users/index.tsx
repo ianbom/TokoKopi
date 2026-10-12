@@ -11,6 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { cleanPageLabel } from '@/lib/pagination-label';
 import { PerPageSelect } from '../pagination';
 
 type AdminUser = {
@@ -225,10 +226,10 @@ export default function AdminUsersIndex({ admins, filters }: Props) {
                                             }
                                         >
                                             <Link href={link.url}>
-                                                {link.label
-                                                    .replace('&laquo;', '')
-                                                    .replace('&raquo;', '')
-                                                    .trim()}
+                                                {cleanPageLabel(
+                                                    link.label,
+                                                    true,
+                                                )}
                                             </Link>
                                         </Button>
                                     ) : (
@@ -238,10 +239,7 @@ export default function AdminUsersIndex({ admins, filters }: Props) {
                                             variant="outline"
                                             disabled
                                         >
-                                            {link.label
-                                                .replace('&laquo;', '')
-                                                .replace('&raquo;', '')
-                                                .trim()}
+                                            {cleanPageLabel(link.label, true)}
                                         </Button>
                                     ),
                                 )}

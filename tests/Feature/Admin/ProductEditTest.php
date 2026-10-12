@@ -13,14 +13,15 @@ it('updates coffee product categories and variant stock', function () {
     $oldCategory = Category::query()->create(['name' => 'Old', 'slug' => 'old']);
     $newCategory = Category::query()->create(['name' => 'Espresso', 'slug' => 'espresso']);
     $product = Product::query()->create(['name' => 'Java', 'slug' => 'java', 'status' => 'draft']);
+    $image = $product->images()->create(['image_url' => '/storage/product/java.jpg', 'is_primary' => true]);
     $product->categories()->sync([$oldCategory->id]);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'JAVA-250', 'regular_price' => 70000, 'shipping_weight_gram' => 300, 'is_active' => true]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'JAVA-250', 'regular_price' => 70000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => true]);
     $variant->stock()->create(['quantity' => 2, 'low_stock_threshold' => 5]);
 
     $this->actingAs($admin)->put(route('admin.products.update', $product), [
-        'name' => 'Java Espresso', 'slug' => 'java-espresso', 'sku' => '', 'origin' => 'Java', 'process' => 'Washed', 'grind_type' => 'fine', 'tasting_notes' => 'Karamel dan almond', 'description' => '', 'status' => 'draft', 'category_ids' => [$newCategory->id], 'images' => [],
-        'variants' => [['id' => $variant->id, 'sku' => '', 'net_weight' => '250g', 'regular_price' => 70000, 'sale_price' => null, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 11, 'low_stock_threshold' => 3]],
-    ])->assertRedirect();
+        'name' => 'Java Espresso', 'slug' => 'java-espresso', 'sku' => '', 'origin' => 'Java', 'process' => 'Washed', 'grind_type' => 'fine', 'tasting_notes' => 'Karamel dan almond', 'description' => '', 'status' => 'draft', 'category_ids' => [$newCategory->id], 'images' => [['id' => $image->id, 'image_url' => $image->image_url]],
+        'variants' => [['id' => $variant->id, 'sku' => '', 'net_weight' => '250g', 'regular_price' => 70000, 'sale_price' => null, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'image_url' => '', 'is_active' => true, 'stock_quantity' => 11, 'low_stock_threshold' => 3]],
+    ])->assertSessionHasNoErrors()->assertRedirect();
 
     expect($product->fresh()->name)->toBe('Java Espresso');
     expect($product->fresh()->categories->modelKeys())->toBe([$newCategory->id]);

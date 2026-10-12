@@ -75,7 +75,7 @@ class StockService
             'product' => $variant->product?->name,
             'sku' => $variant->sku,
             'net_weight' => $variant->net_weight,
-            'grind_type' => $variant->product?->grind_type,
+            'grind_type' => $variant->grind_type,
             'quantity' => $variant->stock?->quantity ?? 0,
             'low_stock_threshold' => $variant->stock?->low_stock_threshold ?? 5,
             'is_active' => $variant->is_active,

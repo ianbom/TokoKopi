@@ -425,6 +425,9 @@ class ShipmentManagementService
                 'name' => mb_substr($item->product_name, 0, 100),
                 'description' => $item->variant_sku ?: $item->product_sku,
                 'category' => 'food_and_drink',
+                'length' => (float) $item->length,
+                'width' => (float) $item->width,
+                'height' => (float) $item->height,
                 'sku' => $item->variant_sku ?: $item->product_sku,
                 'value' => (int) round((float) $item->price),
                 'quantity' => $item->quantity,
@@ -494,6 +497,12 @@ class ShipmentManagementService
             }
         }
         foreach ($payload['items'] ?? [] as $item) {
+            foreach (['length', 'width', 'height'] as $dimension) {
+                $value = $item[$dimension] ?? null;
+                if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
+                    throw ValidationException::withMessages(['shipment' => 'Snapshot dimensi kemasan belum valid. Pengiriman tidak dapat dipesan.']);
+                }
+            }
             if (($item['quantity'] ?? 0) < 1 || ($item['value'] ?? -1) < 0 || ($item['weight'] ?? 0) < 1) {
                 throw ValidationException::withMessages(['shipment' => 'Data item pengiriman belum valid.']);
             }

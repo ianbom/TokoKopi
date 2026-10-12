@@ -215,7 +215,10 @@ export default function VouchersIndex({ vouchers, filters }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    <Pagination paginator={vouchers} />
+                    <Pagination
+                        paginator={vouchers}
+                        normalizeNavigationLabels
+                    />
                 </TableShell>
             </div>
         </>

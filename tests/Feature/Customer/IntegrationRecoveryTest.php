@@ -74,14 +74,14 @@ function recoveryPayment(array $attributes = []): Payment
 {
     $user = User::factory()->create();
     $product = Product::query()->create(['name' => 'Kopi Gayo', 'slug' => 'gayo-'.Str::uuid(), 'status' => 'active']);
-    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 1.49, 'shipping_weight_gram' => 300, 'is_active' => true]);
+    $variant = ProductVariant::query()->create(['product_id' => $product->id, 'regular_price' => 1.49, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => true]);
     Stock::query()->create(['product_variant_id' => $variant->id, 'quantity' => 10]);
     $order = Order::query()->create([
         'user_id' => $user->id, 'order_number' => 'REC-'.Str::uuid(), 'customer_name' => $user->name,
         'customer_email' => $user->email, 'customer_phone' => '081234567890', 'subtotal' => 2.98, 'grand_total' => 3,
         ...$attributes,
     ]);
-    $order->items()->create(['product_id' => $product->id, 'product_variant_id' => $variant->id, 'product_name' => $product->name, 'price' => 1.49, 'quantity' => 2, 'subtotal' => 2.98, 'shipping_weight_gram' => 600]);
+    $order->items()->create(['product_id' => $product->id, 'product_variant_id' => $variant->id, 'product_name' => $product->name, 'price' => 1.49, 'quantity' => 2, 'subtotal' => 2.98, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 600]);
 
     return Payment::query()->create(['order_id' => $order->id, 'midtrans_order_id' => $order->order_number, 'gross_amount' => $order->grand_total, 'transaction_status' => 'pending']);
 }
@@ -216,7 +216,7 @@ test('tracking retains valid link and first delivery timestamp', function () {
 
 test('all variant weights must be positive including inactive variants', function () {
     $payment = recoveryPayment();
-    $data = ['product_id' => $payment->order->items->first()->product_id, 'regular_price' => 90000, 'shipping_weight_gram' => 0, 'stock_quantity' => 0, 'is_active' => false];
+    $data = ['product_id' => $payment->order->items->first()->product_id, 'regular_price' => 90000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 0, 'stock_quantity' => 0, 'is_active' => false];
     expect(Validator::make($data, (new ProductVariantRequest)->rules())->errors()->has('shipping_weight_gram'))->toBeTrue();
 });
 
@@ -263,14 +263,14 @@ test('confirmed snap rejection releases voucher but preserves cart', function ()
 test('weight changes invalidate an existing shipping binding', function () {
     [$user, $address, , $variant] = recoveryCheckout();
     $payload = recoveryCheckoutPayload($this, $user, $address);
-    $variant->update(['shipping_weight_gram' => 400]);
+    $variant->update(['length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 400]);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('shipping_rate_id');
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/v1/transactions'))->count())->toBe(0);
 });
 
 test('invalid cart shipping weight prevents rate requests', function () {
     [$user, $address, , $variant] = recoveryCheckout();
-    $variant->update(['shipping_weight_gram' => 0]);
+    $variant->update(['length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 0]);
     $this->actingAs($user)->postJson(route('checkout.shipping-rates'), ['customer_address_id' => $address->id])
         ->assertUnprocessable()->assertJsonValidationErrors('cart');
     Http::assertNothingSent();
@@ -344,10 +344,10 @@ test('return transit and temporary hold retain lifecycle without automatic refun
 test('display sorting and price filtering use the cheapest active variant', function () {
     $first = Product::query()->create(['name' => 'Kopi A', 'slug' => 'kopi-a', 'status' => 'active']);
     foreach ([[200000, true], [80000, true], [1, false]] as [$price, $active]) {
-        ProductVariant::query()->create(['product_id' => $first->id, 'regular_price' => $price, 'shipping_weight_gram' => 300, 'is_active' => $active]);
+        ProductVariant::query()->create(['product_id' => $first->id, 'regular_price' => $price, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => $active]);
     }
     $second = Product::query()->create(['name' => 'Kopi B', 'slug' => 'kopi-b', 'status' => 'active']);
-    ProductVariant::query()->create(['product_id' => $second->id, 'regular_price' => 90000, 'shipping_weight_gram' => 300, 'is_active' => true]);
+    ProductVariant::query()->create(['product_id' => $second->id, 'regular_price' => 90000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 300, 'is_active' => true]);
     $service = app(ProductBrowsingService::class);
     $cards = $service->productListData(Request::create('/list', 'GET', ['sort' => 'price_low']))['products']->items();
     expect(array_column($cards, 'id'))->toBe([$first->id, $second->id])
@@ -414,4 +414,37 @@ test('shipment index filters retain all statuses while detail exposes legal tran
     $service = app(ShipmentManagementService::class);
     expect($service->indexData(Request::create('/'))['shippingStatuses'])->toBe(ShippingStatus::values())
         ->and($service->detailData($shipment)['shippingStatuses'])->toBe([]);
+});
+
+test('package dimension changes invalidate selected rates before payment', function ($dimension) {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $payload = recoveryCheckoutPayload($this, $user, $address);
+    $variant->update([$dimension => 12.5]);
+    $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('shipping_rate_id');
+    expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/v1/transactions'))->count())->toBe(0);
+})->with(['length', 'width', 'height']);
+
+test('invalid package dimensions prevent rate requests', function ($size) {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $variant->update(['height' => $size]);
+    $this->actingAs($user)->postJson(route('checkout.shipping-rates'), ['customer_address_id' => $address->id])
+        ->assertUnprocessable()->assertJsonValidationErrors('cart');
+    Http::assertNothingSent();
+})->with([0, -1]);
+
+test('checkout sends per unit dimensions and snapshots variant grind not producer', function () {
+    [$user, $address, , $variant] = recoveryCheckout();
+    $variant->product->update(['grind_type' => 'Koperasi Gayo']);
+    $variant->update(['grind_type' => 'fine']);
+    $payload = recoveryCheckoutPayload($this, $user, $address);
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rates/')
+        && (float) $request['items'][0]['length'] === 4.0
+        && (float) $request['items'][0]['width'] === 5.0
+        && (float) $request['items'][0]['height'] === 2.0
+        && $request['items'][0]['quantity'] === 2
+        && $request['items'][0]['weight'] === 300);
+    $response = $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
+    $item = Order::query()->findOrFail($response->json('order_id'))->items()->firstOrFail();
+    expect($item->length)->toBe('4.00')->and($item->width)->toBe('5.00')->and($item->height)->toBe('2.00')
+        ->and($item->grind_type)->toBe('fine')->and($item->shipping_weight_gram)->toBe(600);
 });

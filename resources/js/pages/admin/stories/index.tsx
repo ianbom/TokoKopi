@@ -221,7 +221,7 @@ export default function StoriesIndex({
                         </tbody>
                     </table>
                 </div>
-                <Pagination paginator={stories} />
+                <Pagination paginator={stories} normalizeNavigationLabels />
             </main>
         </>
     );

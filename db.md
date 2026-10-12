@@ -14,7 +14,7 @@ Project declasse_coffee_ecommerce {
   - Semua produk menggunakan product_variants, termasuk produk tanpa pilihan khusus.
     Untuk produk tanpa pilihan, tetap buat satu variant dengan harga dan stock; SKU opsional.
   - Variant kopi fokus pada:
-    net_weight fleksibel, harga, dan stok. Grind type dan tasting notes disimpan di products.
+    net_weight fleksibel, harga, dan stok. Producer (kolom legacy grind_type) dan tasting notes disimpan di products. Grind type dan dimensi kemasan per unit disimpan di product_variants.
   - Detail produk dibuat minimal; origin dan process dapat disimpan di products.
   - Description memakai longtext untuk konten rich text dari Tiptap.js.
   - Stok dikelola langsung oleh website melalui tabel stocks.
@@ -131,7 +131,7 @@ Table products {
 
   origin varchar(180) [note: 'Contoh: Sumatera Karo, Ijen, Gayo, Toraja, Ethiopia']
   process varchar(100) [note: 'Contoh: natural, washed, anaerobic, wet hulled']
-  grind_type varchar(50) [note: 'whole_bean, fine, medium, coarse; boleh null; berlaku untuk seluruh varian produk']
+  grind_type varchar(50) [note: 'Producer teks bebas; nama kolom legacy, bukan grind type varian; nullable']
   tasting_notes varchar(255) [note: 'Karakter rasa kopi, misalnya cokelat, jeruk, gula aren; boleh null']
 
   description longtext [note: 'Konten rich text Tiptap.js: deskripsi produk, origin, karakter kopi, brewing recommendation, storage, dll']
@@ -211,7 +211,11 @@ Table product_variants {
 
   sku varchar(100) [unique, note: 'SKU unik untuk setiap varian produk; opsional']
 
-  net_weight varchar(100) [note: 'Label isi/berat fleksibel. Contoh: 100gram, 250gram, 1kg, 100ml, 2pcs']
+  net_weight varchar(100) [note: 'Label isi/berat fleksibel; wajib di formulir. Contoh: 100gram, 250gram, 1kg, 100ml, 2pcs']
+  grind_type varchar(50) [note: 'whole_bean, fine, medium, coarse; nullable untuk produk tanpa grind']
+  length decimal(8,2) [not null, note: 'Panjang kemasan satu unit dalam cm; wajib positif']
+  width decimal(8,2) [not null, note: 'Lebar kemasan satu unit dalam cm; wajib positif']
+  height decimal(8,2) [not null, note: 'Tinggi kemasan satu unit dalam cm; wajib positif']
 
   regular_price decimal(15,2) [not null]
   sale_price decimal(15,2)
@@ -420,7 +424,10 @@ Table order_items {
   variant_sku varchar(100)
 
   net_weight varchar(100) [note: 'Snapshot variant. Contoh: 100gram, 100ml, 2pcs']
-  grind_type varchar(50)
+  grind_type varchar(50) [note: 'Snapshot grind type varian, bukan Producer produk']
+  length decimal(8,2) [note: 'Snapshot panjang kemasan per unit (cm); nullable untuk histori']
+  width decimal(8,2) [note: 'Snapshot lebar kemasan per unit (cm); nullable untuk histori']
+  height decimal(8,2) [note: 'Snapshot tinggi kemasan per unit (cm); nullable untuk histori']
 
   price decimal(15,2) [not null]
   quantity int [not null]
@@ -839,3 +846,8 @@ Ref: wishlists.product_id > products.id [delete: cascade]
 Ref: notifications.user_id > users.id [delete: cascade]
 
 Ref: admin_activity_logs.user_id > users.id [delete: cascade]
+
+// Pengiriman: dimensi kemasan per unit dikirim sebagai angka ke Biteship, quantity terpisah.
+// order_items.shipping_weight_gram menyimpan berat total baris; Biteship menerima berat per unit.
+// Checkout baru wajib dimensi valid. Tarif terikat pada dimensi; booking memakai snapshot order_items.
+// Seeder memakai contoh 4 x 5 x 2 cm; ukur kemasan aktual sebelum transaksi nyata.

@@ -1,6 +1,16 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Pagination } from '@/pages/admin/catalog/shared';
 import {
     create,
@@ -36,6 +46,11 @@ export default function ProductVariantsIndex({
     product,
     stats,
 }: Props) {
+    const [variantToDelete, setVariantToDelete] = useState<Variant | null>(
+        null,
+    );
+    const [deleting, setDeleting] = useState(false);
+
     return (
         <>
             <Head title="Varian Produk" />
@@ -74,20 +89,24 @@ export default function ProductVariantsIndex({
                     ))}
                 </div>
                 <div className="overflow-x-auto border">
-                    <table className="admin-table w-full min-w-[720px] text-sm">
+                    <table className="admin-table w-full min-w-[820px] text-sm">
                         <thead className="border-b bg-surface-soft text-left">
                             <tr>
-                                <th className="p-3">Produk / SKU</th>
+                                <th className="w-14 p-3 text-center">No.</th>
+                                <th>Produk / SKU</th>
                                 <th>Berat</th>
-                                <th>Harga</th>
-                                <th>Stok</th>
+                                <th className="text-right">Harga</th>
+                                <th className="text-right">Stok</th>
                                 <th>Status</th>
-                                <th />
+                                <th className="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {variants.data.map((variant) => (
+                            {variants.data.map((variant, rowIndex) => (
                                 <tr key={variant.id} className="border-b">
+                                    <td className="p-3 text-center tabular-nums">
+                                        {(variants.from ?? 1) + rowIndex}
+                                    </td>
                                     <td className="p-3">
                                         <b>{variant.product}</b>
                                         <p className="text-xs text-muted-foreground">
@@ -95,14 +114,14 @@ export default function ProductVariantsIndex({
                                         </p>
                                     </td>
                                     <td>{variant.net_weight ?? '-'}</td>
-                                    <td>
+                                    <td className="text-right whitespace-nowrap tabular-nums">
                                         Rp{' '}
                                         {Number(
                                             variant.sale_price ??
                                                 variant.regular_price,
                                         ).toLocaleString('id-ID')}
                                     </td>
-                                    <td>
+                                    <td className="text-right whitespace-nowrap tabular-nums">
                                         {variant.stock_quantity} / min{' '}
                                         {variant.low_stock_threshold}
                                     </td>
@@ -112,45 +131,98 @@ export default function ProductVariantsIndex({
                                             : 'Nonaktif'}
                                     </td>
                                     <td className="p-3 text-right">
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            variant="outline"
-                                        >
-                                            <Link
-                                                href={stockAdjustment(variant)}
+                                        <div className="flex justify-end gap-2 whitespace-nowrap">
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                variant="outline"
                                             >
-                                                Stok
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            variant="outline"
-                                        >
-                                            <Link href={edit(variant)}>
-                                                Edit
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() =>
-                                                router.delete(
-                                                    destroy.url(variant),
-                                                )
-                                            }
-                                        >
-                                            Hapus
-                                        </Button>
+                                                <Link
+                                                    href={stockAdjustment(
+                                                        variant,
+                                                    )}
+                                                >
+                                                    Stok
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                variant="outline"
+                                            >
+                                                <Link href={edit(variant)}>
+                                                    Edit
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                onClick={() =>
+                                                    setVariantToDelete(variant)
+                                                }
+                                            >
+                                                Hapus
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                <Pagination paginator={variants} />
+                <Pagination paginator={variants} normalizeNavigationLabels />
             </main>
+            <Dialog
+                open={variantToDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open && !deleting) {
+                        setVariantToDelete(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus varian?</DialogTitle>
+                        <DialogDescription>
+                            Yakin ingin menghapus varian{' '}
+                            {variantToDelete?.net_weight ?? ''} dari{' '}
+                            {variantToDelete?.product ?? 'produk ini'}? Varian
+                            yang pernah dipesan akan dinonaktifkan, bukan
+                            dihapus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={deleting}
+                            >
+                                Batal
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={!variantToDelete || deleting}
+                            onClick={() => {
+                                if (!variantToDelete || deleting) {
+                                    return;
+                                }
+
+                                setDeleting(true);
+                                router.delete(destroy.url(variantToDelete), {
+                                    preserveScroll: true,
+                                    onSuccess: () => setVariantToDelete(null),
+                                    onFinish: () => setDeleting(false),
+                                });
+                            }}
+                        >
+                            {deleting ? 'Menghapus...' : 'Hapus varian'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

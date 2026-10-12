@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('imports a coffee catalog idempotently', function () {
+it('imports a coffee catalog idempotently', function (array $producerMetadata, string $expectedProducer) {
     $path = tempnam(sys_get_temp_dir(), 'tokopedia-catalog-');
     file_put_contents($path, json_encode([
         'schema_version' => '2.0',
@@ -23,6 +23,7 @@ it('imports a coffee catalog idempotently', function () {
             'sale_price' => 40000,
             'origin' => 'Ijen Bondowoso',
             'process' => 'Natural Classic',
+            ...$producerMetadata,
             'description' => 'Specialty coffee beans.',
             'tasting_notes' => 'Cokelat, karamel, dan buah merah',
             'net_weight' => '200 gram',
@@ -51,8 +52,17 @@ it('imports a coffee catalog idempotently', function () {
         ->and($product->sku)->toBe('TKP-1736029086044161055')
         ->and($variant->regular_price)->toBe('80000.00')
         ->and($variant->sale_price)->toBe('40000.00')
-        ->and($product->grind_type)->toBe('whole_beans')
+        ->and($product->grind_type)->toBe($expectedProducer)
+        ->and($variant->grind_type)->toBe('whole_bean')
+        ->and($variant->length)->toBe('4.00')
+        ->and($variant->width)->toBe('5.00')
+        ->and($variant->height)->toBe('2.00')
         ->and($product->tasting_notes)->toBe('Cokelat, karamel, dan buah merah')
         ->and($variant->shipping_weight_gram)->toBe(200)
         ->and(Stock::query()->where('product_variant_id', $variant->id)->value('quantity'))->toBe(0);
-});
+})->with([
+    'missing producer' => [[], 'Deklase Roastery'],
+    'null producer' => [['producer' => null], 'Deklase Roastery'],
+    'empty producer' => [['producer' => ''], 'Deklase Roastery'],
+    'source producer' => [['producer' => 'Koperasi Gayo'], 'Koperasi Gayo'],
+]);

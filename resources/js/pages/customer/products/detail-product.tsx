@@ -9,20 +9,19 @@ import {
 } from '@/actions/App/Http/Controllers/Customer/WishlistController';
 import HTMLRender from '@/components/HTMLRender';
 import ShopLayout from '@/layouts/shop-layout';
+import { getVariantSelection } from '@/lib/product-variant-selection';
+import type { VariantOption } from '@/lib/product-variant-selection';
 
 type ProductImage = {
     url: string;
     alt: string;
 };
 
-type Variant = {
-    id: number;
+type Variant = VariantOption & {
     sku: string | null;
-    net_weight: string | null;
-    regular_price: number;
-    sale_price: number | null;
-    image_url?: string | null;
-    available_stock: number;
+    length: number;
+    width: number;
+    height: number;
 };
 
 type ProductCard = {
@@ -65,29 +64,54 @@ const formatPrice = (value: number) =>
 const humanize = (value: string | null) =>
     value ? value.replaceAll('_', ' ') : null;
 
+const grindLabel = (grind: string | null) =>
+    ({ whole_bean: 'Beans', fine: 'Fine', medium: 'Medium', coarse: 'Coarse' })[
+        grind ?? ''
+    ] ??
+    humanize(grind) ??
+    'Tanpa grind';
+
+const optionClass = (active: boolean) =>
+    'min-h-11 rounded-none border px-4 py-2 text-[11px] font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-40 ' +
+    (active
+        ? 'border-ink bg-ink text-canvas'
+        : 'border-ink/45 hover:border-ink enabled:hover:bg-sand');
+
 export default function DetailProduct({ product }: Props) {
     return <DetailProductPage key={product.id} product={product} />;
 }
 
 function DetailProductPage({ product }: { product: ProductDetail }) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const [selectedVariantId, setSelectedVariantId] = useState<number | null>(
-        product.variants[0]?.id ?? null,
+    const [selectedWeight, setSelectedWeight] = useState<
+        string | null | undefined
+    >(
+        () =>
+            getVariantSelection(product.variants, undefined, undefined)
+                .initialWeight,
     );
+    const [selectedGrind, setSelectedGrind] = useState<
+        string | null | undefined
+    >(undefined);
     const [quantity, setQuantity] = useState(1);
     const [isWishlisted, setIsWishlisted] = useState(product.is_wishlisted);
     const cartForm = useForm({ quantity: 1 });
     const wishlistForm = useForm({});
-    const selectedVariant =
-        product.variants.find((variant) => variant.id === selectedVariantId) ??
-        null;
+    const selection = getVariantSelection(
+        product.variants,
+        selectedWeight,
+        selectedGrind,
+    );
+    const selectedVariant = selection.variant;
+    const priceVariant = selectedVariant ?? selection.previewVariant;
     const availableStock = selectedVariant?.available_stock ?? 0;
     const isAvailable = availableStock > 0;
-    const price =
-        selectedVariant?.sale_price ??
-        selectedVariant?.regular_price ??
-        product.sale_price ??
-        product.price;
+    const regularPrice = priceVariant?.regular_price ?? product.price;
+    const salePrice = priceVariant
+        ? priceVariant.sale_price
+        : product.sale_price;
+    const price = salePrice ?? regularPrice;
+    const hasDiscount = salePrice !== null && salePrice < regularPrice;
     const gallery = [
         ...product.images,
         ...product.variants.flatMap((variant) =>
@@ -115,20 +139,36 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
         ['TASTING NOTES', product.tasting_notes],
     ].filter(([, value]) => value) as Array<[string, string]>;
 
-    const selectVariant = (variant: Variant) => {
-        setSelectedVariantId(variant.id);
+    const resetQuantity = () => {
         setQuantity(1);
         cartForm.setData('quantity', 1);
-
-        if (variant.image_url) {
-            const variantImageIndex = gallery.findIndex(
-                (image) => image.url === variant.image_url,
-            );
-
-            if (variantImageIndex >= 0) {
-                setActiveImageIndex(variantImageIndex);
-            }
+        cartForm.clearErrors('quantity');
+    };
+    const showVariantImage = (variant: VariantOption | null) => {
+        const index = gallery.findIndex(
+            (image) => image.url === variant?.image_url,
+        );
+        setActiveImageIndex(index >= 0 ? index : 0);
+    };
+    const selectWeight = (weight: string | null) => {
+        if (weight === selectedWeight) {
+            return;
         }
+
+        setSelectedWeight(weight);
+        setSelectedGrind(undefined);
+        resetQuantity();
+        showVariantImage(
+            getVariantSelection(product.variants, weight, undefined).variant,
+        );
+    };
+    const selectGrind = (grind: string | null) => {
+        setSelectedGrind(grind);
+        resetQuantity();
+        showVariantImage(
+            getVariantSelection(product.variants, selectedWeight, grind)
+                .variant,
+        );
     };
     const changeQuantity = (nextQuantity: number) => {
         const next = Math.max(1, Math.min(nextQuantity, availableStock || 1));
@@ -164,7 +204,7 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
         <ShopLayout>
             <Head title={product.title} />
             <main className="min-w-0 border-t border-hairline bg-canvas text-ink">
-                <section className="grid min-w-0 border-b border-hairline lg:grid-cols-2">
+                <section className="grid min-w-0 grid-cols-1 border-b border-hairline lg:grid-cols-2">
                     <ProductGallery
                         gallery={gallery}
                         activeIndex={activeImageIndex}
@@ -202,8 +242,18 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                 }
                                 className="mt-3 max-w-prose text-[11px] leading-5 text-ink/80 sm:text-[12px]"
                             />
-                            <p className="mt-4 text-[19px] font-medium tracking-[-0.02em]">
-                                {formatPrice(price)}
+                            <p className="mt-4 flex flex-wrap items-baseline gap-x-2 text-[19px] font-medium tracking-[-0.02em]">
+                                <span>
+                                    {!selectedVariant &&
+                                        selection.previewPrice !== null &&
+                                        'Mulai dari '}
+                                    {formatPrice(price)}
+                                </span>
+                                {hasDiscount && (
+                                    <s className="text-[13px] font-normal text-ink/80">
+                                        {formatPrice(regularPrice)}
+                                    </s>
+                                )}
                             </p>
 
                             <dl className="mt-8 grid grid-cols-2 border-y border-hairline sm:grid-cols-4">
@@ -222,42 +272,106 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                 ))}
                             </dl>
 
-                            {product.variants.length > 0 && (
-                                <fieldset className="mt-7">
-                                    <legend className="text-[9px] font-semibold tracking-[0.08em] uppercase">
-                                        Choose your weight
-                                    </legend>
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {product.variants.map((variant) => {
-                                            const active =
-                                                variant.id ===
-                                                selectedVariant?.id;
-                                            const label =
-                                                variant.net_weight ||
-                                                variant.sku ||
-                                                `Variant ${variant.id}`;
-
-                                            return (
+                            {selection.weights.length > 0 && (
+                                <div className="mt-7 space-y-5">
+                                    <fieldset>
+                                        <legend className="text-[11px] font-medium tracking-[0.02em]">
+                                            Weight
+                                        </legend>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {selection.weights.map((weight) => (
                                                 <button
-                                                    key={variant.id}
+                                                    key={
+                                                        weight.value ??
+                                                        'default'
+                                                    }
                                                     type="button"
-                                                    aria-pressed={active}
+                                                    aria-pressed={
+                                                        selectedWeight ===
+                                                        weight.value
+                                                    }
+                                                    disabled={!weight.available}
                                                     onClick={() =>
-                                                        selectVariant(variant)
+                                                        selectWeight(
+                                                            weight.value,
+                                                        )
                                                     }
-                                                    className={
-                                                        active
-                                                            ? 'min-h-9 border border-ink bg-ink px-4 text-[8px] font-semibold tracking-[0.06em] text-canvas uppercase transition-colors duration-200'
-                                                            : 'min-h-9 border border-ink/45 px-4 text-[8px] font-semibold tracking-[0.06em] uppercase transition-colors duration-200 hover:border-ink hover:bg-sand'
-                                                    }
+                                                    className={optionClass(
+                                                        selectedWeight ===
+                                                            weight.value,
+                                                    )}
                                                 >
-                                                    {label}
+                                                    {weight.value || 'Default'}
+                                                    {!weight.available && (
+                                                        <span className="block text-[9px]">
+                                                            Stok habis
+                                                        </span>
+                                                    )}
                                                 </button>
-                                            );
-                                        })}
-                                    </div>
-                                </fieldset>
+                                            ))}
+                                        </div>
+                                    </fieldset>
+                                    {selection.requiresGrind && (
+                                        <fieldset aria-describedby="variant-selection-status">
+                                            <legend className="text-[11px] font-medium tracking-[0.02em]">
+                                                Grind Request
+                                            </legend>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {selection.grinds.map(
+                                                    (grind) => (
+                                                        <button
+                                                            key={
+                                                                grind.value ??
+                                                                'no-grind'
+                                                            }
+                                                            type="button"
+                                                            aria-pressed={
+                                                                selectedGrind ===
+                                                                grind.value
+                                                            }
+                                                            disabled={
+                                                                !grind.available
+                                                            }
+                                                            onClick={() =>
+                                                                selectGrind(
+                                                                    grind.value,
+                                                                )
+                                                            }
+                                                            className={optionClass(
+                                                                selectedGrind ===
+                                                                    grind.value,
+                                                            )}
+                                                        >
+                                                            {grindLabel(
+                                                                grind.value,
+                                                            )}
+                                                            {!grind.available && (
+                                                                <span className="block text-[9px]">
+                                                                    {grind.exists
+                                                                        ? 'Stok habis'
+                                                                        : 'Tidak tersedia'}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    ),
+                                                )}
+                                            </div>
+                                        </fieldset>
+                                    )}
+                                </div>
                             )}
+                            <p
+                                id="variant-selection-status"
+                                role="status"
+                                className="mt-3 text-[11px] text-ink/70"
+                            >
+                                {isAvailable
+                                    ? ''
+                                    : selection.requiresGrind &&
+                                        selectedGrind === undefined
+                                      ? 'Pilih grind untuk berat yang dipilih.'
+                                      : 'Produk ini sedang habis.'}
+                            </p>
 
                             <div className="mt-7 flex items-start gap-2">
                                 <form
@@ -271,7 +385,10 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                                 onClick={() =>
                                                     changeQuantity(quantity - 1)
                                                 }
-                                                disabled={quantity <= 1}
+                                                disabled={
+                                                    !isAvailable ||
+                                                    quantity <= 1
+                                                }
                                                 aria-label="Decrease quantity"
                                                 className="flex items-center justify-center transition-colors hover:bg-sand disabled:opacity-30"
                                             >
@@ -307,11 +424,17 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                             <span className="truncate">
                                                 {cartForm.processing
                                                     ? 'Adding to bag'
-                                                    : 'Add to bag'}
+                                                    : selection.requiresGrind &&
+                                                        selectedGrind ===
+                                                            undefined
+                                                      ? 'Pilih grind'
+                                                      : 'Add to bag'}
                                             </span>
-                                            <span className="hidden shrink-0 sm:inline">
-                                                — {formatPrice(price)}
-                                            </span>
+                                            {selectedVariant && (
+                                                <span className="hidden shrink-0 sm:inline">
+                                                    — {formatPrice(price)}
+                                                </span>
+                                            )}
                                             <ArrowRight
                                                 className="shrink-0"
                                                 size={15}
@@ -490,17 +613,28 @@ function CoffeeStory({ product }: { product: ProductDetail }) {
                                         className="border-b border-ink/15 last:border-b-0"
                                     >
                                         <td className="py-3 pr-3 capitalize">
-                                            {humanize(product.grind_type) ??
+                                            {humanize(variant.grind_type) ??
                                                 '-'}
                                         </td>
                                         <td className="py-3 pr-3">
                                             {variant.net_weight ?? '-'}
                                         </td>
                                         <td className="py-3 pr-3">
-                                            {formatPrice(
-                                                variant.sale_price ??
-                                                    variant.regular_price,
-                                            )}
+                                            <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
+                                                {formatPrice(
+                                                    variant.sale_price ??
+                                                        variant.regular_price,
+                                                )}
+                                                {variant.sale_price !== null &&
+                                                    variant.sale_price <
+                                                        variant.regular_price && (
+                                                        <s className="text-ink/80">
+                                                            {formatPrice(
+                                                                variant.regular_price,
+                                                            )}
+                                                        </s>
+                                                    )}
+                                            </span>
                                         </td>
                                         <td className="py-3">
                                             {variant.available_stock}

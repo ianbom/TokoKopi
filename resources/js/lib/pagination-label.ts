@@ -1,0 +1,24 @@
+export function cleanPageLabel(
+    label: string,
+    normalizeNavigationLabels = false,
+) {
+    const cleanLabel = label
+        .replace('&laquo;', '')
+        .replace('&raquo;', '')
+        .trim();
+
+    if (!normalizeNavigationLabels) {
+        return cleanLabel;
+    }
+
+    switch (cleanLabel.toLowerCase()) {
+        case 'pagination.previous':
+        case 'previous':
+            return 'Previous';
+        case 'pagination.next':
+        case 'next':
+            return 'Next';
+        default:
+            return cleanLabel;
+    }
+}

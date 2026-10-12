@@ -460,7 +460,10 @@ export default function CustomersIndex({ customers, filters }: Props) {
                         </table>
                     </div>
 
-                    <Pagination paginator={customers} />
+                    <Pagination
+                        paginator={customers}
+                        normalizeNavigationLabels
+                    />
                 </div>
             </div>
         </>

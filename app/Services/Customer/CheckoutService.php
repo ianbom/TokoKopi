@@ -221,6 +221,13 @@ class CheckoutService
                     throw ValidationException::withMessages(['cart' => "Berat kirim {$product->name} belum valid. Hubungi admin."]);
                 }
 
+                foreach (['length', 'width', 'height'] as $dimension) {
+                    $value = $variant->{$dimension};
+                    if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
+                        throw ValidationException::withMessages(['cart' => 'Dimensi kemasan produk belum valid. Hubungi admin sebelum checkout.']);
+                    }
+                }
+
                 $currentPrice = $this->currentUnitPrice($variant);
 
                 if ($this->minorUnits($item->price_snapshot) !== $this->minorUnits($currentPrice)) {
@@ -237,6 +244,9 @@ class CheckoutService
                 'id' => $item->id, 'product_variant_id' => $item->product_variant_id,
                 'quantity' => $item->quantity, 'price' => $item->price_snapshot,
                 'weight' => $item->variant->shipping_weight_gram * $item->quantity,
+                'length' => $item->variant->length,
+                'width' => $item->variant->width,
+                'height' => $item->variant->height,
             ]));
             if ($lockedHash !== session('checkout.selected_rate_binding.cart_hash')) {
                 throw ValidationException::withMessages(['shipping_rate_id' => 'Data produk berubah. Pilih ulang ongkir.']);
@@ -304,7 +314,10 @@ class CheckoutService
                     'product_sku' => $product->sku,
                     'variant_sku' => $variant->sku,
                     'net_weight' => $variant->net_weight,
-                    'grind_type' => $product->grind_type,
+                    'grind_type' => $variant->grind_type,
+                    'length' => $variant->length,
+                    'width' => $variant->width,
+                    'height' => $variant->height,
                     'price' => $item->price_snapshot,
                     'quantity' => $item->quantity,
                     'subtotal' => (float) $item->price_snapshot * $item->quantity,
@@ -406,7 +419,10 @@ class CheckoutService
                     'sku' => $product?->sku,
                     'variant_sku' => $variant?->sku,
                     'net_weight' => $variant?->net_weight,
-                    'grind_type' => $product?->grind_type,
+                    'grind_type' => $variant?->grind_type,
+                    'length' => $variant?->length,
+                    'width' => $variant?->width,
+                    'height' => $variant?->height,
                     'image' => $variant?->image_url ?? $product?->primaryImage?->image_url,
                     'price' => (float) $item->price_snapshot,
                     'quantity' => $item->quantity,
@@ -470,12 +486,24 @@ class CheckoutService
             throw ValidationException::withMessages(['cart' => 'Berat kirim produk belum valid. Hubungi admin sebelum checkout.']);
         }
 
+        foreach ($items as $item) {
+            foreach (['length', 'width', 'height'] as $dimension) {
+                $value = $item[$dimension] ?? null;
+                if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
+                    throw ValidationException::withMessages(['cart' => 'Dimensi kemasan produk belum valid. Hubungi admin sebelum checkout.']);
+                }
+            }
+        }
+
         return $items->map(fn (array $item): array => [
             'name' => mb_substr($item['title'], 0, 100),
             'description' => $item['variant_sku'] ?? $item['sku'] ?? $item['title'],
             'value' => (int) round($item['price']),
             'quantity' => $item['quantity'],
             'weight' => (int) ceil($item['weight'] / $item['quantity']),
+            'length' => (float) $item['length'],
+            'width' => (float) $item['width'],
+            'height' => (float) $item['height'],
         ])->values()->all();
     }
 
@@ -603,6 +631,9 @@ class CheckoutService
                 'quantity' => $item['quantity'],
                 'price' => number_format((float) $item['price'], 2, '.', ''),
                 'weight' => $item['weight'],
+                'length' => number_format((float) ($item['length'] ?? 0), 2, '.', ''),
+                'width' => number_format((float) ($item['width'] ?? 0), 2, '.', ''),
+                'height' => number_format((float) ($item['height'] ?? 0), 2, '.', ''),
             ])->values()->all(),
         ], JSON_THROW_ON_ERROR));
     }

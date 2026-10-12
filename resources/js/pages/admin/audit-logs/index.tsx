@@ -169,7 +169,7 @@ export default function AuditLogsIndex({ filters, logs }: Props) {
                     {logs.data.length === 0 ? (
                         <EmptyState>Tidak ada activity log.</EmptyState>
                     ) : null}
-                    <Pagination paginator={logs} />
+                    <Pagination paginator={logs} normalizeNavigationLabels />
                 </TableShell>
             </div>
         </>

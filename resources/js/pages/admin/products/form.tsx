@@ -1,11 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { ComponentProps, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import {
-    FormErrorSummary,
-    FormField as Field,
-} from '@/components/form-validation';
+import { FormErrorSummary, FormField } from '@/components/form-validation';
 import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +10,9 @@ import { slugify } from '@/lib/slug';
 import { index, show, store, update } from '@/routes/admin/products';
 
 type Option = { id: number; name: string };
+function Field(props: ComponentProps<typeof FormField>) {
+    return <FormField {...props} showOptionalIndicator={false} />;
+}
 type ImageRow = {
     id?: number;
     image_url: string | null;
@@ -24,6 +24,11 @@ type VariantRow = {
     id?: number;
     sku: string | null;
     net_weight: string;
+    grind_type: string;
+    length: string | number;
+    width: string | number;
+    height: string | number;
+
     regular_price: string | number;
     sale_price: string | number;
     shipping_weight_gram: string | number;
@@ -70,6 +75,10 @@ const blankImage = (): ImageRow => ({
 const blankVariant = (): VariantRow => ({
     sku: '',
     net_weight: '',
+    grind_type: '',
+    length: '',
+    width: '',
+    height: '',
     regular_price: '',
     sale_price: '',
     shipping_weight_gram: '',
@@ -104,6 +113,10 @@ export default function ProductForm({ mode, product, options }: Props) {
         variants: product?.variants?.map((variant) => ({
             ...variant,
             net_weight: value(variant.net_weight),
+            grind_type: variant.grind_type ?? '',
+            length: value(variant.length),
+            width: value(variant.width),
+            height: value(variant.height),
             regular_price: value(variant.regular_price),
             sale_price: value(variant.sale_price),
             shipping_weight_gram: value(variant.shipping_weight_gram),
@@ -195,227 +208,280 @@ export default function ProductForm({ mode, product, options }: Props) {
                 </header>
                 <form onSubmit={submit} className="w-full space-y-6">
                     <FormErrorSummary errors={errors} />
-                    <section className="grid gap-4 border bg-canvas p-5 lg:grid-cols-3">
-                        <Field
-                            name="name"
-                            label="Nama produk"
-                            error={errors.name}
-                            required
-                            requiredIndicator="asterisk"
-                        >
-                            <Input
-                                placeholder="Contoh: Deklase Gayo Natural"
-                                value={form.data.name}
-                                onChange={(event) => {
-                                    const name = event.target.value;
-                                    form.setData((previous) => ({
-                                        ...previous,
-                                        name,
-                                        ...(mode === 'create' &&
-                                        autoGenerateSlug
-                                            ? { slug: slugify(name) }
-                                            : {}),
-                                    }));
-                                }}
-                            />
-                        </Field>
-                        <Field
-                            name="slug"
-                            label="Slug"
-                            error={errors.slug}
-                            required
-                            requiredIndicator="asterisk"
-                        >
-                            <div className="flex flex-col gap-2 sm:flex-row">
+                    <fieldset className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6">
+                        <legend className="px-2 text-base font-semibold text-ink">
+                            Informasi dasar
+                        </legend>
+                        <p className="text-sm text-muted-foreground">
+                            Nama, alamat halaman, SKU, dan kategori produk.
+                        </p>
+                        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                            <Field
+                                name="name"
+                                label="Nama produk"
+                                error={errors.name}
+                                required
+                                requiredIndicator="asterisk"
+                            >
                                 <Input
-                                    className="min-w-0 flex-1"
-                                    placeholder="deklase-gayo-natural"
-                                    value={form.data.slug}
+                                    placeholder="Contoh: Deklase Gayo Natural"
+                                    value={form.data.name}
                                     onChange={(event) => {
-                                        setAutoGenerateSlug(false);
-                                        setField('slug', event.target.value);
+                                        const name = event.target.value;
+                                        form.setData((previous) => ({
+                                            ...previous,
+                                            name,
+                                            ...(mode === 'create' &&
+                                            autoGenerateSlug
+                                                ? { slug: slugify(name) }
+                                                : {}),
+                                        }));
                                     }}
                                 />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="shrink-0"
-                                    disabled={
-                                        form.processing ||
-                                        !form.data.name.trim()
-                                    }
-                                    onClick={() => {
-                                        setField(
-                                            'slug',
-                                            slugify(form.data.name),
-                                        );
-                                        setAutoGenerateSlug(mode === 'create');
-                                    }}
-                                >
-                                    Generate
-                                </Button>
-                            </div>
-                        </Field>
-                        <Field name="sku" label="SKU" error={errors.sku}>
-                            <Input
-                                placeholder="DCL-GAYO-250"
-                                value={form.data.sku ?? ''}
-                                onChange={(event) =>
-                                    setField('sku', event.target.value)
-                                }
-                            />
-                        </Field>
-                        <Field
-                            name="origin"
-                            label="Origin"
-                            error={errors.origin}
-                        >
-                            <Input
-                                placeholder="Aceh Gayo"
-                                value={form.data.origin ?? ''}
-                                onChange={(event) =>
-                                    setField('origin', event.target.value)
-                                }
-                            />
-                        </Field>
-                        <Field
-                            name="process"
-                            label="Process"
-                            error={errors.process}
-                        >
-                            <Input
-                                placeholder="Natural anaerobic"
-                                value={form.data.process ?? ''}
-                                onChange={(event) =>
-                                    setField('process', event.target.value)
-                                }
-                            />
-                        </Field>
-                        <Field
-                            name="grind_type"
-                            label="Producer"
-                            error={errors.grind_type}
-                        >
-                            <Input
-                                placeholder="Contoh: Kopi Klasik Roastery"
-                                value={form.data.grind_type ?? ''}
-                                onChange={(event) =>
-                                    setField('grind_type', event.target.value)
-                                }
-                            />
-                        </Field>
-                        <Field
-                            name="tasting_notes"
-                            label="Tasting Notes"
-                            error={errors.tasting_notes}
-                        >
-                            <Input
-                                placeholder="Cokelat, jeruk, gula aren"
-                                value={form.data.tasting_notes ?? ''}
-                                onChange={(event) =>
-                                    setField(
-                                        'tasting_notes',
-                                        event.target.value,
-                                    )
-                                }
-                            />
-                        </Field>
-                        <Field
-                            name="status"
-                            label="Status"
-                            error={errors.status}
-                            required
-                            requiredIndicator="asterisk"
-                        >
-                            <select
-                                className="h-9 border bg-canvas px-3 text-sm"
-                                value={form.data.status}
-                                onChange={(event) =>
-                                    setField('status', event.target.value)
-                                }
+                            </Field>
+                            <Field
+                                name="slug"
+                                label="Slug"
+                                error={errors.slug}
+                                required
+                                requiredIndicator="asterisk"
                             >
-                                {options.statuses.map((status) => (
-                                    <option key={status} value={status}>
-                                        {status}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-                        <Field
-                            name="category_ids"
-                            label="Kategori"
-                            error={errors.category_ids}
-                            className="lg:col-span-3"
-                        >
-                            <div className="grid gap-2 border bg-surface-soft p-3 sm:grid-cols-2 lg:grid-cols-4">
-                                {options.categories.map((category) => (
+                                <div className="flex flex-col gap-2 sm:flex-row">
+                                    <Input
+                                        className="min-w-0 flex-1"
+                                        placeholder="deklase-gayo-natural"
+                                        value={form.data.slug}
+                                        onChange={(event) => {
+                                            setAutoGenerateSlug(false);
+                                            setField(
+                                                'slug',
+                                                event.target.value,
+                                            );
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="shrink-0"
+                                        disabled={
+                                            form.processing ||
+                                            !form.data.name.trim()
+                                        }
+                                        onClick={() => {
+                                            setField(
+                                                'slug',
+                                                slugify(form.data.name),
+                                            );
+                                            setAutoGenerateSlug(
+                                                mode === 'create',
+                                            );
+                                        }}
+                                    >
+                                        Generate
+                                    </Button>
+                                </div>
+                            </Field>
+                            <Field name="sku" label="SKU" error={errors.sku}>
+                                <Input
+                                    placeholder="DCL-GAYO-250"
+                                    value={form.data.sku ?? ''}
+                                    onChange={(event) =>
+                                        setField('sku', event.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                name="category_ids"
+                                label="Kategori"
+                                error={errors.category_ids}
+                                className="sm:col-span-2 xl:col-span-3"
+                            >
+                                <div className="grid gap-2 border bg-surface-soft p-3 sm:grid-cols-2 lg:grid-cols-4">
+                                    {options.categories.map((category) => (
+                                        <label
+                                            key={category.id}
+                                            className="flex items-center gap-2 text-sm"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={form.data.category_ids.includes(
+                                                    category.id,
+                                                )}
+                                                onChange={(event) =>
+                                                    toggleCategory(
+                                                        category.id,
+                                                        event.target.checked,
+                                                    )
+                                                }
+                                            />
+                                            {category.name}
+                                        </label>
+                                    ))}
+                                </div>
+                            </Field>
+                        </div>
+                    </fieldset>
+                    <fieldset className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6">
+                        <legend className="px-2 text-base font-semibold text-ink">
+                            Profil kopi
+                        </legend>
+                        <p className="text-sm text-muted-foreground">
+                            Informasi asal, proses, producer, dan karakter rasa.
+                        </p>
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <Field
+                                name="origin"
+                                label="Origin"
+                                error={errors.origin}
+                            >
+                                <Input
+                                    placeholder="Aceh Gayo"
+                                    value={form.data.origin ?? ''}
+                                    onChange={(event) =>
+                                        setField('origin', event.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                name="process"
+                                label="Process"
+                                error={errors.process}
+                            >
+                                <Input
+                                    placeholder="Natural anaerobic"
+                                    value={form.data.process ?? ''}
+                                    onChange={(event) =>
+                                        setField('process', event.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                name="grind_type"
+                                label="Producer"
+                                error={errors.grind_type}
+                            >
+                                <Input
+                                    placeholder="Contoh: Kopi Klasik Roastery"
+                                    value={form.data.grind_type ?? ''}
+                                    onChange={(event) =>
+                                        setField(
+                                            'grind_type',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                name="tasting_notes"
+                                label="Tasting Notes"
+                                error={errors.tasting_notes}
+                            >
+                                <Input
+                                    placeholder="Cokelat, jeruk, gula aren"
+                                    value={form.data.tasting_notes ?? ''}
+                                    onChange={(event) =>
+                                        setField(
+                                            'tasting_notes',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                        </div>
+                    </fieldset>
+                    <fieldset className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6">
+                        <legend className="px-2 text-base font-semibold text-ink">
+                            Deskripsi
+                        </legend>
+                        <p className="text-sm text-muted-foreground">
+                            Tulis cerita kopi dan informasi produk yang akan
+                            dilihat pelanggan.
+                        </p>
+                        <div className="grid gap-5">
+                            <Field
+                                name="description"
+                                label="Deskripsi"
+                                error={errors.description}
+                            >
+                                <RichTextEditor
+                                    content={form.data.description ?? ''}
+                                    onChange={(html) =>
+                                        setField('description', html)
+                                    }
+                                />
+                            </Field>
+                        </div>
+                    </fieldset>
+                    <fieldset className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6">
+                        <legend className="px-2 text-base font-semibold text-ink">
+                            Publikasi
+                        </legend>
+                        <p className="text-sm text-muted-foreground">
+                            Atur status produk dan penanda tampilannya di
+                            katalog.
+                        </p>
+                        <div className="grid gap-5 lg:grid-cols-[minmax(12rem,20rem)_minmax(0,1fr)]">
+                            <Field
+                                name="status"
+                                label="Status"
+                                error={errors.status}
+                                required
+                                requiredIndicator="asterisk"
+                            >
+                                <select
+                                    className="h-9 border bg-canvas px-3 text-sm"
+                                    value={form.data.status}
+                                    onChange={(event) =>
+                                        setField('status', event.target.value)
+                                    }
+                                >
+                                    {options.statuses.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <div className="flex flex-wrap items-start gap-x-6 gap-y-3 lg:pt-7">
+                                {(
+                                    [
+                                        'is_featured',
+                                        'is_new_arrival',
+                                        'is_best_seller',
+                                    ] as const
+                                ).map((field) => (
                                     <label
-                                        key={category.id}
-                                        className="flex items-center gap-2 text-sm"
+                                        key={field}
+                                        className="flex items-center gap-2"
                                     >
                                         <input
                                             type="checkbox"
-                                            checked={form.data.category_ids.includes(
-                                                category.id,
-                                            )}
+                                            checked={form.data[field]}
                                             onChange={(event) =>
-                                                toggleCategory(
-                                                    category.id,
+                                                setField(
+                                                    field,
                                                     event.target.checked,
                                                 )
                                             }
                                         />
-                                        {category.name}
+                                        {
+                                            {
+                                                is_featured: 'Produk unggulan',
+                                                is_new_arrival: 'Produk baru',
+                                                is_best_seller: 'Terlaris',
+                                            }[field]
+                                        }
                                     </label>
                                 ))}
                             </div>
-                        </Field>
-                        <Field
-                            name="description"
-                            label="Deskripsi"
-                            error={errors.description}
-                            className="lg:col-span-3"
-                        >
-                            <RichTextEditor
-                                content={form.data.description ?? ''}
-                                onChange={(html) =>
-                                    setField('description', html)
-                                }
-                            />
-                        </Field>
-                        <div className="flex flex-wrap gap-5 text-sm lg:col-span-3">
-                            {(
-                                [
-                                    'is_featured',
-                                    'is_new_arrival',
-                                    'is_best_seller',
-                                ] as const
-                            ).map((field) => (
-                                <label
-                                    key={field}
-                                    className="flex items-center gap-2"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={form.data[field]}
-                                        onChange={(event) =>
-                                            setField(
-                                                field,
-                                                event.target.checked,
-                                            )
-                                        }
-                                    />
-                                    {field.replaceAll('_', ' ')} (opsional)
-                                </label>
-                            ))}
                         </div>
-                    </section>
+                    </fieldset>
                     <section
                         data-field="images"
-                        className="space-y-4 border bg-canvas p-5"
+                        className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6"
                     >
                         <SectionTitle
-                            title="Gambar produk (opsional; minimal 1 jika status aktif)"
+                            title="Galeri produk"
                             onAdd={() =>
                                 setField('images', [
                                     ...form.data.images,
@@ -427,6 +493,17 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 ])
                             }
                         />
+                        <p className="text-sm text-muted-foreground">
+                            Wajib memiliki minimal 1 foto produk.
+                        </p>
+                        {errors.images && (
+                            <p
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {errors.images}
+                            </p>
+                        )}
                         <div className="grid gap-4 xl:grid-cols-2">
                             {form.data.images.map((image, imageIndex) => (
                                 <div
@@ -521,6 +598,7 @@ export default function ProductForm({ mode, product, options }: Props) {
                                             <Button
                                                 type="button"
                                                 size="sm"
+                                                aria-label={`Hapus gambar ${imageIndex + 1}`}
                                                 variant="ghost"
                                                 onClick={() =>
                                                     setField(
@@ -543,10 +621,10 @@ export default function ProductForm({ mode, product, options }: Props) {
                     </section>
                     <section
                         data-field="variants"
-                        className="space-y-4 border bg-canvas p-5"
+                        className="min-w-0 space-y-5 border border-hairline bg-canvas p-4 sm:p-6"
                     >
                         <SectionTitle
-                            title="Varian dan stok"
+                            title="Varian produk"
                             onAdd={() =>
                                 setField('variants', [
                                     ...form.data.variants,
@@ -554,233 +632,472 @@ export default function ProductForm({ mode, product, options }: Props) {
                                 ])
                             }
                         />
-                        <div className="grid gap-4">
+                        <p className="text-sm text-muted-foreground">
+                            Kelompokkan pilihan produk beserta harga,
+                            pengiriman, dan stoknya.
+                        </p>
+                        <div className="grid gap-6">
                             {form.data.variants.map((variant, variantIndex) => (
-                                <div
+                                <article
                                     key={variant.id ?? variantIndex}
-                                    className="grid gap-4 border p-4 lg:grid-cols-4"
+                                    data-field={`variants.${variantIndex}`}
+                                    aria-labelledby={`variant-${variantIndex}-title`}
+                                    className="min-w-0 border border-hairline"
                                 >
-                                    <Field
-                                        name={`variants.${variantIndex}.sku`}
-                                        label="SKU"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.sku`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            placeholder="DCL-GAYO-250-WB"
-                                            value={variant.sku ?? ''}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    sku: event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.net_weight`}
-                                        label="Berat bersih"
-                                        required
-                                        requiredIndicator="asterisk"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.net_weight`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            placeholder="250gram"
-                                            value={variant.net_weight}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    net_weight:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.regular_price`}
-                                        label="Harga normal"
-                                        required
-                                        requiredIndicator="asterisk"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.regular_price`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder="95000"
-                                            value={value(variant.regular_price)}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    regular_price:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.sale_price`}
-                                        label="Harga promo"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.sale_price`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder="85000"
-                                            value={value(variant.sale_price)}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    sale_price:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.shipping_weight_gram`}
-                                        label="Berat kirim (gram)"
-                                        required
-                                        requiredIndicator="asterisk"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.shipping_weight_gram`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            placeholder="300"
-                                            value={value(
-                                                variant.shipping_weight_gram,
-                                            )}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    shipping_weight_gram:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.stock_quantity`}
-                                        label="Stok"
-                                        required
-                                        requiredIndicator="asterisk"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.stock_quantity`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder="20"
-                                            value={value(
-                                                variant.stock_quantity,
-                                            )}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    stock_quantity:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.low_stock_threshold`}
-                                        label="Batas stok rendah"
-                                        required
-                                        requiredIndicator="asterisk"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.low_stock_threshold`
-                                            ]
-                                        }
-                                    >
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder="5"
-                                            value={value(
-                                                variant.low_stock_threshold,
-                                            )}
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    low_stock_threshold:
-                                                        event.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field
-                                        name={`variants.${variantIndex}.image`}
-                                        label="File gambar varian"
-                                        error={
-                                            errors[
-                                                `variants.${variantIndex}.image`
-                                            ]
-                                        }
-                                        className="lg:col-span-2"
-                                    >
-                                        <Input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(event) =>
-                                                patchVariant(variantIndex, {
-                                                    image:
-                                                        event.target
-                                                            .files?.[0] ?? null,
-                                                })
-                                            }
-                                        />
-                                    </Field>
-                                    <div className="flex items-end gap-4">
-                                        <label className="flex h-9 items-center gap-2 text-sm">
-                                            <input
-                                                type="checkbox"
-                                                checked={variant.is_active}
-                                                onChange={(event) =>
-                                                    patchVariant(variantIndex, {
-                                                        is_active:
-                                                            event.target
-                                                                .checked,
-                                                    })
-                                                }
-                                            />
-                                            Aktif (opsional)
-                                        </label>
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() =>
-                                                setField(
-                                                    'variants',
-                                                    form.data.variants.filter(
-                                                        (_, index) =>
-                                                            index !==
-                                                            variantIndex,
-                                                    ),
-                                                )
-                                            }
+                                    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-surface-soft px-4 py-3 sm:px-5">
+                                        <h3
+                                            id={`variant-${variantIndex}-title`}
+                                            className="font-semibold text-ink"
                                         >
-                                            <Trash2 />
-                                        </Button>
+                                            Varian {variantIndex + 1}
+                                        </h3>
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <label className="flex h-9 items-center gap-2 text-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={variant.is_active}
+                                                    onChange={(event) =>
+                                                        patchVariant(
+                                                            variantIndex,
+                                                            {
+                                                                is_active:
+                                                                    event.target
+                                                                        .checked,
+                                                            },
+                                                        )
+                                                    }
+                                                />
+                                                Aktif
+                                            </label>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                aria-label={`Hapus varian ${variantIndex + 1}`}
+                                                variant="ghost"
+                                                onClick={() =>
+                                                    setField(
+                                                        'variants',
+                                                        form.data.variants.filter(
+                                                            (_, index) =>
+                                                                index !==
+                                                                variantIndex,
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </header>
+                                    <div className="space-y-6 p-4 sm:p-5">
+                                        <div className="grid gap-6 xl:grid-cols-2">
+                                            <fieldset className="min-w-0 space-y-5 border-t border-hairline pt-4">
+                                                <legend className="px-2 text-base font-semibold text-ink">
+                                                    Identitas varian
+                                                </legend>
+                                                <p className="text-sm text-muted-foreground">
+                                                    SKU, ukuran isi, dan pilihan
+                                                    gilingan.
+                                                </p>
+                                                <div className="grid gap-4 sm:grid-cols-2">
+                                                    <Field
+                                                        name={`variants.${variantIndex}.sku`}
+                                                        label="SKU"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.sku`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            placeholder="DCL-GAYO-250-WB"
+                                                            value={
+                                                                variant.sku ??
+                                                                ''
+                                                            }
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        sku: event
+                                                                            .target
+                                                                            .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                    <Field
+                                                        name={`variants.${variantIndex}.net_weight`}
+                                                        label="Berat bersih"
+                                                        required
+                                                        requiredIndicator="asterisk"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.net_weight`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            placeholder="250gram"
+                                                            value={
+                                                                variant.net_weight
+                                                            }
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        net_weight:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                    <Field
+                                                        name={`variants.${variantIndex}.grind_type`}
+                                                        label="Grind Type"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.grind_type`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <select
+                                                            className="h-9 w-full border bg-canvas px-3 text-sm"
+                                                            value={
+                                                                variant.grind_type
+                                                            }
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        grind_type:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        >
+                                                            <option value="">
+                                                                Tidak berlaku
+                                                            </option>
+                                                            <option value="whole_bean">
+                                                                whole bean
+                                                            </option>
+                                                            <option value="fine">
+                                                                fine
+                                                            </option>
+                                                            <option value="medium">
+                                                                medium
+                                                            </option>
+                                                            <option value="coarse">
+                                                                coarse
+                                                            </option>
+                                                        </select>
+                                                    </Field>
+                                                </div>
+                                            </fieldset>
+                                            <fieldset className="min-w-0 space-y-5 border-t border-hairline pt-4">
+                                                <legend className="px-2 text-base font-semibold text-ink">
+                                                    Harga
+                                                </legend>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Harga normal dan harga promo
+                                                    jika tersedia.
+                                                </p>
+                                                <div className="grid gap-4 sm:grid-cols-2">
+                                                    <Field
+                                                        name={`variants.${variantIndex}.regular_price`}
+                                                        label="Harga normal"
+                                                        required
+                                                        requiredIndicator="asterisk"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.regular_price`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder="95000"
+                                                            value={value(
+                                                                variant.regular_price,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        regular_price:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                    <Field
+                                                        name={`variants.${variantIndex}.sale_price`}
+                                                        label="Harga promo"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.sale_price`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder="85000"
+                                                            value={value(
+                                                                variant.sale_price,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        sale_price:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                </div>
+                                            </fieldset>
+                                            <fieldset className="min-w-0 space-y-5 border-t border-hairline pt-4">
+                                                <legend className="px-2 text-base font-semibold text-ink">
+                                                    Pengiriman
+                                                </legend>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Berat kirim dan dimensi
+                                                    kemasan untuk pengiriman.
+                                                </p>
+                                                <div className="grid gap-4 sm:grid-cols-2">
+                                                    <Field
+                                                        name={`variants.${variantIndex}.shipping_weight_gram`}
+                                                        label="Berat kirim (gram)"
+                                                        required
+                                                        requiredIndicator="asterisk"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.shipping_weight_gram`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="number"
+                                                            min="1"
+                                                            placeholder="300"
+                                                            value={value(
+                                                                variant.shipping_weight_gram,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        shipping_weight_gram:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                    <fieldset className="min-w-0 space-y-3 sm:col-span-2">
+                                                        <legend className="text-sm font-medium">
+                                                            Dimensi kemasan (cm)
+                                                        </legend>
+                                                        <div className="grid items-end gap-4 sm:grid-cols-3">
+                                                            {(
+                                                                [
+                                                                    'length',
+                                                                    'width',
+                                                                    'height',
+                                                                ] as const
+                                                            ).map(
+                                                                (dimension) => (
+                                                                    <Field
+                                                                        key={
+                                                                            dimension
+                                                                        }
+                                                                        name={`variants.${variantIndex}.${dimension}`}
+                                                                        label={
+                                                                            {
+                                                                                length: 'Panjang',
+                                                                                width: 'Lebar',
+                                                                                height: 'Tinggi',
+                                                                            }[
+                                                                                dimension
+                                                                            ]
+                                                                        }
+                                                                        required
+                                                                        requiredIndicator="asterisk"
+                                                                        error={
+                                                                            errors[
+                                                                                `variants.${variantIndex}.${dimension}`
+                                                                            ]
+                                                                        }
+                                                                    >
+                                                                        <Input
+                                                                            type="number"
+                                                                            min="0.01"
+                                                                            max="999999.99"
+                                                                            step="0.01"
+                                                                            value={
+                                                                                variant[
+                                                                                    dimension
+                                                                                ]
+                                                                            }
+                                                                            onChange={(
+                                                                                event,
+                                                                            ) =>
+                                                                                patchVariant(
+                                                                                    variantIndex,
+                                                                                    {
+                                                                                        [dimension]:
+                                                                                            event
+                                                                                                .target
+                                                                                                .value,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                    </Field>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                            </fieldset>
+                                            <fieldset className="min-w-0 space-y-5 border-t border-hairline pt-4">
+                                                <legend className="px-2 text-base font-semibold text-ink">
+                                                    Stok
+                                                </legend>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Jumlah tersedia dan batas
+                                                    pemberitahuan stok rendah.
+                                                </p>
+                                                <div className="grid gap-4 sm:grid-cols-2">
+                                                    <Field
+                                                        name={`variants.${variantIndex}.stock_quantity`}
+                                                        label="Stok"
+                                                        required
+                                                        requiredIndicator="asterisk"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.stock_quantity`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder="20"
+                                                            value={value(
+                                                                variant.stock_quantity,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        stock_quantity:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                    <Field
+                                                        name={`variants.${variantIndex}.low_stock_threshold`}
+                                                        label="Batas stok rendah"
+                                                        required
+                                                        requiredIndicator="asterisk"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.low_stock_threshold`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder="5"
+                                                            value={value(
+                                                                variant.low_stock_threshold,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        low_stock_threshold:
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                </div>
+                                            </fieldset>
+                                        </div>
+                                        <fieldset className="min-w-0 space-y-5 border-t border-hairline pt-4">
+                                            <legend className="px-2 text-base font-semibold text-ink">
+                                                Gambar varian
+                                            </legend>
+                                            <p className="text-sm text-muted-foreground">
+                                                Gunakan gambar khusus varian
+                                                jika berbeda dari gambar produk.
+                                            </p>
+                                            <div className="grid items-start gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                                                <ImagePreview
+                                                    file={variant.image}
+                                                    url={variant.image_url}
+                                                    alt={`${form.data.name || 'Produk kopi'} - varian ${variantIndex + 1}`}
+                                                />
+                                                <div className="min-w-0">
+                                                    <Field
+                                                        name={`variants.${variantIndex}.image`}
+                                                        label="File gambar varian"
+                                                        error={
+                                                            errors[
+                                                                `variants.${variantIndex}.image`
+                                                            ]
+                                                        }
+                                                    >
+                                                        <Input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(event) =>
+                                                                patchVariant(
+                                                                    variantIndex,
+                                                                    {
+                                                                        image:
+                                                                            event
+                                                                                .target
+                                                                                .files?.[0] ??
+                                                                            null,
+                                                                    },
+                                                                )
+                                                            }
+                                                        />
+                                                    </Field>
+                                                </div>
+                                            </div>
+                                        </fieldset>
                                     </div>
-                                </div>
+                                </article>
                             ))}
                         </div>
                     </section>

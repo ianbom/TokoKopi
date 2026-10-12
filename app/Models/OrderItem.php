@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'product_sku',
     'variant_sku',
     'net_weight',
+    'length',
+    'width',
+    'height',
     'grind_type',
     'price',
     'quantity',
@@ -51,6 +54,9 @@ class OrderItem extends Model
             'quantity' => 'integer',
             'subtotal' => 'decimal:2',
             'shipping_weight_gram' => 'integer',
+            'length' => 'decimal:2',
+            'width' => 'decimal:2',
+            'height' => 'decimal:2',
         ];
     }
 }
