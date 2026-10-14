@@ -64,8 +64,8 @@ class ShipmentManagementService
             'stats' => [
                 'total' => Shipment::query()->count(),
                 'delivered' => Shipment::query()->where('shipping_status', ShippingStatus::Delivered->value)->count(),
-                'pending' => Shipment::query()->whereIn('shipping_status', [ShippingStatus::NotCreated->value, ShippingStatus::Creating->value, ShippingStatus::Confirmed->value, ShippingStatus::Allocated->value])->count(),
-                'in_transit' => Shipment::query()->whereIn('shipping_status', [ShippingStatus::Picked->value, ShippingStatus::InTransit->value])->count(),
+                'pending' => Shipment::query()->whereIn('shipping_status', [ShippingStatus::NotCreated->value, ShippingStatus::Creating->value, ShippingStatus::Confirmed->value, ShippingStatus::Scheduled->value, ShippingStatus::Allocated->value, ShippingStatus::PickingUp->value])->count(),
+                'in_transit' => Shipment::query()->whereIn('shipping_status', [ShippingStatus::Picked->value, ShippingStatus::InTransit->value, ShippingStatus::DroppingOff->value])->count(),
                 'issues' => Shipment::query()->whereIn('shipping_status', ShippingStatus::issueValues())->count(),
                 'tracked' => Shipment::query()->whereNotNull('waybill_id')->count(),
             ],
@@ -195,7 +195,7 @@ class ShipmentManagementService
                 'courier_type' => $payload['courier_type'],
                 'courier_service_name' => $payload['courier_service_name'] ?? null,
                 'delivery_type' => 'now',
-                'shipping_cost' => $order->shipping_cost,
+                'shipping_cost' => $this->biteship->providerPrice($biteshipOrder, ['price']) ?? $shipment->shipping_cost,
                 'insurance_cost' => 0,
                 'estimated_delivery' => $payload['estimated_delivery'] ?? null,
                 'shipping_status' => $this->normalizeShippingStatus($identifiers['shipping_status'] ?: 'confirmed') ?? 'confirmed',
@@ -250,7 +250,7 @@ class ShipmentManagementService
             }
             $payload = ['shipping_status' => $status];
 
-            if (in_array($status, [ShippingStatus::Picked->value, ShippingStatus::InTransit->value], true) && ! $shipment->shipped_at) {
+            if (in_array($status, [ShippingStatus::Picked->value, ShippingStatus::InTransit->value, ShippingStatus::DroppingOff->value], true) && ! $shipment->shipped_at) {
                 $payload['shipped_at'] = now();
             }
 
@@ -301,7 +301,18 @@ class ShipmentManagementService
             $shipment->setRelation('order', $order);
             $payloadHash = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
 
-            if ($shipment->trackings()->where('payload_hash', $payloadHash)->exists()) {
+            $previousTracking = $shipment->trackings()->where('payload_hash', $payloadHash)->first();
+            $status = $this->normalizeShippingStatus(
+                Arr::get($payload, 'status')
+                ?? Arr::get($payload, 'courier.status')
+                ?? Arr::get($payload, 'tracking.status')
+                ?? $shipment->shipping_status
+            );
+            $reconcileUnknown = $previousTracking
+                && $previousTracking->description === 'Status provider belum dikenali; state tidak diubah.'
+                && $status !== null;
+
+            if ($previousTracking && ! $reconcileUnknown) {
                 Log::info('duplicate_biteship_tracking_ignored', ['shipment_id' => $shipment->id]);
 
                 return;
@@ -316,13 +327,21 @@ class ShipmentManagementService
             }
 
             $identifiers = $this->biteship->orderIdentifiers($payload);
-            $status = $this->normalizeShippingStatus(
-                Arr::get($payload, 'status')
-                ?? Arr::get($payload, 'courier.status')
-                ?? Arr::get($payload, 'tracking.status')
-                ?? $shipment->shipping_status
-            );
+            $raw = $payload;
+            $link = $this->biteship->trackingUrl($payload)
+                ?? $this->biteship->trackingUrl($shipment->raw_order_response ?? []);
+            if ($link) {
+                Arr::set($raw, 'courier.link', $link);
+            } else {
+                Arr::forget($raw, 'courier.link');
+            }
+            $providerPrice = $this->biteship->providerPrice($payload, ['order_price', 'price']);
             if ($status === null) {
+                $shipment->update([
+                    'shipping_cost' => $providerPrice ?? $shipment->shipping_cost,
+                    'raw_order_response' => $raw,
+                    'last_synced_at' => now(),
+                ]);
                 $shipment->trackings()->create([
                     'status' => $shipment->shipping_status, 'description' => 'Status provider belum dikenali; state tidak diubah.',
                     'happened_at' => now(), 'provider_happened_at' => $providerHappenedAt,
@@ -333,18 +352,13 @@ class ShipmentManagementService
             }
             if (! $this->canApplyProviderStatus($shipment, $status)) {
                 Log::info('regressive_biteship_status_ignored', ['shipment_id' => $shipment->id, 'current' => $shipment->shipping_status, 'attempted' => $status]);
+                $shipment->update([
+                    'shipping_cost' => $providerPrice ?? $shipment->shipping_cost,
+                    'raw_order_response' => $raw,
+                    'last_synced_at' => now(),
+                ]);
 
                 return;
-            }
-            $raw = $payload;
-            $link = Arr::get($payload, 'courier.link');
-            if (! $this->validTrackingUrl($link)) {
-                $link = Arr::get($shipment->raw_order_response, 'courier.link');
-            }
-            if ($this->validTrackingUrl($link)) {
-                Arr::set($raw, 'courier.link', $link);
-            } else {
-                Arr::forget($raw, 'courier.link');
             }
 
             $shipment->update([
@@ -354,11 +368,16 @@ class ShipmentManagementService
                 'shipping_status' => $status,
                 'raw_order_response' => $raw,
                 'booking_uncertain' => blank($identifiers['biteship_order_id'] ?: $shipment->biteship_order_id) && $shipment->booking_uncertain,
+                'shipping_cost' => $providerPrice ?? $shipment->shipping_cost,
                 'last_synced_at' => now(),
-                'shipped_at' => in_array($status, [ShippingStatus::Picked->value, ShippingStatus::InTransit->value], true) && ! $shipment->shipped_at ? now() : $shipment->shipped_at,
+                'shipped_at' => in_array($status, [ShippingStatus::Picked->value, ShippingStatus::InTransit->value, ShippingStatus::DroppingOff->value], true) && ! $shipment->shipped_at ? now() : $shipment->shipped_at,
                 'delivered_at' => $status === ShippingStatus::Delivered->value ? ($shipment->delivered_at ?? now()) : $shipment->delivered_at,
                 'cancelled_at' => $status === ShippingStatus::Cancelled->value ? ($shipment->cancelled_at ?? now()) : $shipment->cancelled_at,
             ]);
+
+            if ($reconcileUnknown) {
+                $previousTracking->update(['payload_hash' => null]);
+            }
 
             $shipment->trackings()->create([
                 'status' => $status,
@@ -445,9 +464,9 @@ class ShipmentManagementService
         $payload = ['shipping_status' => $status];
         if (! in_array($order->order_status, ['completed', 'cancelled', 'refunded', 'payment_failed', 'payment_expired', 'shipment_failed'], true)) {
             $next = match ($status) {
-                'picked', 'in_transit' => OrderStatus::Shipped->value,
+                'picked', 'in_transit', 'dropping_off' => OrderStatus::Shipped->value,
                 'delivered' => OrderStatus::Delivered->value,
-                'failed', 'cancelled', 'lost', 'returned', 'disposed' => OrderStatus::ShipmentFailed->value,
+                'failed', 'rejected', 'courier_not_found', 'cancelled', 'lost', 'returned', 'disposed' => OrderStatus::ShipmentFailed->value,
                 'problem', 'on_hold', 'return_in_transit' => OrderStatus::ShipmentProblem->value,
                 default => null,
             };
@@ -537,14 +556,19 @@ class ShipmentManagementService
 
     private function normalizeShippingStatus(?string $status): ?string
     {
-        return match (strtolower((string) $status)) {
+        return match (strtolower((string) preg_replace('/([a-z])([A-Z])/', '$1_$2', trim((string) $status)))) {
             'confirmed' => 'confirmed',
-            'allocated', 'courier_assigned', 'picking_up' => 'allocated',
+            'scheduled' => 'scheduled',
+            'allocated', 'courier_assigned' => 'allocated',
+            'picking_up' => 'picking_up',
             'picked', 'picked_up' => 'picked',
-            'in_transit', 'dropping_off', 'on_process', 'on_delivery', 'shipped' => 'in_transit',
+            'in_transit', 'on_process', 'on_delivery', 'shipped' => 'in_transit',
+            'dropping_off' => 'dropping_off',
             'delivered' => 'delivered',
             'cancelled', 'canceled' => 'cancelled',
-            'failed', 'rejected' => 'failed',
+            'failed' => 'failed',
+            'rejected' => 'rejected',
+            'courier_not_found' => 'courier_not_found',
             'lost' => 'lost',
             'returned' => 'returned',
             'problem' => 'problem',
@@ -562,17 +586,20 @@ class ShipmentManagementService
             return [];
         }
         $next = match ($shipment->shipping_status) {
-            'confirmed' => ['allocated', 'cancelled'],
-            'allocated' => ['picked', 'cancelled'],
+            'confirmed' => ['scheduled', 'allocated', 'picking_up', 'cancelled', 'courier_not_found', 'rejected'],
+            'scheduled' => ['allocated', 'picking_up', 'cancelled', 'courier_not_found', 'rejected'],
+            'allocated' => ['picking_up', 'picked', 'cancelled', 'courier_not_found', 'rejected'],
+            'picking_up' => ['picked', 'cancelled', 'courier_not_found', 'rejected'],
             'picked' => ['in_transit'],
-            'in_transit' => ['delivered', 'return_in_transit'],
+            'in_transit' => ['dropping_off', 'delivered', 'return_in_transit'],
+            'dropping_off' => ['delivered', 'return_in_transit'],
             'delivered' => ['return_in_transit'],
             'return_in_transit' => ['returned', 'lost', 'disposed'],
-            'problem', 'on_hold' => ['confirmed', 'allocated', 'picked', 'in_transit', 'delivered', 'return_in_transit', 'returned', 'disposed'],
+            'problem', 'on_hold' => ['confirmed', 'scheduled', 'allocated', 'picking_up', 'picked', 'in_transit', 'dropping_off', 'delivered', 'return_in_transit', 'returned', 'disposed', 'courier_not_found', 'rejected'],
             default => [],
         };
-        if (in_array($shipment->shipping_status, ['confirmed', 'allocated', 'picked', 'in_transit', 'problem', 'on_hold'], true)) {
-            $next = [...$next, 'problem', 'on_hold', 'failed', 'lost'];
+        if (in_array($shipment->shipping_status, ['confirmed', 'scheduled', 'allocated', 'picking_up', 'picked', 'in_transit', 'dropping_off', 'problem', 'on_hold'], true)) {
+            $next = [...$next, 'problem', 'on_hold', 'failed', 'lost', 'rejected', 'courier_not_found'];
         }
 
         return array_values(array_filter(array_unique($next), fn (string $status): bool => $status !== $shipment->shipping_status && $this->canApplyProviderStatus($shipment, $status)));
@@ -581,7 +608,7 @@ class ShipmentManagementService
     private function canApplyProviderStatus(Shipment $shipment, string $status): bool
     {
         $current = $shipment->shipping_status;
-        if (in_array($current, ['failed', 'cancelled', 'lost', 'returned', 'disposed'], true)) {
+        if (in_array($current, ['failed', 'rejected', 'courier_not_found', 'cancelled', 'lost', 'returned', 'disposed'], true)) {
             return $status === $current;
         }
         if ($current === 'delivered') {
@@ -590,15 +617,10 @@ class ShipmentManagementService
         if ($current === 'return_in_transit') {
             return in_array($status, ['return_in_transit', 'returned', 'lost', 'disposed'], true);
         }
-        $ranks = ['confirmed' => 1, 'allocated' => 2, 'picked' => 3, 'in_transit' => 4, 'delivered' => 5];
+        $ranks = ['confirmed' => 1, 'scheduled' => 2, 'allocated' => 3, 'picking_up' => 4, 'picked' => 5, 'in_transit' => 6, 'dropping_off' => 7, 'delivered' => 8];
         $previous = max($ranks[$current] ?? 0, $shipment->trackings()->pluck('status')->map(fn ($value): int => $ranks[$value] ?? 0)->max() ?? 0);
 
         return ! isset($ranks[$status]) || $ranks[$status] >= $previous;
-    }
-
-    private function validTrackingUrl(mixed $url): bool
-    {
-        return is_string($url) && filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
     }
 
     private function sendShipmentCreatedEmail(Shipment $shipment): void

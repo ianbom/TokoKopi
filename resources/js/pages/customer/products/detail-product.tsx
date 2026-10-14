@@ -481,8 +481,6 @@ function DetailProductPage({ product }: { product: ProductDetail }) {
                                 </button>
                             </div>
 
-                            <CoffeeStory product={product} />
-
                             <p className="mt-6 border-t border-hairline pt-4 text-[8px] font-medium tracking-[0.04em] text-ink/65 uppercase">
                                 Roasted fresh weekly · Shipping calculated at
                                 checkout · Secure checkout
@@ -576,76 +574,6 @@ function ProductGallery({
                     ))}
                 </div>
             ) : null}
-        </section>
-    );
-}
-
-function CoffeeStory({ product }: { product: ProductDetail }) {
-    return (
-        <section className="mt-8 border-y border-hairline bg-[#f1e8dc] px-5 py-6 sm:px-6 sm:py-7">
-            <div>
-                <h2 className="font-condensed text-[clamp(30px,3.2vw,44px)] leading-[0.83] font-semibold tracking-[-0.035em] uppercase">
-                    About
-                    <br />
-                    this coffee.
-                </h2>
-            </div>
-
-            {product.variants.length > 0 && (
-                <div className="mt-6 border-t border-ink/20 pt-5">
-                    <p className="text-[9px] font-semibold tracking-[0.08em] uppercase">
-                        Stock details
-                    </p>
-                    <div className="mt-3 overflow-x-auto border-y border-ink/20">
-                        <table className="w-full min-w-[440px] text-left text-[9px]">
-                            <thead className="border-b border-ink/20 text-ink/60 uppercase">
-                                <tr>
-                                    <th className="py-2.5 pr-3">Grind</th>
-                                    <th className="py-2.5 pr-3">Weight</th>
-                                    <th className="py-2.5 pr-3">Price</th>
-                                    <th className="py-2.5">Stock</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {product.variants.map((variant) => (
-                                    <tr
-                                        key={variant.id}
-                                        className="border-b border-ink/15 last:border-b-0"
-                                    >
-                                        <td className="py-3 pr-3 capitalize">
-                                            {humanize(variant.grind_type) ??
-                                                '-'}
-                                        </td>
-                                        <td className="py-3 pr-3">
-                                            {variant.net_weight ?? '-'}
-                                        </td>
-                                        <td className="py-3 pr-3">
-                                            <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
-                                                {formatPrice(
-                                                    variant.sale_price ??
-                                                        variant.regular_price,
-                                                )}
-                                                {variant.sale_price !== null &&
-                                                    variant.sale_price <
-                                                        variant.regular_price && (
-                                                        <s className="text-ink/80">
-                                                            {formatPrice(
-                                                                variant.regular_price,
-                                                            )}
-                                                        </s>
-                                                    )}
-                                            </span>
-                                        </td>
-                                        <td className="py-3">
-                                            {variant.available_stock}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
         </section>
     );
 }

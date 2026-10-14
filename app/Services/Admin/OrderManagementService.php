@@ -64,7 +64,7 @@ class OrderManagementService
                 'total' => Order::query()->count(),
                 'new_orders' => Order::query()->where('order_status', 'pending_payment')->count(),
                 'processing' => Order::query()->where('order_status', 'processing')->count(),
-                'shipped' => Order::query()->where('shipping_status', ShippingStatus::InTransit->value)->count(),
+                'shipped' => Order::query()->whereIn('shipping_status', [ShippingStatus::Picked->value, ShippingStatus::InTransit->value, ShippingStatus::DroppingOff->value])->count(),
                 'completed' => Order::query()->where('order_status', OrderStatus::Completed->value)->count(),
                 'cancelled' => Order::query()->where('order_status', OrderStatus::Cancelled->value)->count(),
             ],
@@ -170,6 +170,8 @@ class OrderManagementService
         return [
             'status' => $status,
             'label' => match ($status) {
+                'courier_not_found' => 'Kurir tidak ditemukan',
+                'rejected' => 'Pengiriman ditolak',
                 'cancelled' => 'Pengiriman dibatalkan kurir',
                 'lost' => 'Paket dinyatakan hilang',
                 'returned' => 'Paket dikembalikan kurir',

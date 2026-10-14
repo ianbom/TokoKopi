@@ -28,9 +28,29 @@ async function setup(
     } = {},
 ) {
     let voucherApplied = false;
-    let serverSelection: string | null = originalRate.id;
+    let serverSelection: string | null =
+        options.initialSelection === false ? null : originalRate.id;
     let rateRequests = 0;
     let orderRequests = 0;
+    let voucherRequests = 0;
+    const currentRate = () => ({
+        ...originalRate,
+        ...(rateRequests > 1 ? options.changedRate : {}),
+    });
+    const summary = () => {
+        const shipping = serverSelection ? currentRate().price : 0;
+        const discount = voucherApplied ? 9000 : 0;
+
+        return {
+            item_count: 1,
+            subtotal: 90000,
+            shipping,
+            discount,
+            service_fee: 0,
+            rounding_adjustment: 0,
+            total: 90000 + shipping - discount,
+        };
+    };
 
     await page.route(viteUrl + '/', (route) =>
         route.fulfill({
@@ -48,6 +68,7 @@ async function setup(
 
         if (path === '/checkout/shipping-rates') {
             rateRequests++;
+            serverSelection = null;
 
             if (rateRequests > 1 && options.rateFailure) {
                 await route.fulfill({
@@ -60,18 +81,18 @@ async function setup(
 
             await route.fulfill({
                 json: {
-                    rates: [
-                        {
-                            ...originalRate,
-                            ...(rateRequests > 1 ? options.changedRate : {}),
-                        },
-                    ],
+                    rates: [currentRate()],
+                    summary: summary(),
                 },
             });
         } else if (path === '/checkout/shipping-rate') {
             serverSelection = route.request().postDataJSON().shipping_rate_id;
-            await route.fulfill({ json: { rate: originalRate } });
+            await route.fulfill({
+                json: { rate: currentRate(), summary: summary() },
+            });
         } else if (path === '/checkout/voucher') {
+            voucherRequests++;
+
             if (options.invalidVoucher) {
                 await route.fulfill({
                     status: 422,
@@ -82,20 +103,12 @@ async function setup(
             }
 
             voucherApplied = route.request().method() === 'POST';
-            serverSelection = null;
             await route.fulfill({
                 json: {
                     voucher: voucherApplied
                         ? { code: 'KOPI10', name: 'Kopi 10%', discount: 9000 }
                         : null,
-                    summary: {
-                        item_count: 1,
-                        subtotal: 90000,
-                        shipping: 0,
-                        discount: voucherApplied ? 9000 : 0,
-                        service_fee: 0,
-                        total: voucherApplied ? 81000 : 90000,
-                    },
+                    summary: summary(),
                 },
             });
         } else if (path === '/checkout/place-order') {
@@ -125,10 +138,11 @@ async function setup(
     return {
         rateRequests: () => rateRequests,
         orderRequests: () => orderRequests,
+        voucherRequests: () => voucherRequests,
     };
 }
 
-test('apply and remove voucher refresh rates, rebind selection and keep correct totals', async ({
+test('apply and remove voucher preserve shipping selection and correct totals without refreshing rates', async ({
     page,
 }) => {
     const requests = await setup(page);
@@ -139,7 +153,9 @@ test('apply and remove voucher refresh rates, rebind selection and keep correct 
     await expect
         .poll(async () => Boolean((await state(page)).loading))
         .toBe(false);
-    expect(requests.rateRequests()).toBe(2);
+    expect(requests.rateRequests()).toBe(1);
+    expect((await state(page)).rate).toEqual(originalRate);
+    expect((await state(page)).summary.shipping).toBe(originalRate.price);
     await page.getByText('Order', { exact: true }).click();
     await expect.poll(requests.orderRequests).toBe(1);
     expect((await state(page)).errors).toEqual({});
@@ -152,7 +168,9 @@ test('apply and remove voucher refresh rates, rebind selection and keep correct 
         .poll(async () => Boolean((await state(page)).loading))
         .toBe(false);
     expect((await state(page)).voucher).toBeNull();
-    expect(requests.rateRequests()).toBe(3);
+    expect(requests.rateRequests()).toBe(1);
+    expect((await state(page)).rate).toEqual(originalRate);
+    expect((await state(page)).summary.shipping).toBe(originalRate.price);
 });
 
 for (const changedRate of [
@@ -167,6 +185,10 @@ for (const changedRate of [
         async ({ page }) => {
             const requests = await setup(page, { changedRate });
             await page.getByText('Apply', { exact: true }).click();
+            await expect
+                .poll(async () => Boolean((await state(page)).loading))
+                .toBe(false);
+            await page.getByText('Refresh', { exact: true }).click();
             await expect.poll(requests.rateRequests).toBe(2);
             await expect.poll(async () => (await state(page)).rate).toBeNull();
             await page.getByText('Order', { exact: true }).click();
@@ -185,41 +207,48 @@ test('rate failure clears stale selection without automatically retrying', async
     const requests = await setup(page, { rateFailure: true });
     await page.getByText('Apply', { exact: true }).click();
     await expect
+        .poll(async () => Boolean((await state(page)).loading))
+        .toBe(false);
+    await page.getByText('Refresh', { exact: true }).click();
+    await expect
         .poll(async () => (await state(page)).errors.shipping)
         .toBe('Ongkir tidak tersedia.');
     expect((await state(page)).rate).toBeNull();
     expect(requests.rateRequests()).toBe(2);
 });
 
-test('shipping synchronization blocks checkout and duplicate voucher requests', async ({
+test('voucher update blocks checkout and duplicate voucher requests', async ({
     page,
 }) => {
     const requests = await setup(page);
-    let releaseRates!: () => void;
-    let refreshing = false;
-    const ratesReady = new Promise<void>((resolve) => {
-        releaseRates = resolve;
+    let releaseVoucher!: () => void;
+    let updatingVoucher = false;
+    const voucherReady = new Promise<void>((resolve) => {
+        releaseVoucher = resolve;
     });
 
-    await page.route('**/checkout/shipping-rates', async (route) => {
-        refreshing = true;
-        await ratesReady;
+    await page.route('**/checkout/voucher', async (route) => {
+        updatingVoucher = true;
+        await voucherReady;
         await route.fallback();
     });
     await page.getByText('Apply', { exact: true }).click();
-    await expect.poll(() => refreshing).toBe(true);
+    await expect.poll(() => updatingVoucher).toBe(true);
     expect((await state(page)).loading).toBe(true);
+    expect((await state(page)).rate).toEqual(originalRate);
+    expect((await state(page)).summary.shipping).toBe(originalRate.price);
     await page.getByText('Order', { exact: true }).click();
     await page.getByText('Apply', { exact: true }).click();
     expect(requests.orderRequests()).toBe(0);
-    releaseRates();
+    releaseVoucher();
     await expect
         .poll(async () => (await state(page)).summary.total)
         .toBe(97000);
     await expect
         .poll(async () => Boolean((await state(page)).loading))
         .toBe(false);
-    expect(requests.rateRequests()).toBe(2);
+    expect(requests.rateRequests()).toBe(1);
+    expect(requests.voucherRequests()).toBe(1);
 });
 
 test('invalid voucher preserves current shipping and does not refresh rates', async ({
@@ -234,16 +263,18 @@ test('invalid voucher preserves current shipping and does not refresh rates', as
     expect(requests.rateRequests()).toBe(1);
 });
 
-test('voucher without selected shipping still refreshes selectable rates', async ({
+test('voucher without selected shipping preserves selectable rates', async ({
     page,
 }) => {
     const requests = await setup(page, { initialSelection: false });
     await page.getByText('Apply', { exact: true }).click();
-    await expect.poll(requests.rateRequests).toBe(2);
     await expect
         .poll(async () => Boolean((await state(page)).loading))
         .toBe(false);
+    expect(requests.rateRequests()).toBe(1);
     expect((await state(page)).rate).toBeNull();
+    expect((await state(page)).rates).toHaveLength(1);
+    expect((await state(page)).summary.total).toBe(81000);
     await page.getByText('Select', { exact: true }).click();
     await expect
         .poll(async () => (await state(page)).summary.total)

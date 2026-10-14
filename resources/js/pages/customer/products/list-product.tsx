@@ -13,6 +13,7 @@ type ProductCard = {
     price_from: boolean;
     sale_price: number | null;
     image_url: string | null;
+    variants: { is_active: boolean; stock: number }[];
 };
 
 type Filters = {
@@ -160,6 +161,9 @@ function ProductGrid({
                         metadata: product.short_description,
                         price: product.sale_price ?? product.price,
                         priceFrom: product.price_from,
+                        soldOut: !product.variants.some(
+                            (variant) => variant.is_active && variant.stock > 0,
+                        ),
                         href: detail.url({
                             query: { product: product.slug },
                         }),

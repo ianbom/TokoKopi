@@ -136,28 +136,52 @@ function dashboardStats(summary: SummaryItem[]) {
 }
 
 function badgeTone(value: string | null | undefined): BadgeTone {
-    const normalized = (value ?? '').toLowerCase();
+    const normalized = (value ?? '').replaceAll('_', ' ').toLowerCase();
 
     if (
-        ['paid', 'delivered', 'completed', 'shipped', 'in transit'].some(
-            (status) => normalized.includes(status),
-        )
+        [
+            'paid',
+            'delivered',
+            'completed',
+            'shipped',
+            'in transit',
+            'dropping off',
+        ].some((status) => normalized === status)
     ) {
         return 'success';
     }
 
     if (
-        ['pending', 'processing', 'waiting', 'need shipment'].some((status) =>
-            normalized.includes(status),
-        )
+        [
+            'pending',
+            'processing',
+            'waiting',
+            'need shipment',
+            'confirmed',
+            'scheduled',
+            'allocated',
+            'picking up',
+            'picked',
+            'on hold',
+        ].some((status) => normalized.includes(status))
     ) {
         return 'warning';
     }
 
     if (
-        ['failed', 'cancelled', 'expired', 'issue', 'return', 'critical'].some(
-            (status) => normalized.includes(status),
-        )
+        [
+            'failed',
+            'rejected',
+            'courier not found',
+            'cancelled',
+            'expired',
+            'issue',
+            'problem',
+            'lost',
+            'disposed',
+            'return',
+            'critical',
+        ].some((status) => normalized.includes(status))
     ) {
         return 'danger';
     }

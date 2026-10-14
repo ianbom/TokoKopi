@@ -86,7 +86,7 @@ test('admin status transitions are validated and recorded once', function () {
 });
 
 test('booking requires packing and uses the saved courier rather than client overrides', function () {
-    Http::fake(['api.biteship.com/v1/orders' => Http::response(['id' => 'biteship-1', 'status' => 'confirmed'])]);
+    Http::fake(['api.biteship.com/v1/orders' => Http::response(['id' => 'biteship-1', 'status' => 'confirmed', 'price' => 20000])]);
     $this->actingAs($this->admin)->post(route('admin.orders.shipments.store', $this->order), ['source' => 'order_detail'])
         ->assertSessionHasErrors('shipment');
     Http::assertNothingSent();
@@ -99,7 +99,10 @@ test('booking requires packing and uses the saved courier rather than client ove
         && ! isset($request['origin_latitude']) && $request['items'][0]['category'] === 'food_and_drink');
     $this->post(route('admin.orders.shipments.store', $this->order), ['source' => 'order_detail'])->assertSessionHasErrors('shipment');
     Http::assertSentCount(1);
-    expect($this->order->refresh()->order_status)->toBe('shipment_created');
+    expect($this->order->refresh()->order_status)->toBe('shipment_created')
+        ->and((float) $this->order->shipping_cost)->toBe(16000.0)
+        ->and((float) $this->order->grand_total)->toBe(116000.0)
+        ->and((float) $this->shipment->refresh()->shipping_cost)->toBe(20000.0);
 });
 
 test('terminal courier issues fail the order without changing payment or totals', function (string $status) {

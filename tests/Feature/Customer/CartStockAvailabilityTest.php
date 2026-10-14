@@ -10,6 +10,7 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\Integrations\BiteshipService;
+use App\Services\Integrations\MidtransService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -94,7 +95,7 @@ it('renders checkout with coffee variant metadata and stock availability', funct
             ->where('cartItems.0.grind_type', 'whole_bean'));
 });
 
-it('refreshes shipping bindings and totals after applying and removing a voucher', function () {
+it('preserves shipping selection through voucher changes and order placement', function (bool $removeVoucher) {
     $user = User::factory()->create();
     [$product, $variant] = createCoffeeCartProduct(stock: 2);
     createCoffeeCartItem($user, $product, $variant, quantity: 1);
@@ -117,7 +118,13 @@ it('refreshes shipping bindings and totals after applying and removing a voucher
         'price' => 16000,
     ];
     $this->mock(BiteshipService::class, function (MockInterface $mock) use ($rate): void {
-        $mock->shouldReceive('shippingRates')->times(3)->andReturn([$rate]);
+        $mock->shouldReceive('shippingRates')->twice()->andReturn([$rate]);
+    });
+    $this->mock(MidtransService::class, function (MockInterface $mock): void {
+        $mock->shouldReceive('createSnapTransaction')->once()->andReturn([
+            'token' => 'checkout-token',
+            'redirect_url' => 'https://app.sandbox.midtrans.com/snap/test',
+        ]);
     });
     $this->actingAs($user);
     $addressPayload = ['customer_address_id' => $address->id];
@@ -130,36 +137,42 @@ it('refreshes shipping bindings and totals after applying and removing a voucher
     $this->postJson(route('checkout.voucher.apply'), ['voucher_code' => 'KOPI10'])
         ->assertSuccessful()
         ->assertJsonPath('voucher.discount', 8500)
-        ->assertSessionMissing('checkout.selected_rate_binding');
-    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('shipping_rate_id');
-    $this->postJson(route('checkout.shipping-rates'), $addressPayload)->assertSuccessful();
-    $voucherHash = session('checkout.cart_hash');
-    expect($voucherHash)->not->toBe($originalHash);
-    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
-        ->assertSuccessful()
-        ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $voucherHash);
+        ->assertJsonPath('summary.shipping', 16000)
+        ->assertJsonPath('summary.total', 92500)
+        ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $originalHash);
     $this->get(route('checkout'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('summary.shipping', 16000)
             ->where('summary.discount', 8500)
             ->where('summary.total', 92500));
 
-    $this->deleteJson(route('checkout.voucher.remove'))
-        ->assertSuccessful()
-        ->assertSessionMissing('checkout.selected_rate_binding');
-    $this->postJson(route('checkout.shipping-rates'), $addressPayload)->assertSuccessful();
-    $this->postJson(route('checkout.shipping-rate'), $ratePayload)
-        ->assertSuccessful()
-        ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $originalHash);
-    $this->get(route('checkout'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('appliedVoucher', null)
-            ->where('summary.shipping', 16000)
-            ->where('summary.discount', 0)
-            ->where('summary.total', 101000));
-});
+    if ($removeVoucher) {
+        $this->deleteJson(route('checkout.voucher.remove'))
+            ->assertSuccessful()
+            ->assertJsonPath('summary.shipping', 16000)
+            ->assertJsonPath('summary.total', 101000)
+            ->assertSessionHas('checkout.selected_rate_binding.cart_hash', $originalHash);
+        $this->get(route('checkout'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('appliedVoucher', null)
+                ->where('summary.shipping', 16000)
+                ->where('summary.discount', 0)
+                ->where('summary.total', 101000));
+    }
+
+    $this->postJson(route('checkout.place-order'), [
+        'customer_address_id' => $address->id,
+        'shipping_rate_id' => $rate['id'],
+        'idempotency_key' => (string) Str::uuid(),
+        'no_return_refund_agreed' => true,
+    ])->assertSuccessful();
+    $this->assertDatabaseHas('orders', [
+        'user_id' => $user->id,
+        'shipping_cost' => 16000,
+        'discount_amount' => $removeVoucher ? 0 : 8500,
+        'grand_total' => $removeVoucher ? 101000 : 92500,
+    ]);
+})->with(['applied voucher' => false, 'removed voucher' => true]);
 
 /**
  * @return array{0: Product, 1: ProductVariant}

@@ -149,7 +149,6 @@ class CheckoutService
         $discount = $this->discountAmount($voucher, (float) $items->sum('subtotal'));
 
         session(['checkout.voucher_code' => $voucher->code]);
-        session()->forget(['checkout.shipping_rates', 'checkout.shipping_rate_id', 'checkout.selected_rate_binding']);
 
         return [
             'voucher' => $this->voucherPayload($voucher, $discount),
@@ -160,7 +159,6 @@ class CheckoutService
     public function removeVoucher(User $user): array
     {
         session()->forget('checkout.voucher_code');
-        session()->forget(['checkout.shipping_rates', 'checkout.shipping_rate_id', 'checkout.selected_rate_binding']);
         $items = $this->cartItems($user);
 
         return [
@@ -633,10 +631,7 @@ class CheckoutService
 
     private function cartHash(Collection $items): string
     {
-        $voucherCode = session('checkout.voucher_code');
-
         return hash('sha256', json_encode([
-            'voucher' => is_string($voucherCode) ? Str::upper($voucherCode) : null,
             'items' => $items->sortBy('id')->map(fn (array $item): array => [
                 'id' => $item['id'],
                 'product_variant_id' => $item['product_variant_id'],

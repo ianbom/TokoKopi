@@ -214,6 +214,61 @@ test('tracking retains valid link and first delivery timestamp', function () {
         ->and($shipment->delivered_at->toISOString())->toBe($delivered);
 });
 
+test('webhook normalizes flat courier link and updates provider price only', function () {
+    $payment = recoveryPayment(['shipping_cost' => 11000, 'grand_total' => 13980]);
+    $shipment = Shipment::query()->create([
+        'order_id' => $payment->order_id,
+        'biteship_order_id' => 'flat-link-order',
+        'shipping_status' => 'confirmed',
+        'courier_company' => 'jne',
+        'courier_type' => 'reg',
+        'shipping_cost' => 11000,
+        'raw_order_response' => ['courier' => ['link' => 'https://tracking.example.test/old']],
+    ]);
+    $payload = [
+        'order_id' => 'flat-link-order',
+        'status' => 'in_transit',
+        'courier_link' => 'https://tracking.example.test/new',
+        'order_price' => 14000,
+    ];
+    $receipt = BiteshipWebhookLog::query()->create([
+        'biteship_order_id' => 'flat-link-order',
+        'payload_hash' => hash('sha256', json_encode($payload)),
+        'payload' => $payload,
+    ]);
+
+    app(ProcessBiteshipWebhookAction::class)->execute($receipt);
+
+    expect(data_get($shipment->refresh()->raw_order_response, 'courier.link'))
+        ->toBe('https://tracking.example.test/new')
+        ->and((float) $shipment->shipping_cost)->toBe(14000.0)
+        ->and((float) $payment->order->fresh()->shipping_cost)->toBe(11000.0)
+        ->and((float) $payment->order->fresh()->grand_total)->toBe(13980.0);
+
+    $service = app(ShipmentManagementService::class);
+    $service->applyBiteshipPayload($shipment, [
+        'status' => 'in_transit',
+        'courier_link' => 'javascript:alert(1)',
+        'order_price' => -1,
+    ]);
+    expect(data_get($shipment->refresh()->raw_order_response, 'courier.link'))
+        ->toBe('https://tracking.example.test/new')
+        ->and((float) $shipment->shipping_cost)->toBe(14000.0);
+
+    $service->applyBiteshipPayload($shipment, [
+        'status' => 'unknown_provider_event',
+        'order_price' => '0',
+    ]);
+    expect($shipment->refresh()->shipping_status)->toBe('in_transit')
+        ->and((float) $shipment->shipping_cost)->toBe(0.0)
+        ->and(data_get($shipment->raw_order_response, 'courier.link'))->toBe('https://tracking.example.test/new');
+
+    $service->applyBiteshipPayload($shipment, ['status' => 'in_transit']);
+    expect((float) $shipment->refresh()->shipping_cost)->toBe(0.0)
+        ->and((float) $payment->order->fresh()->shipping_cost)->toBe(11000.0)
+        ->and((float) $payment->order->fresh()->grand_total)->toBe(13980.0);
+});
+
 test('all variant weights must be positive including inactive variants', function () {
     $payment = recoveryPayment();
     $data = ['product_id' => $payment->order->items->first()->product_id, 'regular_price' => 90000, 'length' => 4, 'width' => 5, 'height' => 2, 'shipping_weight_gram' => 0, 'stock_quantity' => 0, 'is_active' => false];

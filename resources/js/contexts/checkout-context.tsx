@@ -351,15 +351,6 @@ export function CheckoutProvider({
                           });
                 setCurrentVoucher(payload.voucher);
                 setCurrentSummary(payload.summary);
-
-                if (currentAddressId) {
-                    await loadShippingRates(currentAddressId, {
-                        preserveSelectedRate: false,
-                    });
-                } else {
-                    setCurrentRate(null);
-                    setRates([]);
-                }
             } catch (error) {
                 setErrors(error as Record<string, string>);
             } finally {
@@ -367,7 +358,7 @@ export function CheckoutProvider({
                 setVoucherUpdating(false);
             }
         },
-        [currentAddressId, loadShippingRates, placingOrder],
+        [placingOrder],
     );
 
     const applyVoucher = useCallback(

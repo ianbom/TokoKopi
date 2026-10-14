@@ -156,6 +156,30 @@ class BiteshipService
         ];
     }
 
+    public function providerPrice(array $payload, array $keys = ['price', 'order_price']): ?float
+    {
+        foreach ($keys as $key) {
+            $price = Arr::get($payload, $key);
+
+            if (is_numeric($price) && is_finite((float) $price) && (float) $price >= 0) {
+                return (float) $price;
+            }
+        }
+
+        return null;
+    }
+
+    public function trackingUrl(array $payload): ?string
+    {
+        foreach ([Arr::get($payload, 'courier_link'), Arr::get($payload, 'courier_tracking_link'), Arr::get($payload, 'courier.link')] as $url) {
+            if (is_string($url) && filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
     private function client(): PendingRequest
     {
         $apiKey = config('services.biteship.api_key') ?: env('BITESHIP_API_KEY');

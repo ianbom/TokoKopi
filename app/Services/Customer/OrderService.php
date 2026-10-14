@@ -6,6 +6,8 @@ use App\Actions\Payments\CancelMidtransPaymentAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Services\Integrations\BiteshipService;
+use App\Services\Settings\SiteSettingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -15,6 +17,8 @@ class OrderService
 
     public function __construct(
         private readonly CancelMidtransPaymentAction $cancelPayment,
+        private readonly BiteshipService $biteship,
+        private readonly SiteSettingService $settings,
     ) {}
 
     public function indexData(Request $request): array
@@ -133,6 +137,7 @@ class OrderService
             'customer_name' => $order->customer_name,
             'customer_email' => $order->customer_email,
             'customer_phone' => $order->customer_phone,
+            'support_whatsapp_url' => $this->supportWhatsappUrl($order),
             'created_at' => $order->created_at?->toDateTimeString(),
             'created_date' => $order->created_at?->toFormattedDateString(),
             'created_time' => $order->created_at?->format('h:i A'),
@@ -207,14 +212,14 @@ class OrderService
                 'courier_type' => $order->shipment->courier_type,
                 'courier_service_name' => $order->shipment->courier_service_name,
                 'delivery_type' => $order->shipment->delivery_type,
-                'shipping_cost' => (float) $order->shipment->shipping_cost,
+                'shipping_cost' => (float) $order->shipping_cost,
                 'insurance_cost' => (float) $order->shipment->insurance_cost,
                 'estimated_delivery' => $order->shipment->estimated_delivery,
                 'shipping_status' => $order->shipment->shipping_status,
                 'shipped_at' => $order->shipment->shipped_at?->toDateTimeString(),
                 'delivered_at' => $order->shipment->delivered_at?->toDateTimeString(),
                 'cancelled_at' => $order->shipment->cancelled_at?->toDateTimeString(),
-                'raw_order_response' => $order->shipment->raw_order_response,
+                'tracking_url' => $this->biteship->trackingUrl($order->shipment->raw_order_response ?? []),
             ] : null,
             'trackings' => $order->shipment?->trackings?->map(fn ($tracking): array => [
                 'id' => $tracking->id,
@@ -224,6 +229,23 @@ class OrderService
                 'happened_at' => $tracking->happened_at?->toDateTimeString(),
             ])->values() ?? [],
         ];
+    }
+
+    private function supportWhatsappUrl(Order $order): ?string
+    {
+        $phone = preg_replace('/\D+/', '', (string) $this->settings->get('store_phone'));
+
+        if ($phone === '') {
+            return null;
+        }
+
+        if (str_starts_with($phone, '0')) {
+            $phone = '62'.substr($phone, 1);
+        } elseif (str_starts_with($phone, '8')) {
+            $phone = '62'.$phone;
+        }
+
+        return 'https://wa.me/'.$phone.'?text='.rawurlencode("Halo Deklase, saya perlu bantuan untuk pesanan {$order->order_number}");
     }
 
     private function allowed(string $value, array $allowed, string $default = ''): string

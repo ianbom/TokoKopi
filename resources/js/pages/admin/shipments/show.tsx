@@ -287,7 +287,7 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                         </div>
                     }
                 />
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-5">
                     <Metric
                         label="Status"
                         value={
@@ -299,8 +299,12 @@ export default function ShipmentShow({ shipment, shippingStatuses }: Props) {
                         value={`${shipment.courier_company} ${shipment.courier_type}`}
                     />
                     <Metric
-                        label="Cost"
+                        label="Provider cost"
                         value={formatPrice(shipment.shipping_cost)}
+                    />
+                    <Metric
+                        label="Customer shipping"
+                        value={formatPrice(shipment.order?.shipping_cost ?? 0)}
                     />
                     <Metric
                         label="ETA"

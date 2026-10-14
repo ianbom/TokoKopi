@@ -2,6 +2,8 @@
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Shipment;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -50,7 +52,46 @@ it('shows the latest coffee product snapshot on the order detail page', function
             ->where('order.items.0.price', 85000)
             ->where('order.items.0.quantity', 2)
             ->where('order.items.0.subtotal', 170000)
+            ->where('order.support_whatsapp_url', null)
             ->missing('order.items.0.color_name')
             ->missing('order.items.0.size')
             ->missing('order.items.0.weight'));
+});
+
+it('links order support to the configured WhatsApp number', function () {
+    $user = User::factory()->create();
+    $order = Order::query()->create([
+        'user_id' => $user->id,
+        'order_number' => 'ORD-WA-100',
+        'checkout_idempotency_key' => (string) Str::uuid(),
+        'customer_name' => $user->name,
+        'customer_email' => $user->email,
+        'customer_phone' => '081234567890',
+        'subtotal' => 1000,
+        'shipping_cost' => 5000,
+        'grand_total' => 6000,
+    ]);
+    SiteSetting::query()->create([
+        'key' => 'store_phone',
+        'value' => '085649529166',
+        'type' => 'string',
+    ]);
+    Shipment::query()->create([
+        'order_id' => $order->id,
+        'courier_company' => 'jne',
+        'courier_type' => 'reg',
+        'shipping_cost' => 7000,
+        'raw_order_response' => ['price' => 7000, 'courier_link' => 'https://tracking.example.test/order'],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('order.detail', $order))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('order.support_whatsapp_url', 'https://wa.me/6285649529166?text=Halo%20Deklase%2C%20saya%20perlu%20bantuan%20untuk%20pesanan%20ORD-WA-100')
+            ->where('order.shipping_cost', 5000)
+            ->where('order.grand_total', 6000)
+            ->where('order.shipment.shipping_cost', 5000)
+            ->where('order.shipment.tracking_url', 'https://tracking.example.test/order')
+            ->missing('order.shipment.raw_order_response'));
 });

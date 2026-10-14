@@ -66,6 +66,14 @@ type Filters = {
     search: string;
 };
 
+const humanize = (value: string | null) =>
+    value
+        ? value
+              .split('_')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+        : null;
+
 type Props = {
     orders: Paginated<Order>;
     filters: Filters;
@@ -313,7 +321,7 @@ export default function ListOrder({ orders, filters }: Props) {
                                                 </h4>
                                                 <p className="mb-1 text-[11px] text-muted-foreground">
                                                     {item.color ?? '-'} •{' '}
-                                                    {item.size ?? '-'}
+                                                    {humanize(item.size) ?? '-'}
                                                 </p>
                                                 <p className="text-[11px] text-muted-foreground">
                                                     Jml: {item.qty}

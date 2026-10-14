@@ -20,7 +20,7 @@ class ShipmentStatusRequest extends FormRequest
     {
         return [
             'shipping_status' => ['required', Rule::in(array_diff(ShippingStatus::values(), ['not_created', 'creating']))],
-            'description' => ['required_if:shipping_status,cancelled,failed,problem,lost,returned,on_hold,return_in_transit,disposed', 'nullable', 'string', 'max:1000'],
+            'description' => ['required_if:shipping_status,'.implode(',', ShippingStatus::issueValues()), 'nullable', 'string', 'max:1000'],
             'location' => ['nullable', 'string', 'max:255'],
         ];
     }

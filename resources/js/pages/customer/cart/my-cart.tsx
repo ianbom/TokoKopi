@@ -355,11 +355,6 @@ function OrderSummary({
             </h2>
             <dl className="mt-8 border-t border-oat/35 text-[11px]">
                 <SummaryRow
-                    label="Subtotal"
-                    value={formatPrice(summary.subtotal)}
-                />
-                <SummaryRow label="Shipping" value="Calculated at checkout" />
-                <SummaryRow
                     label="Total"
                     value={formatPrice(summary.total)}
                     emphasis

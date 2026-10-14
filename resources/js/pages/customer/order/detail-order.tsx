@@ -16,13 +16,16 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
-import ProfileLayout from '@/layouts/profile-layout';
-import { getOrderWorkflow } from '@/lib/order-workflow';
 import {
     cancel as orderCancel,
     index as orderIndex,
 } from '@/actions/App/Http/Controllers/Customer/OrderController';
 import { show as productShow } from '@/actions/App/Http/Controllers/Customer/ProductController';
+import ProfileLayout from '@/layouts/profile-layout';
+import {
+    getOrderWorkflow,
+    getShippingStatusPresentation,
+} from '@/lib/order-workflow';
 
 type IconComponent = ComponentType<{
     className?: string;
@@ -90,7 +93,7 @@ type Shipment = {
     shipped_at: string | null;
     delivered_at: string | null;
     cancelled_at: string | null;
-    raw_order_response: unknown;
+    tracking_url: string | null;
 };
 
 type Tracking = {
@@ -107,6 +110,7 @@ type Order = {
     customer_name: string;
     customer_email: string;
     customer_phone: string;
+    support_whatsapp_url: string | null;
     created_at: string | null;
     created_date: string | null;
     created_time: string | null;
@@ -189,12 +193,15 @@ const statusTone = (status: string | null): StatusTone => {
         case 'ready_to_ship':
         case 'shipped':
         case 'in_transit':
+        case 'dropping_off':
             return 'blue';
         case 'pending':
         case 'pending_payment':
         case 'not_created':
         case 'confirmed':
+        case 'scheduled':
         case 'allocated':
+        case 'picking_up':
         case 'picked':
         case 'on_hold':
         case 'return_in_transit':
@@ -202,6 +209,8 @@ const statusTone = (status: string | null): StatusTone => {
         case 'cancelled':
         case 'expired':
         case 'failed':
+        case 'rejected':
+        case 'courier_not_found':
         case 'problem':
         case 'lost':
         case 'returned':
@@ -425,34 +434,6 @@ function buildProgress(order: Order) {
     ];
 }
 
-function getBiteshipTrackingUrl(shipment: Shipment | null): string | null {
-    const raw = shipment?.raw_order_response;
-
-    if (!raw || typeof raw !== 'object') {
-        return null;
-    }
-
-    const courier = (raw as Record<string, unknown>).courier;
-
-    if (!courier || typeof courier !== 'object') {
-        return null;
-    }
-
-    const link = (courier as Record<string, unknown>).link;
-
-    if (typeof link !== 'string') {
-        return null;
-    }
-
-    try {
-        const url = new URL(link);
-
-        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
-    } catch {
-        return null;
-    }
-}
-
 function getMidtransReceiptUrl(payment: Payment | null): string | null {
     if (!payment) {
         return null;
@@ -481,15 +462,19 @@ export default function DetailOrder({ order }: Props) {
         .join(' ');
     const address = order.address;
     const paymentMethod =
-        [order.payment?.payment_provider, order.payment?.payment_method]
-            .filter(Boolean)
-            .join(' / ') || '-';
+        humanize(order.payment?.payment_method ?? null) ?? '-';
     const transactionId =
         order.payment?.midtrans_transaction_id ??
         order.payment?.midtrans_order_id ??
         '-';
-    const trackingUrl = getBiteshipTrackingUrl(order.shipment);
+    const trackingUrl = order.shipment?.tracking_url ?? null;
     const workflow = getOrderWorkflow(order);
+    const shippingStatus =
+        order.shipment?.shipping_status ?? order.shipping_status;
+    const shippingPresentation = getShippingStatusPresentation(shippingStatus);
+    const shippingReason = order.trackings
+        .find((tracking) => tracking.status === shippingStatus)
+        ?.description?.trim();
     const isPaymentTerminal = [
         'cancelled',
         'expired',
@@ -631,9 +616,10 @@ export default function DetailOrder({ order }: Props) {
                                 }
                             />
                             <ActionButton
-                                href="/notifications"
+                                href={order.support_whatsapp_url}
                                 icon={Headphones}
                                 label="Dukungan"
+                                external
                             />
                         </div>
                     </div>
@@ -895,7 +881,35 @@ export default function DetailOrder({ order }: Props) {
                     {/* Shipping + Payment Info */}
                     <div className="grid gap-5 md:grid-cols-2">
                         <SectionCard title="Info Pengiriman">
+                            {shippingPresentation.issue && (
+                                <div
+                                    role="status"
+                                    className="mb-4 border border-hairline-strong bg-surface-soft p-3 text-sm text-ink"
+                                >
+                                    <p className="font-semibold">
+                                        {shippingPresentation.label}
+                                    </p>
+                                    <p className="mt-1 [overflow-wrap:anywhere]">
+                                        {shippingReason &&
+                                        shippingReason !==
+                                            `Biteship status ${shippingStatus}.`
+                                            ? shippingReason
+                                            : 'Hubungi toko untuk tindak lanjut pengiriman.'}
+                                    </p>
+                                </div>
+                            )}
                             <div className="divide-y divide-hairline">
+                                <InfoLine
+                                    icon={Package}
+                                    label="Status pengiriman"
+                                    value={
+                                        <StatusPill
+                                            tone={shippingPresentation.tone}
+                                        >
+                                            {shippingPresentation.label}
+                                        </StatusPill>
+                                    }
+                                />
                                 <InfoLine
                                     icon={UserRound}
                                     label="Penerima"

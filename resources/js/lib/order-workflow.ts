@@ -31,6 +31,54 @@ const stages: Record<string, number> = {
     completed: 6,
 };
 
+const shippingStatuses: Record<
+    string,
+    [label: string, tone: 'green' | 'blue' | 'amber' | 'red', issue?: boolean]
+> = {
+    not_created: ['Belum dibuat', 'amber'],
+    creating: ['Sedang dibuat', 'amber'],
+    confirmed: ['Pengiriman dikonfirmasi', 'amber'],
+    scheduled: ['Pengiriman terjadwal', 'amber'],
+    allocated: ['Kurir ditugaskan', 'amber'],
+    picking_up: ['Kurir menuju lokasi penjemputan', 'amber'],
+    picked: ['Paket dijemput', 'blue'],
+    in_transit: ['Dalam perjalanan', 'blue'],
+    dropping_off: ['Diantar ke penerima', 'blue'],
+    delivered: ['Paket terkirim', 'green'],
+    cancelled: ['Pengiriman dibatalkan', 'red', true],
+    failed: ['Pengiriman gagal', 'red', true],
+    rejected: ['Pengiriman ditolak', 'red', true],
+    courier_not_found: ['Kurir tidak ditemukan', 'red', true],
+    problem: ['Pengiriman bermasalah', 'red', true],
+    lost: ['Paket hilang', 'red', true],
+    returned: ['Paket dikembalikan', 'red', true],
+    on_hold: ['Pengiriman ditahan sementara', 'amber', true],
+    return_in_transit: ['Dalam perjalanan kembali', 'amber', true],
+    disposed: ['Paket dimusnahkan', 'red', true],
+};
+
+export function getShippingStatusPresentation(
+    status: string | null | undefined,
+) {
+    const value = status?.trim() ?? '';
+    const presentation = Object.hasOwn(shippingStatuses, value)
+        ? shippingStatuses[value]
+        : undefined;
+
+    return {
+        label:
+            (presentation?.[0] ??
+                value
+                    .split('_')
+                    .filter(Boolean)
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ')) ||
+            '-',
+        tone: presentation?.[1] ?? ('gray' as const),
+        issue: presentation?.[2] ?? false,
+    };
+}
+
 export function getOrderWorkflow(order: WorkflowOrder) {
     const currentStep = Math.max(
         stages[order.order_status] ?? 0,

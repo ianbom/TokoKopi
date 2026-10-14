@@ -73,7 +73,16 @@ const getStatusConfig = (status: string | null) => {
         };
     }
 
-    if (['pending', 'ready_to_ship', 'confirmed'].includes(s)) {
+    if (
+        [
+            'pending',
+            'ready_to_ship',
+            'confirmed',
+            'scheduled',
+            'allocated',
+            'picking_up',
+        ].includes(s)
+    ) {
         return {
             label: safeStatus.replace(/_/g, ' '),
             dot: 'bg-amber-400',
@@ -82,7 +91,16 @@ const getStatusConfig = (status: string | null) => {
         };
     }
 
-    if (['shipped', 'in_transit', 'on_hold'].includes(s)) {
+    if (
+        [
+            'shipped',
+            'picked',
+            'in_transit',
+            'dropping_off',
+            'on_hold',
+            'return_in_transit',
+        ].includes(s)
+    ) {
         return {
             label: safeStatus.replace(/_/g, ' '),
             dot: 'bg-blue-400',
@@ -91,7 +109,18 @@ const getStatusConfig = (status: string | null) => {
         };
     }
 
-    if (['failed', 'cancelled', 'returned', 'lost'].includes(s)) {
+    if (
+        [
+            'failed',
+            'rejected',
+            'courier_not_found',
+            'cancelled',
+            'returned',
+            'lost',
+            'problem',
+            'disposed',
+        ].includes(s)
+    ) {
         return {
             label: safeStatus.replace(/_/g, ' '),
             dot: 'bg-rose-400',

@@ -35,14 +35,21 @@ export function StatusBadge({
                       'processing',
                       'ready_to_ship',
                       'confirmed',
+                      'scheduled',
                       'allocated',
+                      'picking_up',
                       'picked',
                       'in_transit',
+                      'dropping_off',
+                      'on_hold',
+                      'return_in_transit',
                   ].includes(value)
                 ? 'warn'
                 : [
                         'expired',
                         'failed',
+                        'rejected',
+                        'courier_not_found',
                         'cancelled',
                         'cancel',
                         'deny',

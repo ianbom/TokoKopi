@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ShippingStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -281,10 +282,10 @@ class AdminDashboardService
                 $query
                     ->whereIn('payment_status', ['pending', 'pending_payment', 'failed', 'expired'])
                     ->orWhereIn('order_status', ['return_requested', 'refund_requested'])
-                    ->orWhereIn('shipping_status', ['pending', 'not_created', 'ready_to_ship', 'need_shipment', 'waiting_for_shipment', 'problem', 'delivery_issue', 'failed']);
+                    ->orWhereIn('shipping_status', ['pending', 'not_created', 'ready_to_ship', 'need_shipment', 'waiting_for_shipment', ...ShippingStatus::issueValues(), 'delivery_issue']);
             })
             ->orderByRaw("case
-                when shipping_status in ('problem', 'delivery_issue', 'failed') then 0
+                when shipping_status in ('problem', 'delivery_issue', 'failed', 'rejected', 'courier_not_found', 'cancelled', 'lost', 'returned', 'on_hold', 'return_in_transit', 'disposed') then 0
                 when order_status in ('return_requested', 'refund_requested') then 1
                 when payment_status in ('failed', 'expired') then 2
                 when payment_status in ('pending', 'pending_payment') then 3
@@ -333,9 +334,9 @@ class AdminDashboardService
 
         return [
             ['label' => 'Need Shipment', 'value' => $this->pendingShipmentCount()],
-            ['label' => 'In Delivery', 'value' => $this->shippingStatusCount(['shipped', 'in_transit', 'allocated', 'picked'], $start, $end)],
+            ['label' => 'In Delivery', 'value' => $this->shippingStatusCount(['shipped', 'in_transit', 'allocated', 'picking_up', 'picked', 'dropping_off'], $start, $end)],
             ['label' => 'Delivered Today', 'value' => $this->shippingStatusCount(['delivered'], CarbonImmutable::now()->startOfDay(), CarbonImmutable::now()->endOfDay())],
-            ['label' => 'Shipping Issue', 'value' => $this->shippingStatusCount(['problem', 'delivery_issue', 'failed'], $start, $end)],
+            ['label' => 'Shipping Issue', 'value' => $this->shippingStatusCount([...ShippingStatus::issueValues(), 'delivery_issue'], $start, $end)],
         ];
     }
 
@@ -358,7 +359,7 @@ class AdminDashboardService
 
     private function attentionAction(string $paymentStatus, string $orderStatus, string $shippingStatus): string
     {
-        if (in_array($shippingStatus, ['problem', 'delivery_issue', 'failed'], true)) {
+        if (in_array($shippingStatus, [...ShippingStatus::issueValues(), 'delivery_issue'], true)) {
             return 'Check Shipping';
         }
 

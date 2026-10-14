@@ -8,6 +8,7 @@ export type EditorialProduct = {
     metadata: string | null;
     price: number;
     priceFrom?: boolean;
+    soldOut?: boolean;
     href: string;
 };
 
@@ -78,10 +79,15 @@ function EditorialProductGrid({
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+                            className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025] ${product.soldOut ? 'opacity-65 grayscale' : ''}`}
                         />
                     </div>
                     <div className="pt-5 text-center text-teal">
+                        {product.soldOut && (
+                            <span className="inline-block bg-teal px-2.5 py-1 text-[9px] font-semibold tracking-[0.12em] text-white uppercase">
+                                Stok Habis
+                            </span>
+                        )}
                         {/* <span className="text-[10px] font-semibold tracking-[0.12em]">
                             {String(index + 1).padStart(2, '0')}
                         </span> */}

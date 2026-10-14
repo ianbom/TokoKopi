@@ -28,6 +28,13 @@ function Probe() {
             </button>
             <button
                 onClick={() =>
+                    void loadShippingRates(1, { preserveSelectedRate: true })
+                }
+            >
+                Refresh
+            </button>
+            <button
+                onClick={() =>
                     void checkout.selectShippingRate(checkout.shippingRates[0])
                 }
             >
@@ -67,6 +74,7 @@ export function mount(rate: ShippingRate | null) {
                 shipping: rate?.price ?? 0,
                 discount: 0,
                 service_fee: 0,
+                rounding_adjustment: 0,
                 total: 90000 + (rate?.price ?? 0),
             }}
         >
