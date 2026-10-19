@@ -83,7 +83,7 @@ export default function ListProduct({ products, filters, options }: Props) {
                         </p>
                     </div>
                     <img
-                        src="/deklase-2.webp"
+                        src="/DK - website - header coffee 2.png"
                         alt="Coffee pouch and cup on a sunlit table"
                         fetchPriority="high"
                         decoding="async"

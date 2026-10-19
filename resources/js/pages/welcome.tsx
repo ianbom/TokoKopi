@@ -34,7 +34,7 @@ type Props = {
 const images = {
     hero: '/logo/dc-bg.jpg',
     cta: '/dekalse-1.webp',
-    ritual: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=90',
+    ritual: 'DK - website - header coffee 1.png',
     morning:
         'https://images.unsplash.com/photo-1521302080334-4bebac2763a6?auto=format&fit=crop&w=1400&q=90',
 };

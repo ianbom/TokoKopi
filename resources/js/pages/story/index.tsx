@@ -28,7 +28,7 @@ export default function Stories({ stories, categories, filters }: Props) {
 
     return (
         <ShopLayout>
-            <Head title="Stories | Deklase">
+            <Head title="Stories">
                 <meta
                     name="description"
                     content="Coffee origins, brewing notes, and stories from Deklase."
@@ -53,20 +53,12 @@ export default function Stories({ stories, categories, filters }: Props) {
                         </p>
                     </div>
                     <div className="relative min-h-64 bg-teal md:min-h-96">
-                        {stories.data[0] ? (
-                            <img
-                                src={stories.data[0].cover_image_url}
-                                alt={stories.data[0].title}
+                         <img
+                                src={'DK - website - header coffee 3.png'}
+                                alt={'Deklase Story'}
                                 fetchPriority="high"
                                 className="absolute inset-0 h-full w-full object-cover"
                             />
-                        ) : (
-                            <div className="flex h-full min-h-64 items-center justify-center p-7 font-condensed text-5xl text-white uppercase">
-                                Good coffee.
-                                <br />
-                                More to discover.
-                            </div>
-                        )}
                     </div>
                 </header>
                 <form
