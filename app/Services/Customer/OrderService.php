@@ -7,6 +7,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Services\Integrations\BiteshipService;
+use App\Services\Integrations\MidtransService;
 use App\Services\Settings\SiteSettingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class OrderService
         private readonly CancelMidtransPaymentAction $cancelPayment,
         private readonly BiteshipService $biteship,
         private readonly SiteSettingService $settings,
+        private readonly MidtransService $midtrans,
     ) {}
 
     public function indexData(Request $request): array
@@ -45,7 +47,7 @@ class OrderService
                         'product_image_url',
                     ])->oldest('id'),
                     'shipment:id,order_id,waybill_id,courier_company,courier_type',
-                    'payment:id,order_id,midtrans_redirect_url',
+                    'payment:id,order_id,midtrans_redirect_url,midtrans_snap_token',
                 ])
                 ->withCount('items')
                 ->whereBelongsTo($request->user())
@@ -124,7 +126,7 @@ class OrderService
                 'service' => $order->shipment?->courier_type,
             ],
             'payment' => [
-                'midtrans_redirect_url' => $order->payment?->midtrans_redirect_url,
+                'midtrans_redirect_url' => $this->midtrans->paymentRedirectUrl($order->payment),
             ],
         ];
     }
@@ -184,10 +186,12 @@ class OrderService
             'payment' => $order->payment ? [
                 'payment_provider' => $order->payment->payment_provider,
                 'payment_method' => $order->payment->payment_method,
+                'requested_payment_method' => $order->payment->requested_payment_method,
+                'requested_payment_method_label' => $order->payment->requested_payment_method_label,
                 'midtrans_order_id' => $order->payment->midtrans_order_id,
                 'midtrans_transaction_id' => $order->payment->midtrans_transaction_id,
                 'midtrans_snap_token' => $order->payment->midtrans_snap_token,
-                'midtrans_redirect_url' => $order->payment->midtrans_redirect_url,
+                'midtrans_redirect_url' => $this->midtrans->paymentRedirectUrl($order->payment),
                 'transaction_status' => $order->payment->transaction_status,
                 'fraud_status' => $order->payment->fraud_status,
                 'gross_amount' => (float) $order->payment->gross_amount,

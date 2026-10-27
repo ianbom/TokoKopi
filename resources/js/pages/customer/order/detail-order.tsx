@@ -64,6 +64,8 @@ type Address = {
 type Payment = {
     payment_provider: string;
     payment_method: string | null;
+    requested_payment_method?: string | null;
+    requested_payment_method_label?: string | null;
     midtrans_order_id: string | null;
     midtrans_transaction_id: string | null;
     midtrans_snap_token: string | null;
@@ -441,10 +443,6 @@ function getMidtransReceiptUrl(payment: Payment | null): string | null {
 
     if (payment.midtrans_redirect_url) {
         return payment.midtrans_redirect_url;
-    }
-
-    if (payment.midtrans_snap_token) {
-        return `https://app.midtrans.com/snap/v2/vtweb/${payment.midtrans_snap_token}`;
     }
 
     return null;
@@ -954,9 +952,20 @@ export default function DetailOrder({ order }: Props) {
                         </SectionCard>
                         <SectionCard title="Info Pembayaran">
                             <div className="divide-y divide-hairline">
+                                {order.payment
+                                    ?.requested_payment_method_label && (
+                                    <InfoLine
+                                        icon={CreditCard}
+                                        label="Metode Dipilih"
+                                        value={
+                                            order.payment
+                                                .requested_payment_method_label
+                                        }
+                                    />
+                                )}
                                 <InfoLine
                                     icon={CreditCard}
-                                    label="Metode"
+                                    label="Metode Terkonfirmasi"
                                     value={paymentMethod}
                                 />
                                 <InfoLine

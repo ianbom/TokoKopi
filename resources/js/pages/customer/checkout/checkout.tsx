@@ -1,6 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
 import type { Icon, LatLngBoundsExpression, Map as LeafletMap } from 'leaflet';
-import { Lock, MapPinned, ShieldCheck, Ticket, Truck } from 'lucide-react';
+import {
+    Check,
+    Lock,
+    MapPinned,
+    ShieldCheck,
+    Ticket,
+    Truck,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type * as ReactLeaflet from 'react-leaflet';
 import { toast } from 'sonner';
@@ -8,6 +15,7 @@ import { CheckoutProvider, useCheckout } from '@/contexts/checkout-context';
 import type {
     CheckoutAddress,
     CheckoutItem,
+    CheckoutPaymentMethod,
     CheckoutStoreLocation,
     CheckoutSummary,
     ShippingRate,
@@ -15,8 +23,10 @@ import type {
 } from '@/contexts/checkout-context';
 import ShopLayout from '@/layouts/shop-layout';
 import { cart, home, list, manageAddress } from '@/routes';
+import { detail as orderDetail } from '@/routes/order';
 
 type Props = {
+    paymentMethods: CheckoutPaymentMethod[];
     addresses: CheckoutAddress[];
     appliedVoucher: Voucher;
     cartItems: CheckoutItem[];
@@ -155,6 +165,9 @@ function CheckoutScreen() {
         loadShippingRates,
         placeOrder,
         placingOrder,
+        paymentMethods,
+        selectedPaymentMethod,
+        selectPaymentMethod,
         removeVoucher,
         selectAddress,
         selectShippingRate,
@@ -259,8 +272,8 @@ function CheckoutScreen() {
                                 Checkout
                             </h1>
                             <p className="mt-5 max-w-xl text-sm leading-5 text-body">
-                                Pilih alamat tersimpan, ongkir Biteship,
-                                voucher, lalu bayar via Midtrans.
+                                Pilih alamat, layanan pengiriman, dan metode
+                                pembayaran. Gunakan voucher jika tersedia.
                             </p>
                         </div>
                     </div>
@@ -645,6 +658,104 @@ function CheckoutScreen() {
                                             </span>
                                         </div>
                                     </div>
+                                    <fieldset
+                                        className="mt-6 min-w-0"
+                                        disabled={placingOrder}
+                                        aria-describedby={
+                                            errors.payment_method
+                                                ? 'payment-method-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={Boolean(
+                                            errors.payment_method,
+                                        )}
+                                    >
+                                        <legend className="mb-3 text-[11px] font-semibold tracking-[0.08em] text-ink uppercase">
+                                            Metode Pembayaran
+                                        </legend>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {paymentMethods.map((method) => (
+                                                <label
+                                                    key={method.id}
+                                                    className="relative min-w-0 cursor-pointer"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="payment_method"
+                                                        value={method.id}
+                                                        aria-label={method.name}
+                                                        checked={
+                                                            selectedPaymentMethod ===
+                                                            method.id
+                                                        }
+                                                        onChange={() =>
+                                                            selectPaymentMethod(
+                                                                method.id,
+                                                            )
+                                                        }
+                                                        className="peer sr-only"
+                                                        required
+                                                    />
+                                                    <span className="flex h-16 items-center justify-center border-2 border-hairline bg-canvas px-2 peer-checked:border-ink peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink peer-disabled:cursor-wait">
+                                                        <img
+                                                            src={method.logo}
+                                                            alt=""
+                                                            className="max-h-8 w-full max-w-20 object-contain"
+                                                        />
+                                                    </span>
+                                                    {selectedPaymentMethod ===
+                                                        method.id && (
+                                                        <Check
+                                                            aria-hidden="true"
+                                                            size={14}
+                                                            strokeWidth={3}
+                                                            className="absolute top-0.5 right-0.5 bg-ink text-canvas"
+                                                        />
+                                                    )}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {paymentMethods.length === 0 && (
+                                            <p
+                                                role="alert"
+                                                className="mt-2 text-xs text-error"
+                                            >
+                                                Metode pembayaran belum
+                                                tersedia. Hubungi admin.
+                                            </p>
+                                        )}
+                                        {errors.payment_method && (
+                                            <p
+                                                id="payment-method-error"
+                                                role="alert"
+                                                className="mt-2 text-xs text-error"
+                                            >
+                                                {errors.payment_method}
+                                            </p>
+                                        )}
+                                    </fieldset>
+                                    {errors.payment && (
+                                        <p
+                                            role="alert"
+                                            className="mt-2 text-xs text-error"
+                                        >
+                                            {errors.payment}
+                                        </p>
+                                    )}
+                                    {errors.order_id &&
+                                        Number.isSafeInteger(
+                                            Number(errors.order_id),
+                                        ) &&
+                                        Number(errors.order_id) > 0 && (
+                                            <Link
+                                                href={orderDetail(
+                                                    Number(errors.order_id),
+                                                )}
+                                                className="mt-3 inline-block text-sm font-semibold text-ink underline"
+                                            >
+                                                Lanjutkan ke detail pesanan
+                                            </Link>
+                                        )}
                                     <button
                                         type="button"
                                         onClick={() => void submitOrder()}
@@ -652,6 +763,9 @@ function CheckoutScreen() {
                                             placingOrder ||
                                             checkoutUpdating ||
                                             !selectedShippingRate ||
+                                            !selectedAddressId ||
+                                            !selectedPaymentMethod ||
+                                            hasUnavailableItems ||
                                             !agreed
                                         }
                                         className="mt-6 flex h-14 w-full items-center justify-center bg-primary text-[11px] font-semibold tracking-[0.1em] text-canvas uppercase hover:bg-primary-hover active:bg-primary-active disabled:cursor-not-allowed disabled:bg-oat disabled:text-muted-soft"
@@ -659,7 +773,7 @@ function CheckoutScreen() {
                                         <Lock size={16} className="mr-2" />
                                         {placingOrder
                                             ? 'Membuat Pembayaran...'
-                                            : 'Bayar dengan Midtrans'}
+                                            : 'Bayar Sekarang'}
                                     </button>
                                     <div className="mt-8 space-y-4 border-t border-hairline pt-6">
                                         <CheckoutRouteMap
@@ -678,8 +792,8 @@ function CheckoutScreen() {
                                                     strokeWidth={1.5}
                                                 />
                                                 <p>
-                                                    Pembayaran aman didukung
-                                                    Midtrans
+                                                    Pembayaran diproses dengan
+                                                    aman
                                                 </p>
                                             </div>
                                         </div>
@@ -691,8 +805,8 @@ function CheckoutScreen() {
                                                     strokeWidth={1.5}
                                                 />
                                                 <p>
-                                                    Ongkir dihitung oleh
-                                                    Biteship
+                                                    Ongkir sesuai layanan
+                                                    pengiriman yang dipilih
                                                 </p>
                                             </div>
                                         </div>

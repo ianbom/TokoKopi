@@ -164,6 +164,7 @@ it('preserves shipping selection through voucher changes and order placement', f
         'customer_address_id' => $address->id,
         'shipping_rate_id' => $rate['id'],
         'idempotency_key' => (string) Str::uuid(),
+        'payment_method' => 'bca_va',
         'no_return_refund_agreed' => true,
     ])->assertSuccessful();
     $this->assertDatabaseHas('orders', [

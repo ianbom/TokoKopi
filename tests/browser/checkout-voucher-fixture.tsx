@@ -40,8 +40,19 @@ function Probe() {
             >
                 Select
             </button>
+            <button onClick={() => checkout.selectPaymentMethod('bca_va')}>
+                Select payment
+            </button>
             <button onClick={() => void checkout.placeOrder('', true)}>
                 Order
+            </button>
+            <button
+                onClick={() => {
+                    void checkout.placeOrder('', true);
+                    void checkout.placeOrder('', true);
+                }}
+            >
+                Double order
             </button>
             <pre id="state">
                 {JSON.stringify({
@@ -66,6 +77,13 @@ export function mount(rate: ShippingRate | null) {
             appliedVoucher={null}
             cartItems={[]}
             defaultAddressId={1}
+            paymentMethods={[
+                {
+                    id: 'bca_va',
+                    name: 'BCA Virtual Account',
+                    logo: '/images/payments/bca_va.png',
+                },
+            ]}
             selectedShippingRate={rate}
             storeLocation={{ latitude: null, longitude: null }}
             summary={{

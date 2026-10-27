@@ -25,6 +25,8 @@ type Payment = {
     customer: string | null;
     payment_provider: string;
     payment_method: string | null;
+    requested_payment_method: string | null;
+    requested_payment_method_label: string | null;
     midtrans_order_id: string | null;
     midtrans_transaction_id: string | null;
     midtrans_snap_token: string | null;
@@ -94,9 +96,15 @@ export default function PaymentShow({ payment }: Props) {
                     />
                     <Metric label="Fraud" value={payment.fraud_status ?? '-'} />
                     <Metric
-                        label="Method"
+                        label="Metode Terkonfirmasi"
                         value={payment.payment_method ?? '-'}
                     />
+                    {payment.requested_payment_method_label && (
+                        <Metric
+                            label="Metode Dipilih"
+                            value={payment.requested_payment_method_label}
+                        />
+                    )}
                 </div>
                 <div className="grid gap-6 lg:grid-cols-2">
                     <Card>

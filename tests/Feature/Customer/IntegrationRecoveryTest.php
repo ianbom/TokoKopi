@@ -67,7 +67,7 @@ function recoveryCheckoutPayload($test, User $user, CustomerAddress $address): a
     $rateId = $test->postJson(route('checkout.shipping-rates'), ['customer_address_id' => $address->id])->assertSuccessful()->json('rates.0.id');
     $test->postJson(route('checkout.shipping-rate'), ['shipping_rate_id' => $rateId])->assertSuccessful()->assertJsonPath('summary.total', 3);
 
-    return ['customer_address_id' => $address->id, 'shipping_rate_id' => $rateId, 'idempotency_key' => (string) Str::uuid(), 'no_return_refund_agreed' => true];
+    return ['customer_address_id' => $address->id, 'shipping_rate_id' => $rateId, 'idempotency_key' => (string) Str::uuid(), 'payment_method' => 'bca_va', 'no_return_refund_agreed' => true];
 }
 
 function recoveryPayment(array $attributes = []): Payment

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Enums\CheckoutPaymentMethod;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlaceOrderRequest extends FormRequest
@@ -14,6 +15,7 @@ class PlaceOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'payment_method' => CheckoutPaymentMethod::rules(),
             'customer_address_id' => ['required', 'integer'],
             'shipping_rate_id' => ['required', 'string'],
             'idempotency_key' => ['required', 'string', 'max:100'],

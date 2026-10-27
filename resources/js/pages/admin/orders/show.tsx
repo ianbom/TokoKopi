@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+    index as ordersIndex,
+    updateStatus,
+} from '@/actions/App/Http/Controllers/Admin/OrderController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -33,10 +37,6 @@ import {
     refreshTracking,
     show as shipmentShow,
 } from '@/routes/admin/shipments';
-import {
-    index as ordersIndex,
-    updateStatus,
-} from '@/actions/App/Http/Controllers/Admin/OrderController';
 
 interface OrderItem {
     id: number;
@@ -75,6 +75,8 @@ interface Payment {
     id: number;
     payment_provider?: string | null;
     payment_method?: string | null;
+    requested_payment_method?: string | null;
+    requested_payment_method_label?: string | null;
     midtrans_order_id?: string | null;
     midtrans_transaction_id?: string | null;
     transaction_status?: string | null;
@@ -1446,7 +1448,12 @@ function PaymentTab({ order }: { order: Order }) {
                         <Detail label="Provider">
                             {payment.payment_provider ?? '—'}
                         </Detail>
-                        <Detail label="Method">
+                        {payment.requested_payment_method_label && (
+                            <Detail label="Metode Dipilih">
+                                {payment.requested_payment_method_label}
+                            </Detail>
+                        )}
+                        <Detail label="Metode Terkonfirmasi">
                             {payment.payment_method ?? '—'}
                         </Detail>
                         <Detail label="Transaction Status">

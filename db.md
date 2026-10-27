@@ -506,6 +506,7 @@ Table payments {
   order_id bigint [not null, unique]
   payment_provider varchar(50) [not null, default: 'midtrans']
   payment_method varchar(100)
+  requested_payment_method varchar(100) [note: 'Immutable checkout Snap channel snapshot; nullable for historical payments. payment_method remains the provider-confirmed payment_type.']
 
   midtrans_order_id varchar(100) [unique]
   midtrans_transaction_id varchar(150)

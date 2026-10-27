@@ -2,6 +2,7 @@
 
 namespace App\Services\Integrations;
 
+use App\Enums\CheckoutPaymentMethod;
 use App\Exceptions\UncertainSnapCreationException;
 use App\Models\Order;
 use App\Models\Payment;
@@ -17,11 +18,20 @@ class MidtransService
 
     public function createSnapTransaction(Order $order): array
     {
-        $order->load(['items', 'address']);
+        $order->load(['items', 'address', 'payment']);
+        $payment = $order->payment;
+        if (! $payment || $payment->payment_provider !== 'midtrans') {
+            throw ValidationException::withMessages(['payment' => 'Payment belum tersimpan.']);
+        }
+        $method = $payment->requested_payment_method;
+        if ($method !== null && ! CheckoutPaymentMethod::tryFrom($method)) {
+            throw ValidationException::withMessages(['payment' => 'Metode pembayaran tersimpan tidak valid.']);
+        }
 
         $client = $this->snapClient();
         try {
             $response = $client->post('/snap/v1/transactions', [
+                ...($method !== null ? ['enabled_payments' => [$method]] : []),
                 'transaction_details' => [
                     'order_id' => $order->order_number,
                     'gross_amount' => (int) round((float) $order->grand_total),
@@ -63,12 +73,40 @@ class MidtransService
         $payload = $response->json();
         $token = $payload['token'] ?? null;
         $redirect = $payload['redirect_url'] ?? null;
-        if (! is_string($token) || trim($token) === '' || ! is_string($redirect)
-            || ! filter_var($redirect, FILTER_VALIDATE_URL) || parse_url($redirect, PHP_URL_SCHEME) !== 'https') {
+        if (! is_string($token) || ! preg_match('/\A[A-Za-z0-9_-]{1,255}\z/', $token)
+            || ! is_string($redirect) || ! $this->isValidSnapRedirect($redirect)) {
             throw new UncertainSnapCreationException('Midtrans belum memberikan sesi pembayaran yang valid.');
         }
 
         return $payload;
+    }
+
+    public function isValidSnapRedirect(string $url): bool
+    {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+        $parts = parse_url($url);
+
+        return is_array($parts) && ($parts['scheme'] ?? null) === 'https'
+            && ($parts['host'] ?? null) === parse_url($this->snapBaseUrl(), PHP_URL_HOST)
+            && ! isset($parts['user']) && ! isset($parts['pass'])
+            && (! isset($parts['port']) || $parts['port'] === 443)
+            && str_starts_with($parts['path'] ?? '', '/snap/');
+    }
+
+    public function paymentRedirectUrl(?Payment $payment): ?string
+    {
+        if (! $payment) {
+            return null;
+        }
+        if (filled($payment->midtrans_redirect_url)) {
+            return $this->isValidSnapRedirect($payment->midtrans_redirect_url) ? $payment->midtrans_redirect_url : null;
+        }
+        $token = $payment->midtrans_snap_token;
+
+        return is_string($token) && preg_match('/\A[A-Za-z0-9_-]{1,255}\z/', $token)
+            ? $this->snapBaseUrl().'/snap/v2/vtweb/'.$token : null;
     }
 
     public function transactionStatus(string $midtransOrderId): array

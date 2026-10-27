@@ -55,6 +55,15 @@ class SyncMidtransPaymentAction
                 $error = 'Nominal Midtrans tidak cocok dengan payment lokal.';
                 $eventType = 'rejected_amount_mismatch';
             }
+            if (! $error && isset($payload['currency']) && $payload['currency'] !== $payment->currency) {
+                $error = 'Mata uang Midtrans tidak cocok dengan payment lokal.';
+                $eventType = 'rejected_currency_mismatch';
+            }
+            if (! $error && filled($payment->midtrans_transaction_id) && isset($payload['transaction_id'])
+                && $payload['transaction_id'] !== $payment->midtrans_transaction_id) {
+                $error = 'Transaction ID Midtrans tidak cocok dengan payment lokal.';
+                $eventType = 'rejected_reference_mismatch';
+            }
             $payment->logs()->create([
                 'order_id' => $payment->order_id, 'provider' => $payment->payment_provider,
                 'event_type' => $eventType, 'transaction_status' => is_string($payload['transaction_status'] ?? null) ? $payload['transaction_status'] : null,

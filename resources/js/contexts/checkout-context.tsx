@@ -82,6 +82,12 @@ export type CheckoutStoreLocation = {
     longitude: string | null;
 };
 
+export type CheckoutPaymentMethod = {
+    id: string;
+    name: string;
+    logo: string;
+};
+
 type CheckoutContextValue = {
     addresses: CheckoutAddress[];
     appliedVoucher: Voucher;
@@ -94,6 +100,9 @@ type CheckoutContextValue = {
     ) => Promise<void>;
     placeOrder: (notes: string, agreed: boolean) => Promise<string | null>;
     placingOrder: boolean;
+    paymentMethods: CheckoutPaymentMethod[];
+    selectedPaymentMethod: string | null;
+    selectPaymentMethod: (method: string) => void;
     removeVoucher: () => Promise<void>;
     selectAddress: (addressId: number) => Promise<void>;
     selectShippingRate: (rate: ShippingRate) => Promise<void>;
@@ -143,19 +152,38 @@ async function jsonRequest(
     method: string,
     body?: Record<string, unknown>,
 ) {
-    const response = await fetch(url, {
-        method,
-        headers: csrfHeaders(),
-        body: body ? JSON.stringify(body) : undefined,
-    });
+    let response: Response;
+
+    try {
+        response = await fetch(url, {
+            method,
+            headers: csrfHeaders(),
+            body: body ? JSON.stringify(body) : undefined,
+        });
+    } catch {
+        throw {
+            checkout:
+                'Koneksi terputus. Coba kembali tanpa mengubah metode pembayaran; hubungi admin jika status pembayaran belum jelas.',
+        };
+    }
+
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const errors = payload.errors ?? {
-            checkout: payload.message ?? 'Request failed.',
-        };
+        const errors =
+            response.status === 422 && payload.errors
+                ? payload.errors
+                : {
+                      checkout:
+                          'Permintaan belum berhasil. Muat ulang halaman atau hubungi admin jika pembayaran sedang diproses.',
+                  };
 
-        throw errors;
+        throw Object.fromEntries(
+            Object.entries(errors).map(([key, value]) => [
+                key,
+                Array.isArray(value) ? String(value[0]) : String(value),
+            ]),
+        );
     }
 
     return payload;
@@ -167,6 +195,7 @@ export function CheckoutProvider({
     cartItems,
     children,
     defaultAddressId,
+    paymentMethods,
     selectedShippingRate,
     storeLocation,
     summary,
@@ -176,6 +205,7 @@ export function CheckoutProvider({
     cartItems: CheckoutItem[];
     children: ReactNode;
     defaultAddressId: number | null;
+    paymentMethods: CheckoutPaymentMethod[];
     selectedShippingRate: ShippingRate | null;
     storeLocation: CheckoutStoreLocation;
     summary: CheckoutSummary;
@@ -194,6 +224,21 @@ export function CheckoutProvider({
     const [shippingRatesLoading, setShippingRatesLoading] = useState(false);
     const [placingOrder, setPlacingOrder] = useState(false);
     const [voucherUpdating, setVoucherUpdating] = useState(false);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+        string | null
+    >(null);
+    const orderRequestInProgress = useRef(false);
+    const selectPaymentMethod = useCallback(
+        (method: string) => {
+            if (
+                !orderRequestInProgress.current &&
+                paymentMethods.some((option) => option.id === method)
+            ) {
+                setSelectedPaymentMethod(method);
+            }
+        },
+        [paymentMethods],
+    );
     const shippingRequestInProgress = useRef(false);
     const voucherRequestInProgress = useRef(false);
     const [idempotencyKey] = useState(checkoutIdempotencyKey);
@@ -370,7 +415,7 @@ export function CheckoutProvider({
     const placeOrder = useCallback(
         async (notes: string, agreed: boolean) => {
             if (
-                placingOrder ||
+                orderRequestInProgress.current ||
                 shippingRequestInProgress.current ||
                 voucherRequestInProgress.current
             ) {
@@ -385,6 +430,29 @@ export function CheckoutProvider({
                 return null;
             }
 
+            if (
+                !selectedPaymentMethod ||
+                !paymentMethods.some(
+                    (method) => method.id === selectedPaymentMethod,
+                )
+            ) {
+                setErrors({
+                    payment_method: 'Pilih metode pembayaran terlebih dahulu.',
+                });
+
+                return null;
+            }
+
+            if (!agreed || cartItems.some((item) => !item.is_available)) {
+                setErrors({
+                    checkout:
+                        'Periksa ketersediaan produk dan setujui ketentuan checkout.',
+                });
+
+                return null;
+            }
+
+            orderRequestInProgress.current = true;
             setPlacingOrder(true);
             setErrors({});
 
@@ -396,6 +464,7 @@ export function CheckoutProvider({
                         customer_address_id: currentAddressId,
                         shipping_rate_id: currentRate.id,
                         idempotency_key: idempotencyKey,
+                        payment_method: selectedPaymentMethod,
                         voucher_code: currentVoucher?.code ?? null,
                         notes,
                         no_return_refund_agreed: agreed,
@@ -419,6 +488,7 @@ export function CheckoutProvider({
 
                 return null;
             } finally {
+                orderRequestInProgress.current = false;
                 setPlacingOrder(false);
             }
         },
@@ -427,7 +497,9 @@ export function CheckoutProvider({
             currentRate,
             currentVoucher,
             idempotencyKey,
-            placingOrder,
+            selectedPaymentMethod,
+            paymentMethods,
+            cartItems,
         ],
     );
 
@@ -441,6 +513,9 @@ export function CheckoutProvider({
             loadShippingRates,
             placeOrder,
             placingOrder,
+            paymentMethods,
+            selectedPaymentMethod,
+            selectPaymentMethod,
             removeVoucher,
             selectAddress,
             selectShippingRate,
@@ -464,6 +539,9 @@ export function CheckoutProvider({
             loadShippingRates,
             placeOrder,
             placingOrder,
+            paymentMethods,
+            selectedPaymentMethod,
+            selectPaymentMethod,
             rates,
             removeVoucher,
             selectAddress,

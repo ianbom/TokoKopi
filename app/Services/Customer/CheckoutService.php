@@ -5,6 +5,7 @@ namespace App\Services\Customer;
 use App\Actions\Stock\FinalizeOrderStockAction;
 use App\Actions\Stock\ReleaseOrderStockAction;
 use App\Actions\Vouchers\ReleaseVoucherReservationAction;
+use App\Enums\CheckoutPaymentMethod;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CustomerAddress;
@@ -22,6 +23,8 @@ use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -49,6 +52,7 @@ class CheckoutService
 
         return [
             'cartItems' => $items->values()->all(),
+            'paymentMethods' => CheckoutPaymentMethod::options(),
             'addresses' => $addresses,
             'defaultAddressId' => collect($addresses)->firstWhere('is_default', true)['id'] ?? ($addresses[0]['id'] ?? null),
             'storeLocation' => [
@@ -169,6 +173,10 @@ class CheckoutService
 
     public function placeOrder(User $user, array $payload): array
     {
+        Validator::make($payload, ['payment_method' => CheckoutPaymentMethod::rules()])->validate();
+        if (! Schema::hasColumn('payments', 'requested_payment_method')) {
+            throw ValidationException::withMessages(['checkout' => 'Pembayaran sementara belum tersedia. Hubungi admin untuk menyelesaikan pembaruan sistem.']);
+        }
         $this->forgetExpiredCheckoutSession();
 
         $idempotencyKey = (string) $payload['idempotency_key'];
@@ -179,20 +187,18 @@ class CheckoutService
             ->first();
 
         if ($existingOrder) {
-            if ($existingOrder->payment?->midtrans_redirect_url) {
-                return [
-                    'order_id' => $existingOrder->id,
-                    'payment_id' => $existingOrder->payment->id,
-                    'redirect_url' => $existingOrder->payment->midtrans_redirect_url,
-                ];
-            }
-
-            throw ValidationException::withMessages(['checkout' => 'Checkout sebelumnya masih diproses atau gagal. Muat ulang checkout untuk mencoba lagi.']);
+            return $this->existingCheckout($existingOrder, $payload['payment_method']);
         }
 
         $this->validateSelectedShippingRate($user, (int) $payload['customer_address_id'], (string) $payload['shipping_rate_id']);
 
-        $payment = DB::transaction(function () use ($user, $payload): Payment {
+        $result = DB::transaction(function () use ($user, $payload): Payment|array {
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $existingOrder = Order::query()->with('payment')->where('user_id', $user->id)
+                ->where('checkout_idempotency_key', $payload['idempotency_key'])->lockForUpdate()->first();
+            if ($existingOrder) {
+                return $this->existingCheckout($existingOrder, $payload['payment_method']);
+            }
             $address = $this->ownedAddress($user, (int) $payload['customer_address_id']);
             $rate = $this->rateFromPayload((string) $payload['shipping_rate_id']);
             $items = $this->lockedCartItems($user);
@@ -350,6 +356,8 @@ class CheckoutService
 
             $payment = $order->payment()->create([
                 'payment_provider' => 'midtrans',
+                'requested_payment_method' => $payload['payment_method'],
+                'raw_response' => ['snap_creation_in_progress' => true],
                 'midtrans_order_id' => $order->order_number,
                 'gross_amount' => $order->grand_total,
                 'currency' => 'IDR',
@@ -360,6 +368,10 @@ class CheckoutService
             return $payment;
         }, 3);
 
+        if (is_array($result)) {
+            return $result;
+        }
+        $payment = $result;
         try {
             $snap = $this->midtrans->createSnapTransaction($payment->order()->with(['items', 'address'])->firstOrFail());
             DB::transaction(function () use ($payment, $snap): void {
@@ -395,7 +407,7 @@ class CheckoutService
                 $payment->update(['transaction_status' => 'snap_failed', 'failure_reason' => 'Pembuatan pembayaran ditolak.', 'raw_response' => ['snap_creation_rejected' => true]]);
             });
 
-            throw ValidationException::withMessages(['payment' => $exception instanceof ValidationException
+            throw ValidationException::withMessages(['order_id' => (string) $payment->order_id, 'payment' => $exception instanceof ValidationException
                 ? 'Pembuatan pembayaran ditolak. Periksa checkout dan coba lagi.'
                 : 'Hasil pembayaran belum terkonfirmasi. Jangan ulangi checkout; hubungi admin untuk sinkronisasi.']);
         }
@@ -410,6 +422,26 @@ class CheckoutService
             'payment_id' => $payment->id,
             'redirect_url' => $payment->midtrans_redirect_url,
         ];
+    }
+
+    private function existingCheckout(Order $order, string $method): array
+    {
+        $payment = $order->payment;
+        if ($payment?->requested_payment_method !== null && $payment->requested_payment_method !== $method) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Metode pembayaran berbeda dari checkout sebelumnya. Lanjutkan melalui detail pesanan.',
+                'order_id' => (string) $order->id,
+            ]);
+        }
+        if (filled($payment?->midtrans_redirect_url) && in_array($order->payment_status, ['pending', 'manual_review'], true)
+            && $this->midtrans->isValidSnapRedirect($payment->midtrans_redirect_url)) {
+            return ['order_id' => $order->id, 'payment_id' => $payment->id, 'redirect_url' => $payment->midtrans_redirect_url];
+        }
+
+        throw ValidationException::withMessages([
+            'checkout' => 'Checkout sebelumnya sudah tercatat. Lanjutkan melalui detail pesanan; jangan membuat pembayaran ulang.',
+            'order_id' => (string) $order->id,
+        ]);
     }
 
     private function cartItems(User $user): Collection

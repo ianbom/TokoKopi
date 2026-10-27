@@ -112,6 +112,9 @@ async function setup(
                 },
             });
         } else if (path === '/checkout/place-order') {
+            expect(route.request().postDataJSON().payment_method).toBe(
+                'bca_va',
+            );
             orderRequests++;
             await route.fulfill(
                 serverSelection
@@ -130,6 +133,9 @@ async function setup(
         }
     });
     await page.goto(viteUrl + '/');
+    await page
+        .getByRole('button', { name: 'Select payment', exact: true })
+        .click();
     await expect.poll(async () => (await state(page)).rates.length).toBe(1);
     await expect
         .poll(async () => Boolean((await state(page)).loading))
@@ -141,6 +147,18 @@ async function setup(
         voucherRequests: () => voucherRequests,
     };
 }
+
+test('same-tick submissions send only one checkout request', async ({
+    page,
+}) => {
+    const requests = await setup(page);
+    await page
+        .getByRole('button', { name: 'Double order', exact: true })
+        .click();
+    await expect.poll(() => requests.orderRequests()).toBe(1);
+    await page.waitForTimeout(100);
+    expect(requests.orderRequests()).toBe(1);
+});
 
 test('apply and remove voucher preserve shipping selection and correct totals without refreshing rates', async ({
     page,

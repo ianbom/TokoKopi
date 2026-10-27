@@ -54,6 +54,7 @@ return [
     'midtrans' => [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        'enabled_payments' => ['bca_va', 'bni_va', 'bri_va', 'echannel', 'permata_va', 'other_qris', 'gopay', 'shopeepay'],
     ],
 
     'checkout' => [
