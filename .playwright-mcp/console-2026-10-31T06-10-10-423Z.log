@@ -1,0 +1,8 @@
+[     180ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8000/_boost/browser-logs @ http://127.0.0.1:8000/my-order?per_page=3:33
+[     262ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:8000/my-order?per_page=3:92
+[  153949ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8000/_boost/browser-logs @ http://127.0.0.1:8000/my-order?per_page=3:33
+[  153988ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:8000/my-order?per_page=3:92
+[  198480ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://[::1]:5173/resources/js/pages/customer/order/my-order.tsx?t=1793427208601:0
+[  198484ms] [ERROR] [vite] Failed to reload /resources/js/pages/customer/order/my-order.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:8000/my-order?per_page=3:92
+[  269442ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8000/_boost/browser-logs @ http://127.0.0.1:8000/my-order?per_page=3:33
+[  269488ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:8000/my-order?per_page=3:92

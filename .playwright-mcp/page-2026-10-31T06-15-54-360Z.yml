@@ -1,0 +1,208 @@
+- generic [ref=f10e3]:
+  - banner [ref=f10e4]:
+    - navigation [ref=f10e5]:
+      - generic [ref=f10e6]:
+        - link "Shop" [ref=f10e7] [cursor=pointer]:
+          - /url: /list
+        - link "Home" [ref=f10e8] [cursor=pointer]:
+          - /url: /
+        - link "Locations" [ref=f10e9] [cursor=pointer]:
+          - /url: /location
+        - link "Stories" [ref=f10e10] [cursor=pointer]:
+          - /url: /story
+      - link "Deklase home" [ref=f10e11] [cursor=pointer]:
+        - /url: /
+        - img "Deklase" [ref=f10e12]
+      - generic [ref=f10e13]:
+        - link "Account" [ref=f10e14] [cursor=pointer]:
+          - /url: /my-profile
+        - link "Cart (05 items)" [ref=f10e15] [cursor=pointer]:
+          - /url: /my-cart
+          - generic [ref=f10e20]: "05"
+  - main [ref=f10e21]:
+    - generic [ref=f10e23]:
+      - generic [ref=f10e24]:
+        - navigation [ref=f10e25]:
+          - link "Beranda" [ref=f10e26] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f10e27]: /
+          - link "Akun Saya" [ref=f10e28] [cursor=pointer]:
+            - /url: /my-profile
+          - generic [ref=f10e29]: /
+          - generic [ref=f10e30]: Pesanan Saya
+        - heading "Pesanan Saya" [level=1] [ref=f10e31]
+      - generic [ref=f10e32]:
+        - paragraph [ref=f10e33]: Member space
+        - paragraph [ref=f10e34]: Lacak dan kelola pembelian terbarumu.
+    - main [ref=f10e35]:
+      - generic [ref=f10e36]:
+        - complementary [ref=f10e37]:
+          - paragraph [ref=f10e39]: Akun Saya
+          - navigation "Navigasi akun" [ref=f10e40]:
+            - link "01 Pengaturan Profil" [ref=f10e41] [cursor=pointer]:
+              - /url: /my-profile
+              - generic [ref=f10e42]: "01"
+              - generic [ref=f10e46]: Pengaturan Profil
+            - link "02 Pesanan Saya" [ref=f10e47] [cursor=pointer]:
+              - /url: /my-order
+              - generic [ref=f10e48]: "02"
+              - generic [ref=f10e53]: Pesanan Saya
+            - link "03 Buku Alamat" [ref=f10e54] [cursor=pointer]:
+              - /url: /address
+              - generic [ref=f10e55]: "03"
+              - generic [ref=f10e59]: Buku Alamat
+            - link "04 Wishlist Saya" [ref=f10e60] [cursor=pointer]:
+              - /url: /wishlist
+              - generic [ref=f10e61]: "04"
+              - generic [ref=f10e64]: Wishlist Saya
+            - link "05 Notifikasi" [ref=f10e65] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=f10e66]: "05"
+              - generic [ref=f10e70]: Notifikasi
+            - button "06 Keluar" [ref=f10e71]:
+              - generic [ref=f10e72]: "06"
+              - generic [ref=f10e76]: Keluar
+        - generic [ref=f10e77]:
+          - generic [ref=f10e78]:
+            - searchbox "Cari nomor pesanan atau nama produk" [ref=f10e83]
+            - button "Cari" [ref=f10e84]
+          - generic [ref=f10e85]:
+            - article [ref=f10e86]:
+              - generic [ref=f10e87]:
+                - generic [ref=f10e88]:
+                  - paragraph [ref=f10e89]: "Pesanan #ORD-20261014-SAYDDJ"
+                  - paragraph [ref=f10e90]: Oct 14, 2026 • 03:36 PM
+                - generic [ref=f10e91]:
+                  - paragraph [ref=f10e92]: Pembayaran
+                  - generic [ref=f10e93]: Dibayar
+                - generic [ref=f10e94]:
+                  - paragraph [ref=f10e95]: Total
+                  - paragraph [ref=f10e96]: Rp 130.000
+                - generic [ref=f10e97]:
+                  - paragraph [ref=f10e98]: Status Pesanan
+                  - generic [ref=f10e99]: Shipment Created
+              - generic [ref=f10e100]:
+                - generic [ref=f10e102]:
+                  - img "Requiem Toraja Natural" [ref=f10e104]
+                  - generic [ref=f10e105]:
+                    - heading "Requiem Toraja Natural" [level=4] [ref=f10e106]
+                    - paragraph [ref=f10e107]: 200gram • Whole Bean
+                    - paragraph [ref=f10e108]: "Jml: 1"
+                - link "Lihat Detail" [ref=f10e110] [cursor=pointer]:
+                  - /url: /my-order/3
+            - article [ref=f10e111]:
+              - generic [ref=f10e112]:
+                - generic [ref=f10e113]:
+                  - paragraph [ref=f10e114]: "Pesanan #ORD-20261014-0PHCSZ"
+                  - paragraph [ref=f10e115]: Oct 14, 2026 • 03:30 PM
+                - generic [ref=f10e116]:
+                  - paragraph [ref=f10e117]: Pembayaran
+                  - generic [ref=f10e118]: Dibayar
+                - generic [ref=f10e119]:
+                  - paragraph [ref=f10e120]: Total
+                  - paragraph [ref=f10e121]: Rp 116.000
+                - generic [ref=f10e122]:
+                  - paragraph [ref=f10e123]: Status Pesanan
+                  - generic [ref=f10e124]: Selesai
+              - generic [ref=f10e125]:
+                - generic [ref=f10e127]:
+                  - img "Requiem Karo Blueberry" [ref=f10e129]
+                  - generic [ref=f10e130]:
+                    - heading "Requiem Karo Blueberry" [level=4] [ref=f10e131]
+                    - paragraph [ref=f10e132]: 200gram • Whole Bean
+                    - paragraph [ref=f10e133]: "Jml: 1"
+                - generic [ref=f10e134]:
+                  - link "Lihat Detail" [ref=f10e135] [cursor=pointer]:
+                    - /url: /my-order/2
+                  - link "Beli Lagi" [ref=f10e136] [cursor=pointer]:
+                    - /url: /list
+            - article [ref=f10e137]:
+              - generic [ref=f10e138]:
+                - generic [ref=f10e139]:
+                  - paragraph [ref=f10e140]: "Pesanan #ORD-20261012-QKMP1X"
+                  - paragraph [ref=f10e141]: Oct 12, 2026 • 04:50 PM
+                - generic [ref=f10e142]:
+                  - paragraph [ref=f10e143]: Pembayaran
+                  - generic [ref=f10e144]: Menunggu
+                - generic [ref=f10e145]:
+                  - paragraph [ref=f10e146]: Total
+                  - paragraph [ref=f10e147]: Rp 135.000
+                - generic [ref=f10e148]:
+                  - paragraph [ref=f10e149]: Status Pesanan
+                  - generic [ref=f10e150]: Menunggu Pembayaran
+              - generic [ref=f10e151]:
+                - generic [ref=f10e153]:
+                  - img "Gayo Wine" [ref=f10e155]
+                  - generic [ref=f10e156]:
+                    - heading "Gayo Wine" [level=4] [ref=f10e157]
+                    - paragraph [ref=f10e158]: 200gram • Whole Bean
+                    - paragraph [ref=f10e159]: "Jml: 1"
+                - generic [ref=f10e160]:
+                  - link "Bayar Sekarang" [ref=f10e161] [cursor=pointer]:
+                    - /url: https://app.sandbox.midtrans.com/snap/v4/redirection/6ee6877c-d676-42b0-8083-04e20d06a961
+                  - link "Lihat Detail" [ref=f10e162] [cursor=pointer]:
+                    - /url: /my-order/1
+            - generic [ref=f10e163]:
+              - generic [ref=f10e164]: Menampilkan 6-8 dari 8 pesanan
+              - generic [ref=f10e165]:
+                - link "Previous" [ref=f10e166] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/my-order?per_page=5&page=1
+                - link "1" [ref=f10e170] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/my-order?per_page=5&page=1
+                - link "2" [ref=f10e171] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/my-order?per_page=5&page=2
+                - generic [ref=f10e172]: Next
+  - region "Notifications alt+T"
+  - contentinfo [ref=f10e176]:
+    - generic [ref=f10e177]:
+      - generic [ref=f10e178]:
+        - heading "Good coffee. Occasional emails." [level=2] [ref=f10e179]: Good coffee.Occasional emails.
+        - generic [ref=f10e180]:
+          - generic [ref=f10e181]: Email address
+          - textbox "Email address" [ref=f10e182]:
+            - /placeholder: Your email
+          - button "Join →" [ref=f10e183]
+      - generic [ref=f10e184]:
+        - heading "Shop" [level=3] [ref=f10e185]
+        - generic [ref=f10e186]:
+          - link "Coffee" [ref=f10e187] [cursor=pointer]:
+            - /url: /list
+          - link "Subscriptions" [ref=f10e188] [cursor=pointer]:
+            - /url: "#subscription"
+          - link "Bundles" [ref=f10e189] [cursor=pointer]:
+            - /url: "#rituals"
+          - link "Merchandise" [ref=f10e190] [cursor=pointer]:
+            - /url: /
+      - generic [ref=f10e191]:
+        - heading "Deklase" [level=3] [ref=f10e192]
+        - generic [ref=f10e193]:
+          - link "Stories" [ref=f10e194] [cursor=pointer]:
+            - /url: /story
+          - link "Newsletter" [ref=f10e195] [cursor=pointer]:
+            - /url: "#newsletter"
+          - link "Tentang kopi kami" [ref=f10e196] [cursor=pointer]:
+            - /url: /
+          - link "Semua kopi" [ref=f10e197] [cursor=pointer]:
+            - /url: /list
+          - link "Instagram" [ref=f10e198] [cursor=pointer]:
+            - /url: https://instagram.com/declasseid
+      - generic [ref=f10e199]:
+        - heading "Follow" [level=3] [ref=f10e200]
+        - generic [ref=f10e201]:
+          - link "Instagram" [ref=f10e202] [cursor=pointer]:
+            - /url: "#"
+          - link "TikTok" [ref=f10e203] [cursor=pointer]:
+            - /url: "#"
+          - link "Tokopedia" [ref=f10e204] [cursor=pointer]:
+            - /url: "#"
+          - link "Shopee" [ref=f10e205] [cursor=pointer]:
+            - /url: "#"
+    - generic [ref=f10e206]:
+      - generic [ref=f10e207]: © 2026 Deklase Coffee
+      - generic [ref=f10e208]:
+        - link "Privacy" [ref=f10e209] [cursor=pointer]:
+          - /url: /privacy-policy
+        - link "Shipping" [ref=f10e210] [cursor=pointer]:
+          - /url: /shipping-policy
+        - link "Terms" [ref=f10e211] [cursor=pointer]:
+          - /url: "#"

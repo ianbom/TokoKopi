@@ -5,6 +5,8 @@ export function cleanPageLabel(
     const cleanLabel = label
         .replace('&laquo;', '')
         .replace('&raquo;', '')
+        .replace('«', '')
+        .replace('»', '')
         .trim();
 
     if (!normalizeNavigationLabels) {

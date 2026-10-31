@@ -96,6 +96,7 @@ test('preview keeps regular and sale prices on the same variant', () => {
         assert.equal(selection.previewVariant, variant);
         assert.equal(selection.previewPrice, sale ?? 120000);
     }
+
     assert.equal(
         getVariantSelection([], undefined, undefined).previewVariant,
         null,

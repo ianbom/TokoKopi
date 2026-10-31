@@ -7,6 +7,8 @@ test('admin navigation labels become readable button text when enabled', () => {
     assert.equal(cleanPageLabel('pagination.next', true), 'Next');
     assert.equal(cleanPageLabel('&laquo; Previous', true), 'Previous');
     assert.equal(cleanPageLabel('Next &raquo;', true), 'Next');
+    assert.equal(cleanPageLabel('« Previous', true), 'Previous');
+    assert.equal(cleanPageLabel('Next »', true), 'Next');
 });
 
 test('page numbers and ellipses remain unchanged', () => {

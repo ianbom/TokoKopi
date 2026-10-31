@@ -49,10 +49,6 @@ const formatPrice = (value: number) =>
         .trim();
 
 export default function MyWishlist({ wishlistItems, summary }: Props) {
-    const visibleWishlistItems = wishlistItems.filter(
-        (item) => item.is_available,
-    );
-
     return (
         <ProfileLayout
             title="Wishlist Saya"
@@ -81,9 +77,9 @@ export default function MyWishlist({ wishlistItems, summary }: Props) {
                     </div>
                 </div>
 
-                {visibleWishlistItems.length > 0 ? (
+                {wishlistItems.length > 0 ? (
                     <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-5 md:gap-y-10 xl:grid-cols-4">
-                        {visibleWishlistItems.map((item, index) => (
+                        {wishlistItems.map((item, index) => (
                             <WishlistTile
                                 key={item.id}
                                 item={item}
@@ -115,6 +111,7 @@ export default function MyWishlist({ wishlistItems, summary }: Props) {
 
 function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
     const productHref = detail.url({ query: { product: item.slug } });
+    const isSoldOut = !item.is_available || item.available_stock <= 0;
 
     const removeItem = (event: MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
@@ -136,7 +133,9 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                     alt={item.title}
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+                    className={`h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03] ${
+                        isSoldOut ? 'opacity-65 grayscale' : ''
+                    }`}
                 />
 
                 <button
@@ -159,6 +158,14 @@ function WishlistTile({ item, index }: { item: WishlistItem; index: number }) {
                             title={color.name}
                         />
                     ))}
+                </div>
+            )}
+
+            {isSoldOut && (
+                <div className="mt-2">
+                    <span className="inline-block bg-teal px-2.5 py-1 text-[9px] font-semibold tracking-[0.12em] text-white uppercase">
+                        Stok Habis
+                    </span>
                 </div>
             )}
 

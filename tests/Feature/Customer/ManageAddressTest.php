@@ -140,6 +140,43 @@ it('keeps only one default address for each user', function () {
     expect($second->fresh()?->is_default)->toBeFalse();
 });
 
+it('validates required fields with specific Indonesian messages when creating address', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from(route('manage-address'))
+        ->post(route('manage-address.store'), [])
+        ->assertSessionHasErrors([
+            'recipient_name' => 'Nama penerima wajib diisi.',
+            'recipient_phone' => 'Nomor telepon wajib diisi.',
+            'biteship_area_id' => 'Pilih area pengiriman melalui pencarian kode pos.',
+            'province' => 'Provinsi wajib diisi (pilih area dari pencarian kode pos).',
+            'city' => 'Kota wajib diisi (pilih area dari pencarian kode pos).',
+            'district' => 'Kecamatan wajib diisi (pilih area dari pencarian kode pos).',
+            'postal_code' => 'Kode pos wajib diisi (pilih area dari pencarian kode pos).',
+            'full_address' => 'Alamat lengkap wajib diisi.',
+        ]);
+});
+
+it('validates max lengths and coordinates with specific Indonesian messages', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from(route('manage-address'))
+        ->post(route('manage-address.store'), addressPayload([
+            'recipient_name' => str_repeat('a', 151),
+            'recipient_phone' => str_repeat('1', 31),
+            'latitude' => 95,
+            'longitude' => 185,
+        ]))
+        ->assertSessionHasErrors([
+            'recipient_name' => 'Nama penerima maksimal 150 karakter.',
+            'recipient_phone' => 'Nomor telepon maksimal 30 karakter.',
+            'latitude' => 'Titik koordinat latitude harus di antara -90 dan 90.',
+            'longitude' => 'Titik koordinat longitude harus di antara -180 dan 180.',
+        ]);
+});
+
 /**
  * @param  array<string, mixed>  $overrides
  * @return array<string, mixed>

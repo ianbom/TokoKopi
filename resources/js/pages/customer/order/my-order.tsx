@@ -15,6 +15,7 @@ import {
     show as orderShow,
 } from '@/actions/App/Http/Controllers/Customer/OrderController';
 import ProfileLayout from '@/layouts/profile-layout';
+import { cleanPageLabel } from '@/lib/pagination-label';
 import { list as productList } from '@/routes';
 
 type PaginationLink = {
@@ -146,10 +147,6 @@ const cleanQuery = (filters: Filters) => {
             ([, value]) => value !== '' && value !== null,
         ),
     );
-};
-
-const cleanPageLabel = (label: string) => {
-    return label.replace('&laquo;', '').replace('&raquo;', '').trim();
 };
 
 const canBuyAgain = (status: string) => {
@@ -453,7 +450,7 @@ export default function ListOrder({ orders, filters }: Props) {
                             Menampilkan {orders.from ?? 0}-{orders.to ?? 0} dari{' '}
                             {orders.total} pesanan
                         </span>
-                        <div className="flex flex-wrap justify-center gap-1">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
                             {orders.links.map((link) => (
                                 <PaginationButton
                                     key={`${link.label}-${link.url ?? 'disabled'}`}
@@ -469,19 +466,53 @@ export default function ListOrder({ orders, filters }: Props) {
 }
 
 function PaginationButton({ link }: { link: PaginationLink }) {
-    const label = cleanPageLabel(link.label);
-    const content =
-        label === 'Previous' ? (
-            <ChevronLeft size={16} />
-        ) : label === 'Next' ? (
-            <ChevronRight size={16} />
+    const label = cleanPageLabel(link.label, true);
+    const isPrevious = label === 'Previous';
+    const isNext = label === 'Next';
+
+    if (isPrevious || isNext) {
+        const buttonContent = isPrevious ? (
+            <>
+                <ChevronLeft size={14} />
+                <span>Previous</span>
+            </>
         ) : (
-            label
+            <>
+                <span>Next</span>
+                <ChevronRight size={14} />
+            </>
         );
+
+        const buttonClassName =
+            'inline-flex h-11 items-center gap-1 border border-hairline-strong bg-white px-3 text-[11px] font-semibold text-ink uppercase transition-colors hover:bg-surface-soft sm:h-8';
+
+        if (!link.url) {
+            return (
+                <span
+                    aria-disabled="true"
+                    className={`${buttonClassName} cursor-not-allowed opacity-40`}
+                >
+                    {buttonContent}
+                </span>
+            );
+        }
+
+        return (
+            <Link
+                href={link.url}
+                preserveScroll
+                preserveState
+                className={buttonClassName}
+            >
+                {buttonContent}
+            </Link>
+        );
+    }
+
     const className = `flex h-11 min-w-11 items-center justify-center border-b px-2 font-medium transition-colors sm:h-8 sm:min-w-8 ${link.active ? 'border-ink text-ink' : 'border-transparent text-muted-foreground hover:border-hairline-strong hover:text-ink'}`;
 
     if (!link.url) {
-        return <span className={`${className} opacity-40`}>{content}</span>;
+        return <span className={`${className} opacity-40`}>{label}</span>;
     }
 
     return (
@@ -491,7 +522,7 @@ function PaginationButton({ link }: { link: PaginationLink }) {
             preserveState
             className={className}
         >
-            {content}
+            {label}
         </Link>
     );
 }

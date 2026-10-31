@@ -1,10 +1,28 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 import { home, list } from '@/routes';
 import { privacy, shipping } from '@/routes/policy';
 import { index as stories } from '@/routes/story';
 
-export default function Footer() {
+export type SocialLinks = {
+    instagram_url?: string;
+    tiktok_url?: string;
+};
+
+type FooterProps = {
+    socialLinks?: SocialLinks;
+};
+
+export default function Footer({ socialLinks }: FooterProps) {
+    const pageProps =
+        usePage<{ shop?: { social_links?: SocialLinks } }>().props;
+    const links = socialLinks ?? pageProps.shop?.social_links;
+
+    const instagramUrl =
+        links?.instagram_url || 'https://instagram.com/Deklaseid';
+    const tiktokUrl =
+        links?.tiktok_url || 'https://www.tiktok.com/@deklaseroastery';
+
     return (
         <footer className="bg-teal text-white">
             {/* <section
@@ -79,13 +97,22 @@ export default function Footer() {
                     <a href="#newsletter">Newsletter</a>
                     <a href={home.url()}>Tentang kopi kami</a>
                     <a href={list.url()}>Semua kopi</a>
-                    <a href="https://instagram.com/declasseid">Instagram</a>
                 </FooterColumn>
                 <FooterColumn title="Follow">
-                    <a href="#">Instagram</a>
-                    <a href="#">TikTok</a>
-                    <a href="#">Tokopedia</a>
-                    <a href="#">Shopee</a>
+                    <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Instagram
+                    </a>
+                    <a
+                        href={tiktokUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        TikTok
+                    </a>
                 </FooterColumn>
             </section>
             <div className="flex flex-col gap-3 px-5 py-4 text-[10px] tracking-[0.04em] text-oat uppercase sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-7 lg:px-10">

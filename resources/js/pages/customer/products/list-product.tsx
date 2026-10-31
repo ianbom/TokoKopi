@@ -60,7 +60,7 @@ export default function ListProduct({ products, filters, options }: Props) {
     return (
         <ShopLayout>
             <Head title="List Product" />
-            <section className="border-t border-b border-hairline">
+            <section className="overflow-hidden border-t border-b border-hairline">
                 <div className="grid lg:h-[327px] lg:grid-cols-[48.7%_51.3%]">
                     <div className="flex min-h-[280px] flex-col justify-between bg-[#f1e8dc] px-7 py-7 sm:px-12 sm:py-10 lg:min-h-0 lg:px-12 lg:py-14">
                         <div>
@@ -82,13 +82,15 @@ export default function ListProduct({ products, filters, options }: Props) {
                             {products.total} Products
                         </p>
                     </div>
-                    <img
-                        src="/DK - website - header coffee 2.png"
-                        alt="Coffee pouch and cup on a sunlit table"
-                        fetchPriority="high"
-                        decoding="async"
-                        className="h-[220px] w-full object-cover lg:h-full"
-                    />
+                    <div className="relative h-[220px] w-full lg:h-full lg:min-h-0">
+                        <img
+                            src="/DK - website - header coffee 2.png"
+                            alt="Coffee pouch and cup on a sunlit table"
+                            fetchPriority="high"
+                            decoding="async"
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
+                    </div>
                 </div>
             </section>
 

@@ -1,0 +1,1 @@
+function e(e,t=!1){let n=e.replace(`&laquo;`,``).replace(`&raquo;`,``).replace(`«`,``).replace(`»`,``).trim();if(!t)return n;switch(n.toLowerCase()){case`pagination.previous`:case`previous`:return`Previous`;case`pagination.next`:case`next`:return`Next`;default:return n}}export{e as t};

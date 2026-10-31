@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Middleware;
@@ -54,6 +55,7 @@ class HandleInertiaRequests extends Middleware
             'shop' => [
                 'cart_count' => fn (): int => $this->cartCount($request),
                 'featured_collections' => fn (): array => $this->featuredCategories(),
+                'social_links' => fn (): array => $this->socialLinks(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
@@ -107,5 +109,44 @@ class HandleInertiaRequests extends Middleware
         }
 
         return null;
+    }
+
+    /**
+     * @return array{instagram_url: string, tiktok_url: string}
+     */
+    private function socialLinks(): array
+    {
+        try {
+            $settings = SiteSetting::query()
+                ->whereIn('key', ['instagram_handle', 'tiktok_handle'])
+                ->pluck('value', 'key');
+        } catch (\Throwable) {
+            $settings = collect();
+        }
+
+        $instagramHandle = $settings->get('instagram_handle') ?: '@Deklaseid';
+        $tiktokHandle = $settings->get('tiktok_handle') ?: '@deklaseroastery';
+
+        return [
+            'instagram_url' => $this->formatSocialUrl($instagramHandle, 'https://instagram.com/'),
+            'tiktok_url' => $this->formatSocialUrl($tiktokHandle, 'https://www.tiktok.com/@'),
+        ];
+    }
+
+    private function formatSocialUrl(string $handle, string $baseUrl): string
+    {
+        $handle = trim($handle);
+
+        if (Str::startsWith($handle, ['http://', 'https://'])) {
+            return $handle;
+        }
+
+        $clean = ltrim($handle, '@/');
+
+        if ($clean === '') {
+            return $baseUrl;
+        }
+
+        return $baseUrl.$clean;
     }
 }

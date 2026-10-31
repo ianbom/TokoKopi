@@ -1,0 +1,53 @@
+- generic [ref=f3e4]:
+  - generic [ref=f3e5]:
+    - img "Kopi Deklase dalam suasana hangat dan tenang" [ref=f3e6]
+    - generic [ref=f3e8]:
+      - link "Deklase" [ref=f3e9] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f3e10]: Coffee roastery
+    - generic [ref=f3e11]:
+      - paragraph [ref=f3e12]: Your daily ritual
+      - paragraph [ref=f3e13]: Good coffee.Made personal.
+      - link "Back to shop" [ref=f3e14] [cursor=pointer]:
+        - /url: /
+  - main [ref=f3e17]:
+    - generic [ref=f3e19]:
+      - navigation "Breadcrumb" [ref=f3e20]:
+        - generic [ref=f3e21]:
+          - link "Beranda" [ref=f3e22] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f3e23]: /
+        - generic [ref=f3e24]:
+          - generic [ref=f3e25]: Akun
+          - generic [ref=f3e26]: /
+        - generic [ref=f3e27]: Masuk
+      - generic [ref=f3e29]:
+        - paragraph [ref=f3e30]: Deklase account
+        - heading "Masuk" [level=1] [ref=f3e31]
+        - paragraph [ref=f3e32]: Masuk untuk menyimpan ritual kopi dan melanjutkan pesanan Anda.
+      - generic [ref=f3e33]:
+        - generic [ref=f3e34]:
+          - generic [ref=f3e35]:
+            - generic [ref=f3e36]: Alamat email
+            - textbox "Alamat email" [active] [ref=f3e37]:
+              - /placeholder: nama@email.com
+          - generic [ref=f3e38]:
+            - generic [ref=f3e39]:
+              - generic [ref=f3e40]: Kata sandi
+              - link "Lupa kata sandi?" [ref=f3e41] [cursor=pointer]:
+                - /url: /forgot-password
+            - generic [ref=f3e42]:
+              - textbox "Kata sandi" [ref=f3e43]:
+                - /placeholder: Masukkan kata sandi
+              - button "Show password" [ref=f3e44]
+          - generic [ref=f3e48]:
+            - checkbox "Ingat saya" [ref=f3e49]
+            - checkbox [aria-hidden]
+            - generic [ref=f3e50]: Ingat saya
+          - button "Masuk" [ref=f3e51]
+        - generic [ref=f3e52]: atau
+        - button "Masuk dengan Google" [ref=f3e54]
+        - paragraph [ref=f3e55]:
+          - text: Belum punya akun?
+          - link "Buat akun" [ref=f3e56] [cursor=pointer]:
+            - /url: /register

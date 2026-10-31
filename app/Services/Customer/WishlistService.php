@@ -89,7 +89,7 @@ class WishlistService
             'badge' => $this->badge($product),
             'colors' => [],
             'available_stock' => $availableStock,
-            'is_available' => $product->status === 'active' && $availableStock > 0,
+            'is_available' => in_array($product->status, ['active', 'published'], true) && $availableStock > 0,
         ];
     }
 

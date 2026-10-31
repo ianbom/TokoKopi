@@ -237,8 +237,8 @@ export default function Welcome({
                         href: list.url({ query: { search: product.name } }),
                     }))}
                 />
-                <section className="grid border-b border-hairline lg:grid-cols-[.9fr_1.1fr]">
-                    <div className="flex min-h-[230px] flex-col justify-between bg-white p-7 sm:p-12">
+                <section className="grid overflow-hidden border-b border-hairline lg:h-[520px] lg:grid-cols-[.9fr_1.1fr]">
+                    <div className="flex min-h-[300px] flex-col justify-between bg-white p-7 sm:p-12 lg:h-full lg:min-h-0">
                         <p className="max-w-xs text-xs leading-5 text-teal sm:text-sm">
                             Good coffee does not need an occasion. Sometimes the
                             ritual is enough.
@@ -258,7 +258,7 @@ export default function Welcome({
                         src={images.cta}
                         alt="Coffee to go in the morning"
                         loading="lazy"
-                        className="min-h-[230px] w-full object-cover saturate-75"
+                        className="h-[320px] w-full object-cover object-[center_62%] saturate-75 sm:h-[400px] lg:h-full lg:max-h-full lg:min-h-0"
                     />
                 </section>
             </div>

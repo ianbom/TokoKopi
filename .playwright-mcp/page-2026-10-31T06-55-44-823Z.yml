@@ -1,0 +1,174 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - navigation [ref=e5]:
+      - generic [ref=e6]:
+        - link "Shop" [ref=e7] [cursor=pointer]:
+          - /url: /list
+        - link "Home" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "Locations" [ref=e9] [cursor=pointer]:
+          - /url: /location
+        - link "Stories" [ref=e10] [cursor=pointer]:
+          - /url: /story
+      - link "Deklase home" [ref=e11] [cursor=pointer]:
+        - /url: /
+        - img "Deklase" [ref=e12]
+      - generic [ref=e13]:
+        - link "Account" [ref=e14] [cursor=pointer]:
+          - /url: /my-profile
+        - link "Cart (00 items)" [ref=e15] [cursor=pointer]:
+          - /url: /my-cart
+          - generic [ref=e20]: "00"
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - link "Shop coffee →" [ref=e25] [cursor=pointer]:
+            - /url: /list
+            - generic [ref=e26]:
+              - text: Shop coffee
+              - generic [ref=e27]: →
+          - heading [level=1] [ref=e28]:
+            - generic [ref=e29]: Coffee
+            - generic [ref=e30]: without
+            - text: the routine.
+        - generic [ref=e31]:
+          - img "Deklase coffee ritual" [ref=e32]
+          - img "Fresh roasted coffee" [ref=e33]
+          - img "Coffee beans from Deklase" [ref=e34]
+          - button "Slide sebelumnya" [ref=e35]
+          - button "Slide berikutnya" [ref=e38]
+          - generic [ref=e41]:
+            - button "Tampilkan slide 1" [ref=e42]
+            - button "Tampilkan slide 2" [ref=e43]
+            - button "Tampilkan slide 3" [ref=e44]
+      - generic [ref=e45]:
+        - link [ref=e46] [cursor=pointer]:
+          - /url: /list?search=Gayo+Wine
+          - img "Gayo Wine" [ref=e48]
+          - generic [ref=e49]:
+            - heading "Gayo Wine" [level=3] [ref=e50]
+            - paragraph [ref=e51]: Coffee Beans
+            - strong [ref=e52]: Rp 125.000
+        - link [ref=e53] [cursor=pointer]:
+          - /url: /list?search=Requiem+Karo+Blueberry
+          - img "Requiem Karo Blueberry" [ref=e55]
+          - generic [ref=e56]:
+            - heading "Requiem Karo Blueberry" [level=3] [ref=e57]
+            - paragraph [ref=e58]: Coffee Beans
+            - strong [ref=e59]: Rp 115.000
+        - link [ref=e60] [cursor=pointer]:
+          - /url: /list?search=Requiem+Toraja+Natural
+          - img "Requiem Toraja Natural" [ref=e62]
+          - generic [ref=e63]:
+            - heading "Requiem Toraja Natural" [level=3] [ref=e64]
+            - paragraph [ref=e65]: Coffee Beans
+            - strong [ref=e66]: Rp 120.000
+        - link [ref=e67] [cursor=pointer]:
+          - /url: /list?search=Requiem+Bali+Kala+Patra
+          - img "Requiem Bali Kala Patra" [ref=e69]
+          - generic [ref=e70]:
+            - heading "Requiem Bali Kala Patra" [level=3] [ref=e71]
+            - paragraph [ref=e72]: Coffee Beans
+            - strong [ref=e73]: Rp 110.000
+      - generic [ref=e74]:
+        - img "Pour-over coffee ritual" [ref=e75]
+        - generic [ref=e76]:
+          - text: Our approach
+          - heading "Better coffee starts with better details." [level=2] [ref=e77]: Better coffeestarts withbetter details.
+          - paragraph [ref=e78]: Carefully selected beans, thoughtful roasting profiles, uncomplicated brewing. Great coffee does not need to be complicated.
+          - link "Read our story ↗" [ref=e79] [cursor=pointer]:
+            - /url: /story
+      - generic [ref=e80]:
+        - link [ref=e81] [cursor=pointer]:
+          - /url: /list?search=Gayo+Wine
+          - img "Gayo Wine" [ref=e83]
+          - generic [ref=e84]:
+            - heading "Gayo Wine" [level=3] [ref=e85]
+            - paragraph [ref=e86]: Coffee Beans
+            - strong [ref=e87]: Rp 125.000
+        - link [ref=e88] [cursor=pointer]:
+          - /url: /list?search=Requiem+Karo+Blueberry
+          - img "Requiem Karo Blueberry" [ref=e90]
+          - generic [ref=e91]:
+            - heading "Requiem Karo Blueberry" [level=3] [ref=e92]
+            - paragraph [ref=e93]: Coffee Beans
+            - strong [ref=e94]: Rp 115.000
+        - link [ref=e95] [cursor=pointer]:
+          - /url: /list?search=Requiem+Toraja+Natural
+          - img "Requiem Toraja Natural" [ref=e97]
+          - generic [ref=e98]:
+            - heading "Requiem Toraja Natural" [level=3] [ref=e99]
+            - paragraph [ref=e100]: Coffee Beans
+            - strong [ref=e101]: Rp 120.000
+        - link [ref=e102] [cursor=pointer]:
+          - /url: /list?search=Espresso+Amore+Blend
+          - img "Espresso Amore Blend" [ref=e104]
+          - generic [ref=e105]:
+            - heading "Espresso Amore Blend" [level=3] [ref=e106]
+            - paragraph [ref=e107]: Coffee Beans
+            - strong [ref=e108]: Rp 85.000
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - paragraph [ref=e111]: Good coffee does not need an occasion. Sometimes the ritual is enough.
+          - heading "Make mornings matter." [level=2] [ref=e112]: Makemorningsmatter.
+          - link "Shop coffee →" [ref=e113] [cursor=pointer]:
+            - /url: /list
+            - generic [ref=e114]:
+              - text: Shop coffee
+              - generic [ref=e115]: →
+        - img "Coffee to go in the morning" [ref=e116]
+  - region "Notifications alt+T"
+  - contentinfo [ref=e117]:
+    - generic [ref=e118]:
+      - generic [ref=e119]:
+        - heading "Good coffee. Occasional emails." [level=2] [ref=e120]: Good coffee.Occasional emails.
+        - generic [ref=e121]:
+          - generic [ref=e122]: Email address
+          - textbox "Email address" [ref=e123]:
+            - /placeholder: Your email
+          - button "Join →" [ref=e124]
+      - generic [ref=e125]:
+        - heading "Shop" [level=3] [ref=e126]
+        - generic [ref=e127]:
+          - link "Coffee" [ref=e128] [cursor=pointer]:
+            - /url: /list
+          - link "Subscriptions" [ref=e129] [cursor=pointer]:
+            - /url: "#subscription"
+          - link "Bundles" [ref=e130] [cursor=pointer]:
+            - /url: "#rituals"
+          - link "Merchandise" [ref=e131] [cursor=pointer]:
+            - /url: /
+      - generic [ref=e132]:
+        - heading "Deklase" [level=3] [ref=e133]
+        - generic [ref=e134]:
+          - link "Stories" [ref=e135] [cursor=pointer]:
+            - /url: /story
+          - link "Newsletter" [ref=e136] [cursor=pointer]:
+            - /url: "#newsletter"
+          - link "Tentang kopi kami" [ref=e137] [cursor=pointer]:
+            - /url: /
+          - link "Semua kopi" [ref=e138] [cursor=pointer]:
+            - /url: /list
+          - link "Instagram" [ref=e139] [cursor=pointer]:
+            - /url: https://instagram.com/declasseid
+      - generic [ref=e140]:
+        - heading "Follow" [level=3] [ref=e141]
+        - generic [ref=e142]:
+          - link "Instagram" [ref=e143] [cursor=pointer]:
+            - /url: "#"
+          - link "TikTok" [ref=e144] [cursor=pointer]:
+            - /url: "#"
+          - link "Tokopedia" [ref=e145] [cursor=pointer]:
+            - /url: "#"
+          - link "Shopee" [ref=e146] [cursor=pointer]:
+            - /url: "#"
+    - generic [ref=e147]:
+      - generic [ref=e148]: © 2026 Deklase Coffee
+      - generic [ref=e149]:
+        - link "Privacy" [ref=e150] [cursor=pointer]:
+          - /url: /privacy-policy
+        - link "Shipping" [ref=e151] [cursor=pointer]:
+          - /url: /shipping-policy
+        - link "Terms" [ref=e152] [cursor=pointer]:
+          - /url: "#"

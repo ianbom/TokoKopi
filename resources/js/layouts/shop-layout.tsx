@@ -9,7 +9,13 @@ type ShopLayoutProps = { children: ReactNode };
 
 type SharedShopProps = {
     auth: { user: unknown | null };
-    shop?: { cart_count?: number };
+    shop?: {
+        cart_count?: number;
+        social_links?: {
+            instagram_url?: string;
+            tiktok_url?: string;
+        };
+    };
 };
 
 export default function ShopLayout({ children }: ShopLayoutProps) {
@@ -23,7 +29,7 @@ export default function ShopLayout({ children }: ShopLayoutProps) {
             />
             <main className="min-w-0 grow bg-white">{children}</main>
             <Toaster />
-            <Footer />
+            <Footer socialLinks={props.shop?.social_links} />
         </div>
     );
 }

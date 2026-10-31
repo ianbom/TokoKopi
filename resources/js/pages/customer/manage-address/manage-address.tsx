@@ -269,6 +269,13 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
                 area.administrative_division_level_3_name ?? form.data.district,
             postal_code: postalCode,
         });
+        form.clearErrors(
+            'biteship_area_id',
+            'province',
+            'city',
+            'district',
+            'postal_code',
+        );
         setAreaQuery(digitsOnly(areaSearchText(area)));
         setAreaResults([]);
         setAreaError('');
@@ -336,6 +343,7 @@ export default function ManageAddress({ addresses, redirectTo = '' }: Props) {
             latitude: formatCoordinate(latitude),
             longitude: formatCoordinate(longitude),
         });
+        form.clearErrors('latitude', 'longitude');
         setMapError('');
     };
 
