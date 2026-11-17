@@ -112,13 +112,13 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{instagram_url: string, tiktok_url: string}
+     * @return array{instagram_url: string, tiktok_url: string, whatsapp_url: ?string}
      */
     private function socialLinks(): array
     {
         try {
             $settings = SiteSetting::query()
-                ->whereIn('key', ['instagram_handle', 'tiktok_handle'])
+                ->whereIn('key', ['instagram_handle', 'tiktok_handle', 'store_phone'])
                 ->pluck('value', 'key');
         } catch (\Throwable) {
             $settings = collect();
@@ -126,10 +126,18 @@ class HandleInertiaRequests extends Middleware
 
         $instagramHandle = $settings->get('instagram_handle') ?: '@Deklaseid';
         $tiktokHandle = $settings->get('tiktok_handle') ?: '@deklaseroastery';
+        $phone = preg_replace('/\D+/', '', (string) $settings->get('store_phone'));
+
+        if (str_starts_with($phone, '0')) {
+            $phone = '62'.substr($phone, 1);
+        } elseif (str_starts_with($phone, '8')) {
+            $phone = '62'.$phone;
+        }
 
         return [
             'instagram_url' => $this->formatSocialUrl($instagramHandle, 'https://instagram.com/'),
             'tiktok_url' => $this->formatSocialUrl($tiktokHandle, 'https://www.tiktok.com/@'),
+            'whatsapp_url' => preg_match('/^[1-9][0-9]{7,14}$/', $phone) ? 'https://wa.me/'.$phone : null,
         ];
     }
 
