@@ -3,11 +3,10 @@
 namespace App\Services\Customer;
 
 use App\Actions\Stock\FinalizeOrderStockAction;
-use App\Actions\Stock\ReleaseOrderStockAction;
-use App\Actions\Vouchers\ReleaseVoucherReservationAction;
 use App\Enums\CheckoutPaymentMethod;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\CheckoutAttempt;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Payment;
@@ -23,6 +22,7 @@ use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -34,9 +34,7 @@ class CheckoutService
         private readonly BiteshipService $biteship,
         private readonly MidtransService $midtrans,
         private readonly SiteSettingService $settings,
-        private readonly ReleaseVoucherReservationAction $releaseVoucher,
         private readonly FinalizeOrderStockAction $deductStock,
-        private readonly ReleaseOrderStockAction $releaseStock,
     ) {}
 
     public function pageData(User $user): array
@@ -174,7 +172,7 @@ class CheckoutService
     public function placeOrder(User $user, array $payload): array
     {
         Validator::make($payload, ['payment_method' => CheckoutPaymentMethod::rules()])->validate();
-        if (! Schema::hasColumn('payments', 'requested_payment_method')) {
+        if (! Schema::hasColumn('payments', 'requested_payment_method') || ! Schema::hasTable('checkout_attempts')) {
             throw ValidationException::withMessages(['checkout' => 'Pembayaran sementara belum tersedia. Hubungi admin untuk menyelesaikan pembaruan sistem.']);
         }
         $this->forgetExpiredCheckoutSession();
@@ -192,228 +190,224 @@ class CheckoutService
 
         $this->validateSelectedShippingRate($user, (int) $payload['customer_address_id'], (string) $payload['shipping_rate_id']);
 
-        $result = DB::transaction(function () use ($user, $payload): Payment|array {
-            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
-            $existingOrder = Order::query()->with('payment')->where('user_id', $user->id)
-                ->where('checkout_idempotency_key', $payload['idempotency_key'])->lockForUpdate()->first();
-            if ($existingOrder) {
-                return $this->existingCheckout($existingOrder, $payload['payment_method']);
-            }
-            $address = $this->ownedAddress($user, (int) $payload['customer_address_id']);
-            $rate = $this->rateFromPayload((string) $payload['shipping_rate_id']);
-            $items = $this->lockedCartItems($user);
+        $attempt = $this->beginCheckoutAttempt($user, $payload);
+        if (is_array($attempt)) {
+            return $attempt;
+        }
+        $snap = $attempt->snap_response;
+        $snapHash = $attempt->snap_request_hash;
+        $snapRequested = false;
 
-            if ($items->isEmpty()) {
-                throw ValidationException::withMessages(['cart' => 'Keranjang kosong.']);
-            }
+        try {
+            // ponytail: Snap's 20s timeout bounds provider work under stock locks; use reservations if contention grows.
+            $result = DB::transaction(function () use ($user, $payload, $attempt, &$snap, &$snapHash, &$snapRequested): Payment|array {
+                User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+                $existingOrder = Order::query()->with('payment')->where('user_id', $user->id)
+                    ->where('checkout_idempotency_key', $payload['idempotency_key'])->lockForUpdate()->first();
+                if ($existingOrder) {
+                    return $this->existingCheckout($existingOrder, $payload['payment_method']);
+                }
+                $address = $this->ownedAddress($user, (int) $payload['customer_address_id']);
+                $rate = $this->rateFromPayload((string) $payload['shipping_rate_id']);
+                $items = $this->lockedCartItems($user);
 
-            $subtotal = 0.0;
-            foreach ($items->sortBy('product_variant_id') as $item) {
-                $variant = ProductVariant::query()
-                    ->with(['product.primaryImage:id,product_id,image_url', 'stock'])
-                    ->whereKey($item->product_variant_id)
-                    ->lockForUpdate()
-                    ->first();
-                $product = $variant?->product;
-                $stock = $variant
-                    ? Stock::query()
-                        ->where('product_variant_id', $variant->id)
+                if ($items->isEmpty()) {
+                    throw ValidationException::withMessages(['cart' => 'Keranjang kosong.']);
+                }
+
+                $subtotal = 0.0;
+                foreach ($items->sortBy('product_variant_id') as $item) {
+                    $variant = ProductVariant::query()
+                        ->with(['product.primaryImage:id,product_id,image_url', 'stock'])
+                        ->whereKey($item->product_variant_id)
                         ->lockForUpdate()
-                        ->first()
-                    : null;
-                $available = max(0, (int) ($stock?->quantity ?? 0));
+                        ->first();
+                    $product = $variant?->product;
+                    $stock = $variant
+                        ? Stock::query()
+                            ->where('product_variant_id', $variant->id)
+                            ->lockForUpdate()
+                            ->first()
+                        : null;
+                    $available = max(0, (int) ($stock?->quantity ?? 0));
 
-                if (! $variant || ! $product || $product->status !== 'active' || ! $variant->is_active || $available < $item->quantity) {
-                    throw ValidationException::withMessages(['cart' => "Stok {$product?->name} tidak mencukupi."]);
-                }
-                if ($variant->shipping_weight_gram < 1 || $item->quantity < 1) {
-                    throw ValidationException::withMessages(['cart' => "Berat kirim {$product->name} belum valid. Hubungi admin."]);
-                }
-
-                foreach (['length', 'width', 'height'] as $dimension) {
-                    $value = $variant->{$dimension};
-                    if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
-                        throw ValidationException::withMessages(['cart' => 'Dimensi kemasan produk belum valid. Hubungi admin sebelum checkout.']);
+                    if (! $variant || ! $product || $product->status !== 'active' || ! $variant->is_active || $available < $item->quantity) {
+                        throw ValidationException::withMessages(['cart' => "Stok {$product?->name} tidak mencukupi."]);
                     }
+                    if ($variant->shipping_weight_gram < 1 || $item->quantity < 1) {
+                        throw ValidationException::withMessages(['cart' => "Berat kirim {$product->name} belum valid. Hubungi admin."]);
+                    }
+
+                    foreach (['length', 'width', 'height'] as $dimension) {
+                        $value = $variant->{$dimension};
+                        if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
+                            throw ValidationException::withMessages(['cart' => 'Dimensi kemasan produk belum valid. Hubungi admin sebelum checkout.']);
+                        }
+                    }
+
+                    $currentPrice = $this->currentUnitPrice($variant);
+
+                    if ($this->minorUnits($item->price_snapshot) !== $this->minorUnits($currentPrice)) {
+                        $item->forceFill(['price_snapshot' => $currentPrice])->save();
+
+                        throw ValidationException::withMessages(['cart' => "Harga {$product->name} berubah. Tinjau ulang keranjang dan pilih ulang ongkir."]);
+                    }
+
+                    $item->setRelation('variant', $variant);
+                    $item->setRelation('product', $product);
+                    $subtotal += (float) $item->price_snapshot * $item->quantity;
+                }
+                $lockedHash = $this->cartHash($items->map(fn ($item): array => [
+                    'id' => $item->id, 'product_variant_id' => $item->product_variant_id,
+                    'quantity' => $item->quantity, 'price' => $item->price_snapshot,
+                    'weight' => $item->variant->shipping_weight_gram * $item->quantity,
+                    'length' => $item->variant->length,
+                    'width' => $item->variant->width,
+                    'height' => $item->variant->height,
+                ]));
+                if ($lockedHash !== session('checkout.selected_rate_binding.cart_hash')) {
+                    throw ValidationException::withMessages(['shipping_rate_id' => 'Data produk berubah. Pilih ulang ongkir.']);
                 }
 
-                $currentPrice = $this->currentUnitPrice($variant);
-
-                if ($this->minorUnits($item->price_snapshot) !== $this->minorUnits($currentPrice)) {
-                    $item->forceFill(['price_snapshot' => $currentPrice])->save();
-
-                    throw ValidationException::withMessages(['cart' => "Harga {$product->name} berubah. Tinjau ulang keranjang dan pilih ulang ongkir."]);
+                $voucher = null;
+                $discount = 0.0;
+                $voucherCode = session('checkout.voucher_code');
+                if (is_string($voucherCode)) {
+                    $voucher = Voucher::query()->where('code', Str::upper(trim($voucherCode)))->lockForUpdate()->first();
+                    if (! $voucher) {
+                        throw ValidationException::withMessages(['voucher_code' => 'Voucher tidak valid untuk order ini.']);
+                    }
+                    $this->assertValidVoucher($voucher, $subtotal);
+                    $discount = $this->discountAmount($voucher, $subtotal);
+                    $voucher->increment('used_count');
                 }
 
-                $item->setRelation('variant', $variant);
-                $item->setRelation('product', $product);
-                $subtotal += (float) $item->price_snapshot * $item->quantity;
-            }
-            $lockedHash = $this->cartHash($items->map(fn ($item): array => [
-                'id' => $item->id, 'product_variant_id' => $item->product_variant_id,
-                'quantity' => $item->quantity, 'price' => $item->price_snapshot,
-                'weight' => $item->variant->shipping_weight_gram * $item->quantity,
-                'length' => $item->variant->length,
-                'width' => $item->variant->width,
-                'height' => $item->variant->height,
-            ]));
-            if ($lockedHash !== session('checkout.selected_rate_binding.cart_hash')) {
-                throw ValidationException::withMessages(['shipping_rate_id' => 'Data produk berubah. Pilih ulang ongkir.']);
-            }
-
-            $voucher = null;
-            $discount = 0.0;
-            $voucherCode = session('checkout.voucher_code');
-            if (is_string($voucherCode)) {
-                $voucher = Voucher::query()->where('code', Str::upper(trim($voucherCode)))->lockForUpdate()->first();
-                if (! $voucher) {
-                    throw ValidationException::withMessages(['voucher_code' => 'Voucher tidak valid untuk order ini.']);
-                }
-                $this->assertValidVoucher($voucher, $subtotal);
-                $discount = $this->discountAmount($voucher, $subtotal);
-                $voucher->increment('used_count');
-            }
-
-            $serviceFee = (float) ($this->settings->first(['payment_service_fee'], '0') ?: 0);
-            $order = Order::query()->create([
-                'user_id' => $user->id,
-                'customer_address_id' => $address->id,
-                'order_number' => $this->orderNumber(),
-                'checkout_idempotency_key' => $payload['idempotency_key'],
-                'customer_name' => $user->name,
-                'customer_email' => $user->email,
-                'customer_phone' => $address->recipient_phone,
-                'subtotal' => $subtotal,
-                'discount_amount' => $discount,
-                'shipping_cost' => (float) $rate['price'],
-                'service_fee' => $serviceFee,
-                'grand_total' => round(max(0, $subtotal + (float) $rate['price'] + $serviceFee - $discount), 0, PHP_ROUND_HALF_UP),
-                'voucher_id' => $voucher?->id,
-                'voucher_code' => $voucher?->code,
-                'payment_status' => 'pending',
-                'order_status' => 'pending_payment',
-                'shipping_status' => 'not_created',
-                'no_return_refund_agreed' => (bool) ($payload['no_return_refund_agreed'] ?? false),
-                'no_return_refund_agreed_at' => ! empty($payload['no_return_refund_agreed']) ? now() : null,
-                'notes' => $payload['notes'] ?? null,
-            ]);
-
-            $order->address()->create([
-                'recipient_name' => $address->recipient_name,
-                'recipient_phone' => $address->recipient_phone,
-                'province' => $address->province,
-                'city' => $address->city,
-                'district' => $address->district,
-                'subdistrict' => $address->subdistrict,
-                'postal_code' => $address->postal_code,
-                'biteship_area_id' => $address->biteship_area_id,
-                'latitude' => $address->latitude,
-                'longitude' => $address->longitude,
-                'full_address' => $address->full_address,
-                'note' => $address->note,
-            ]);
-
-            foreach ($items as $item) {
-                $variant = $item->variant;
-                $product = $item->product;
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'product_variant_id' => $variant->id,
-                    'product_name' => $product->name,
-                    'product_sku' => $product->sku,
-                    'variant_sku' => $variant->sku,
-                    'net_weight' => $variant->net_weight,
-                    'grind_type' => $variant->grind_type,
-                    'length' => $variant->length,
-                    'width' => $variant->width,
-                    'height' => $variant->height,
-                    'price' => $item->price_snapshot,
-                    'quantity' => $item->quantity,
-                    'subtotal' => (float) $item->price_snapshot * $item->quantity,
-                    'shipping_weight_gram' => $variant->shipping_weight_gram * $item->quantity,
-                    'product_image_url' => $variant->image_url ?? $product->primaryImage?->image_url,
+                $serviceFee = (float) ($this->settings->first(['payment_service_fee'], '0') ?: 0);
+                $order = Order::query()->create([
+                    'user_id' => $user->id,
+                    'customer_address_id' => $address->id,
+                    'order_number' => $attempt->midtrans_order_id,
+                    'checkout_idempotency_key' => $payload['idempotency_key'],
+                    'customer_name' => $user->name,
+                    'customer_email' => $user->email,
+                    'customer_phone' => $address->recipient_phone,
+                    'subtotal' => $subtotal,
+                    'discount_amount' => $discount,
+                    'shipping_cost' => (float) $rate['price'],
+                    'service_fee' => $serviceFee,
+                    'grand_total' => round(max(0, $subtotal + (float) $rate['price'] + $serviceFee - $discount), 0, PHP_ROUND_HALF_UP),
+                    'voucher_id' => $voucher?->id,
+                    'voucher_code' => $voucher?->code,
+                    'payment_status' => 'pending',
+                    'order_status' => 'pending_payment',
+                    'shipping_status' => 'not_created',
+                    'no_return_refund_agreed' => (bool) ($payload['no_return_refund_agreed'] ?? false),
+                    'no_return_refund_agreed_at' => ! empty($payload['no_return_refund_agreed']) ? now() : null,
+                    'notes' => $payload['notes'] ?? null,
                 ]);
+
+                $order->address()->create([
+                    'recipient_name' => $address->recipient_name,
+                    'recipient_phone' => $address->recipient_phone,
+                    'province' => $address->province,
+                    'city' => $address->city,
+                    'district' => $address->district,
+                    'subdistrict' => $address->subdistrict,
+                    'postal_code' => $address->postal_code,
+                    'biteship_area_id' => $address->biteship_area_id,
+                    'latitude' => $address->latitude,
+                    'longitude' => $address->longitude,
+                    'full_address' => $address->full_address,
+                    'note' => $address->note,
+                ]);
+
+                foreach ($items as $item) {
+                    $variant = $item->variant;
+                    $product = $item->product;
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'product_variant_id' => $variant->id,
+                        'product_name' => $product->name,
+                        'product_sku' => $product->sku,
+                        'variant_sku' => $variant->sku,
+                        'net_weight' => $variant->net_weight,
+                        'grind_type' => $variant->grind_type,
+                        'length' => $variant->length,
+                        'width' => $variant->width,
+                        'height' => $variant->height,
+                        'price' => $item->price_snapshot,
+                        'quantity' => $item->quantity,
+                        'subtotal' => (float) $item->price_snapshot * $item->quantity,
+                        'shipping_weight_gram' => $variant->shipping_weight_gram * $item->quantity,
+                        'product_image_url' => $variant->image_url ?? $product->primaryImage?->image_url,
+                    ]);
+                }
+
+                try {
+                    $this->deductStock->execute($order);
+                } catch (DomainException $exception) {
+                    throw ValidationException::withMessages(['cart' => $exception->getMessage()]);
+                }
+
+                $order->shipment()->create([
+                    'shipping_provider' => 'biteship',
+                    'courier_company' => $rate['courier_company'],
+                    'courier_type' => $rate['courier_type'],
+                    'courier_service_name' => $rate['courier_service_name'],
+                    'delivery_type' => 'now',
+                    'shipping_cost' => $rate['price'],
+                    'insurance_cost' => 0,
+                    'estimated_delivery' => $rate['duration'],
+                    'shipping_status' => 'not_created',
+                    'raw_rate_response' => $rate['raw'] ?? $rate,
+                ]);
+
+                $payment = $order->payment()->create([
+                    'payment_provider' => 'midtrans',
+                    'requested_payment_method' => $payload['payment_method'],
+                    'midtrans_order_id' => $order->order_number,
+                    'gross_amount' => $order->grand_total,
+                    'currency' => 'IDR',
+                    'transaction_status' => 'pending',
+                    'expires_at' => $attempt->expires_at,
+                ]);
+
+                $requestHash = hash('sha256', json_encode($this->midtrans->snapPayload($order), JSON_THROW_ON_ERROR));
+                if ($snap !== null && $snapHash !== $requestHash) {
+                    throw ValidationException::withMessages(['checkout' => 'Nominal atau data pembayaran berubah. Pastikan sesi lama dibatalkan sebelum membuat pembayaran baru.']);
+                }
+                $snapHash = $requestHash;
+                if ($snap === null) {
+                    $snapRequested = true;
+                    $snap = $this->midtrans->createSnapTransaction($order);
+                }
+                $payment->update([
+                    'midtrans_snap_token' => $snap['token'],
+                    'midtrans_redirect_url' => $snap['redirect_url'],
+                    'raw_response' => filled($payment->refresh()->raw_response['transaction_status'] ?? null) ? $payment->raw_response : $snap,
+                ]);
+                $attempt->update(['status' => 'completed', 'snap_response' => $snap, 'snap_request_hash' => $snapHash, 'order_id' => $order->id]);
+                Cart::query()->firstWhere('user_id', $user->id)?->items()->delete();
+
+                return $payment;
+            });
+        } catch (\Throwable $exception) {
+            $status = $snap !== null ? 'ready' : ($snapRequested && ! $exception instanceof ValidationException ? 'uncertain' : 'rejected');
+            $attempt->refresh()->update(['status' => $status, 'snap_response' => $snap, 'snap_request_hash' => $snapHash, 'order_id' => null]);
+            Log::warning('checkout_attempt_failed', ['attempt_id' => $attempt->id, 'environment' => $attempt->environment, 'status' => $status, 'exception_type' => $exception::class]);
+            if ($exception instanceof ValidationException) {
+                throw $exception;
             }
 
-            try {
-                $this->deductStock->execute($order);
-            } catch (DomainException $exception) {
-                throw ValidationException::withMessages(['cart' => $exception->getMessage()]);
-            }
-
-            $order->shipment()->create([
-                'shipping_provider' => 'biteship',
-                'courier_company' => $rate['courier_company'],
-                'courier_type' => $rate['courier_type'],
-                'courier_service_name' => $rate['courier_service_name'],
-                'delivery_type' => 'now',
-                'shipping_cost' => $rate['price'],
-                'insurance_cost' => 0,
-                'estimated_delivery' => $rate['duration'],
-                'shipping_status' => 'not_created',
-                'raw_rate_response' => $rate['raw'] ?? $rate,
-            ]);
-
-            $payment = $order->payment()->create([
-                'payment_provider' => 'midtrans',
-                'requested_payment_method' => $payload['payment_method'],
-                'raw_response' => ['snap_creation_in_progress' => true],
-                'midtrans_order_id' => $order->order_number,
-                'gross_amount' => $order->grand_total,
-                'currency' => 'IDR',
-                'transaction_status' => 'pending',
-                'expires_at' => now()->addMinutes((int) ($this->settings->first(['payment_expiry_duration'], '1440') ?: 1440)),
-            ]);
-
-            return $payment;
-        }, 3);
+            throw ValidationException::withMessages(['payment' => $status === 'ready'
+                ? 'Pesanan belum tersimpan. Coba kembali tanpa mengubah checkout; sesi pembayaran yang sama akan digunakan.'
+                : 'Hasil pembuatan sesi pembayaran belum terkonfirmasi. Pesanan belum tersimpan; hubungi admin untuk rekonsiliasi sebelum mencoba pembayaran baru.']);
+        }
 
         if (is_array($result)) {
             return $result;
         }
         $payment = $result;
-        try {
-            $snap = $this->midtrans->createSnapTransaction($payment->order()->with(['items', 'address'])->firstOrFail());
-            DB::transaction(function () use ($payment, $snap): void {
-                $order = $payment->order()->lockForUpdate()->firstOrFail();
-                $payment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
-                if (! in_array($order->payment_status, ['pending', 'manual_review'], true)) {
-                    return;
-                }
-                $payment->update([
-                    'midtrans_snap_token' => $snap['token'] ?? null,
-                    'midtrans_redirect_url' => $snap['redirect_url'] ?? null,
-                    'raw_response' => filled($payment->raw_response['transaction_status'] ?? null) ? $payment->raw_response : $snap,
-                ]);
-            });
-        } catch (\Throwable $exception) {
-            DB::transaction(function () use ($payment, $exception): void {
-                $order = $payment->order()->lockForUpdate()->firstOrFail();
-                $payment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
-                if (! in_array($order->payment_status, ['pending', 'manual_review'], true)
-                    || filled($payment->raw_response['transaction_status'] ?? null)) {
-                    return;
-                }
-                if (! $exception instanceof ValidationException) {
-                    $reason = 'Pembuatan pembayaran belum terkonfirmasi. Jangan ulangi checkout; admin perlu melakukan sinkronisasi.';
-                    $order->update(['payment_status' => 'manual_review']);
-                    $payment->update(['transaction_status' => 'manual_review', 'failure_reason' => $reason, 'raw_response' => ['snap_creation_uncertain' => true]]);
-
-                    return;
-                }
-                $this->releaseStock->execute($order);
-                $this->releaseVoucher->execute($order);
-                $order->update(['payment_status' => 'failed', 'order_status' => 'payment_failed', 'cancelled_at' => now()]);
-                $payment->update(['transaction_status' => 'snap_failed', 'failure_reason' => 'Pembuatan pembayaran ditolak.', 'raw_response' => ['snap_creation_rejected' => true]]);
-            });
-
-            throw ValidationException::withMessages(['order_id' => (string) $payment->order_id, 'payment' => $exception instanceof ValidationException
-                ? 'Pembuatan pembayaran ditolak. Periksa checkout dan coba lagi.'
-                : 'Hasil pembayaran belum terkonfirmasi. Jangan ulangi checkout; hubungi admin untuk sinkronisasi.']);
-        }
-
-        $cart = Cart::query()->firstWhere('user_id', $user->id);
-        $cart?->items()->delete();
         $this->forgetCheckoutSession();
         $payment->refresh();
 
@@ -422,6 +416,54 @@ class CheckoutService
             'payment_id' => $payment->id,
             'redirect_url' => $payment->midtrans_redirect_url,
         ];
+    }
+
+    private function beginCheckoutAttempt(User $user, array $payload): CheckoutAttempt|array
+    {
+        return DB::transaction(function () use ($user, $payload): CheckoutAttempt|array {
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $order = Order::query()->with('payment')->where('user_id', $user->id)
+                ->where('checkout_idempotency_key', $payload['idempotency_key'])->first();
+            if ($order) {
+                return $this->existingCheckout($order, $payload['payment_method']);
+            }
+            $attempt = CheckoutAttempt::query()->where('user_id', $user->id)->where('idempotency_key', $payload['idempotency_key'])->lockForUpdate()->first();
+            $environment = config('services.midtrans.is_production') ? 'production' : 'sandbox';
+            $hash = hash('sha256', json_encode([
+                collect($payload)->sortKeys()->all(),
+                $this->cartHash($this->cartItems($user)),
+                $this->ownedAddress($user, (int) $payload['customer_address_id'])->getAttributes(),
+                $user->only(['name', 'email']),
+                session('checkout.voucher_code'),
+                $this->settings->first(['payment_service_fee'], '0'),
+                $this->settings->first(['payment_expiry_duration'], '1440'),
+            ], JSON_THROW_ON_ERROR));
+            if ($attempt && $attempt->status !== 'rejected') {
+                if ($attempt->payment_method !== $payload['payment_method']) {
+                    throw ValidationException::withMessages(['payment_method' => 'Metode pembayaran berbeda dari percobaan sebelumnya. Gunakan metode yang sama sampai status sesi dipastikan.']);
+                }
+                if ($attempt->request_hash !== $hash || $attempt->environment !== $environment) {
+                    throw ValidationException::withMessages(['checkout' => 'Data checkout berbeda dari sesi sebelumnya. Pastikan sesi lama dibatalkan sebelum membuat pembayaran baru.']);
+                }
+                if ($attempt->status !== 'ready' || $attempt->expires_at?->isPast()) {
+                    throw ValidationException::withMessages(['payment' => 'Sesi pembayaran sedang diproses atau belum terkonfirmasi. Pesanan belum tersimpan; hubungi admin untuk rekonsiliasi.']);
+                }
+            }
+            if (CheckoutAttempt::query()->where('user_id', $user->id)->where('idempotency_key', '!=', $payload['idempotency_key'])
+                ->whereIn('status', ['processing', 'uncertain', 'ready'])->exists()) {
+                throw ValidationException::withMessages(['payment' => 'Masih ada sesi pembayaran yang belum diselesaikan. Pastikan status sesi tersebut sebelum membuat pembayaran baru.']);
+            }
+            $attempt ??= new CheckoutAttempt(['user_id' => $user->id, 'idempotency_key' => $payload['idempotency_key'], 'midtrans_order_id' => $this->orderNumber()]);
+            $attempt->fill([
+                'environment' => $environment,
+                'payment_method' => $payload['payment_method'],
+                'request_hash' => $hash,
+                'status' => 'processing',
+                'expires_at' => $attempt->snap_response !== null ? $attempt->expires_at : now()->addMinutes((int) ($this->settings->first(['payment_expiry_duration'], '1440') ?: 1440)),
+            ])->save();
+
+            return $attempt;
+        });
     }
 
     private function existingCheckout(Order $order, string $method): array
@@ -785,7 +827,7 @@ class CheckoutService
     {
         do {
             $number = 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
-        } while (Order::query()->where('order_number', $number)->exists());
+        } while (Order::query()->where('order_number', $number)->exists() || CheckoutAttempt::query()->where('midtrans_order_id', $number)->exists());
 
         return $number;
     }

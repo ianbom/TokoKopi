@@ -113,7 +113,7 @@ async function setup(
             });
         } else if (path === '/checkout/place-order') {
             expect(route.request().postDataJSON().payment_method).toBe(
-                'bca_va',
+                'bni_va',
             );
             orderRequests++;
             await route.fulfill(

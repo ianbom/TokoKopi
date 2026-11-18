@@ -4,6 +4,7 @@ use App\Actions\Payments\SyncMidtransPaymentAction;
 use App\Enums\CheckoutPaymentMethod;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\CheckoutAttempt;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Payment;
@@ -59,7 +60,7 @@ function paymentMethodCheckout(): array
     return [$user, $address, $stock, $cart];
 }
 
-function paymentMethodPayload($test, User $user, CustomerAddress $address, string $method = 'bca_va'): array
+function paymentMethodPayload($test, User $user, CustomerAddress $address, string $method = 'bni_va'): array
 {
     $test->actingAs($user);
     $rate = $test->postJson(route('checkout.shipping-rates'), ['customer_address_id' => $address->id])->assertSuccessful()->json('rates.0.id');
@@ -74,6 +75,30 @@ beforeEach(function () {
     config(['services.midtrans.server_key' => 'synthetic-key', 'services.biteship.api_key' => 'synthetic-key', 'inertia.ssr.enabled' => false]);
     Http::preventStrayRequests();
 });
+
+test('checkout exposes exactly the requested payment methods in order', function () {
+    [$user] = paymentMethodCheckout();
+    $options = CheckoutPaymentMethod::options();
+    expect(array_column($options, 'id'))->toBe(['gopay', 'echannel', 'bni_va', 'bri_va', 'permata_va', 'cimb_va', 'bsi_va', 'other_va'])
+        ->and(array_column($options, 'name'))->toBe(['GoPay', 'Mandiri VA', 'BNI VA', 'BRI VA', 'Permata VA', 'CIMB Niaga VA', 'BSI VA', 'Other VA']);
+    $this->actingAs($user)->get(route('checkout'))->assertSuccessful()->assertInertia(fn (Assert $page) => $page->where('paymentMethods', $options));
+    foreach ($options as $option) {
+        expect(is_file(public_path($option['logo'])))->toBeTrue();
+    }
+});
+
+test('removed checkout channels remain readable on historical payments', function (string $method, string $label) {
+    expect((new Payment(['requested_payment_method' => $method]))->requested_payment_method_label)->toBe($label);
+    [$user, $address, $stock, $cart] = paymentMethodCheckout();
+    $payload = paymentMethodPayload($this, $user, $address, $method);
+    $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment_method');
+    expect(Order::query()->count())->toBe(0)->and($stock->fresh()->quantity)->toBe(10)->and($cart->items()->count())->toBe(1);
+    expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBe(0);
+})->with([
+    ['bca_va', 'BCA Virtual Account'],
+    ['other_qris', 'QRIS'],
+    ['shopeepay', 'ShopeePay'],
+]);
 
 test('invalid payment selection has no checkout side effects', function (mixed $method) {
     [$user, $address, $stock, $cart] = paymentMethodCheckout();
@@ -90,15 +115,15 @@ test('invalid payment selection has no checkout side effects', function (mixed $
         ->and($voucher->fresh()->used_count)->toBe(0);
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBe(0);
     expect(fn () => app(CheckoutService::class)->placeOrder($user, $payload))->toThrow(ValidationException::class);
-})->with([null, '', [['bca_va']], 'unknown', 'credit_card']);
+})->with([null, '', [['bni_va']], 'unknown', 'credit_card']);
 
-test('each allowed method is persisted before snap and scopes its payload', function (string $method) {
+test('each allowed method is committed only with a valid snap session', function (string $method) {
     [$user, $address] = paymentMethodCheckout();
     $payload = paymentMethodPayload($this, $user, $address, $method);
     $transactionLevel = DB::transactionLevel();
     paymentMethodFake(['*/snap/v1/transactions' => function ($request) use ($method, $transactionLevel) {
         $payment = Payment::query()->sole();
-        expect(DB::transactionLevel())->toBe($transactionLevel)
+        expect(DB::transactionLevel())->toBeGreaterThan($transactionLevel)
             ->and($payment->requested_payment_method)->toBe($method)->and($payment->payment_method)->toBeNull()
             ->and($request['enabled_payments'])->toBe([$method])
             ->and($request['transaction_details']['gross_amount'])->toBe(106000)
@@ -108,25 +133,25 @@ test('each allowed method is persisted before snap and scopes its payload', func
     }]);
     $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
     $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
-    $this->postJson(route('checkout.place-order'), [...$payload, 'payment_method' => $method === 'bca_va' ? 'bni_va' : 'bca_va'])
+    $this->postJson(route('checkout.place-order'), [...$payload, 'payment_method' => $method === 'bni_va' ? 'bri_va' : 'bni_va'])
         ->assertUnprocessable()->assertJsonValidationErrors(['payment_method', 'order_id']);
     expect(Order::query()->count())->toBe(1)->and(Payment::query()->count())->toBe(1);
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBe(1);
-})->with(['bca_va', 'bni_va', 'bri_va', 'echannel', 'permata_va', 'other_qris', 'gopay', 'shopeepay']);
+})->with(['gopay', 'echannel', 'bni_va', 'bri_va', 'permata_va', 'cimb_va', 'bsi_va', 'other_va']);
 
 test('configured allowlist rejects a known but disabled method', function () {
     [$user, $address, $stock] = paymentMethodCheckout();
-    $payload = paymentMethodPayload($this, $user, $address, 'bni_va');
-    config(['services.midtrans.enabled_payments' => ['bca_va']]);
+    $payload = paymentMethodPayload($this, $user, $address, 'bri_va');
+    config(['services.midtrans.enabled_payments' => ['bni_va']]);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment_method');
     expect(fn () => app(CheckoutService::class)->placeOrder($user, $payload))->toThrow(ValidationException::class);
     expect(Order::query()->count())->toBe(0)->and($stock->fresh()->quantity)->toBe(10);
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBe(0);
 });
 
-test('snapshot survives uncertain creation and validated duplicate notifications', function (string $failure) {
+test('uncertain creation preserves only the attempt and cannot post another snap', function (string $failure) {
     [$user, $address, $stock, $cart] = paymentMethodCheckout();
-    $payload = paymentMethodPayload($this, $user, $address, 'other_qris');
+    $payload = paymentMethodPayload($this, $user, $address, 'gopay');
     paymentMethodFake(['*/snap/v1/transactions' => function () use ($failure) {
         return match ($failure) {
             'timeout' => throw new ConnectionException('Synthetic timeout'),
@@ -136,22 +161,32 @@ test('snapshot survives uncertain creation and validated duplicate notifications
         };
     }]);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable();
-    $payment = Payment::query()->sole();
-    expect($payment->requested_payment_method)->toBe('other_qris')->and($payment->payment_method)->toBeNull()
-        ->and($payment->order->payment_status)->toBe('manual_review')->and($stock->fresh()->quantity)->toBe(9)
+    $attempt = CheckoutAttempt::query()->sole();
+    expect($attempt->payment_method)->toBe('gopay')->and($attempt->status)->toBe('uncertain')
+        ->and(Order::query()->count())->toBe(0)->and(Payment::query()->count())->toBe(0)
+        ->and($stock->fresh()->quantity)->toBe(10)
         ->and($cart->items()->count())->toBe(1);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable();
+    $this->postJson(route('checkout.place-order'), [...$payload, 'idempotency_key' => (string) Str::uuid()])->assertUnprocessable();
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBeLessThanOrEqual(1);
+})->with(['timeout', 'duplicate', 'server', 'foreign redirect']);
+
+test('successful checkout retains its snapshot through duplicate notifications', function () {
+    [$user, $address, $stock] = paymentMethodCheckout();
+    $payload = paymentMethodPayload($this, $user, $address, 'gopay');
+    paymentMethodFake(['*/snap/v1/transactions' => Http::response(['token' => 'test-token', 'redirect_url' => 'https://app.sandbox.midtrans.com/snap/test'], 201)]);
+    $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
+    $payment = Payment::query()->sole();
     $notification = ['order_id' => $payment->midtrans_order_id, 'status_code' => '200', 'gross_amount' => '106000.00', 'currency' => 'IDR', 'transaction_status' => 'settlement', 'payment_type' => 'qris', 'transaction_id' => 'synthetic-transaction'];
     $notification['signature_key'] = hash('sha512', $notification['order_id'].'200106000.00synthetic-key');
     $this->postJson(route('payments.midtrans.notification'), $notification)->assertSuccessful();
     $this->postJson(route('payments.midtrans.notification'), $notification)->assertSuccessful();
-    expect($payment->fresh()->requested_payment_method)->toBe('other_qris')->and($payment->fresh()->payment_method)->toBe('qris')
+    expect($payment->fresh()->requested_payment_method)->toBe('gopay')->and($payment->fresh()->payment_method)->toBe('qris')
         ->and($payment->order->fresh()->payment_status)->toBe('paid')->and($stock->fresh()->quantity)->toBe(9)
         ->and($payment->logs()->count())->toBe(1);
     app(SyncMidtransPaymentAction::class)->applyPayload($payment, [...$notification, 'transaction_status' => 'pending'], 'stale_sync');
-    expect($payment->order->fresh()->payment_status)->toBe('paid')->and($payment->fresh()->requested_payment_method)->toBe('other_qris');
-})->with(['timeout', 'duplicate', 'server', 'foreign redirect']);
+    expect($payment->order->fresh()->payment_status)->toBe('paid')->and($payment->fresh()->requested_payment_method)->toBe('gopay');
+});
 
 test('snap redirect validates environment authority and token response', function (string $url, bool $valid) {
     expect(app(MidtransService::class)->isValidSnapRedirect($url))->toBe($valid);
@@ -174,7 +209,7 @@ test('an in-flight retry cannot post snap or reserve stock twice', function () {
         $attempts++;
         expect(fn () => app(CheckoutService::class)->placeOrder($user, $payload))->toThrow(ValidationException::class);
         try {
-            app(CheckoutService::class)->placeOrder($user, [...$payload, 'payment_method' => 'bni_va']);
+            app(CheckoutService::class)->placeOrder($user, [...$payload, 'payment_method' => 'bri_va']);
             test()->fail('Conflicting retry was accepted.');
         } catch (ValidationException $exception) {
             expect($exception->errors())->toHaveKey('payment_method');
@@ -194,7 +229,7 @@ test('locked recheck enforces method when another request wins after initial loo
             'user_id' => $user->id, 'order_number' => 'RACE-ORDER', 'checkout_idempotency_key' => $payload['idempotency_key'],
             'customer_name' => $user->name, 'customer_email' => $user->email, 'customer_phone' => '081234567890', 'subtotal' => 90000, 'grand_total' => 106000,
         ]);
-        $order->payment()->create(['requested_payment_method' => $sameMethod ? 'bca_va' : 'bni_va', 'gross_amount' => 106000, 'midtrans_redirect_url' => 'https://app.sandbox.midtrans.com/snap/test']);
+        $order->payment()->create(['requested_payment_method' => $sameMethod ? 'bni_va' : 'bri_va', 'gross_amount' => 106000, 'midtrans_redirect_url' => 'https://app.sandbox.midtrans.com/snap/test']);
 
         return Http::response(['pricing' => [['company' => 'jne', 'type' => 'reg', 'price' => 16000]]]);
     }]);
@@ -239,7 +274,7 @@ test('snapshot is immutable and rejected notifications cannot change payment', f
     paymentMethodFake(['*/snap/v1/transactions' => Http::response(['token' => 'test-token', 'redirect_url' => 'https://app.sandbox.midtrans.com/snap/test'], 201)]);
     $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
     $payment = Payment::query()->sole();
-    expect(fn () => $payment->update(['requested_payment_method' => 'bni_va']))->toThrow(LogicException::class);
+    expect(fn () => $payment->update(['requested_payment_method' => 'bri_va']))->toThrow(LogicException::class);
     $payment->refresh();
     $notification = ['order_id' => $payment->midtrans_order_id, 'status_code' => '200', 'gross_amount' => '106000.00', 'currency' => 'IDR', 'transaction_status' => 'settlement', 'payment_type' => 'bank_transfer'];
     $notification[$invalidField] = match ($invalidField) {
@@ -254,7 +289,7 @@ test('snapshot is immutable and rejected notifications cannot change payment', f
     } else {
         $response->assertSuccessful();
     }
-    expect($payment->fresh()->requested_payment_method)->toBe('bca_va')->and($payment->fresh()->payment_method)->toBeNull()
+    expect($payment->fresh()->requested_payment_method)->toBe('bni_va')->and($payment->fresh()->payment_method)->toBeNull()
         ->and($payment->order->fresh()->payment_status)->toBe('pending')->and($stock->fresh()->quantity)->toBe(9);
 })->with(['signature_key', 'currency', 'gross_amount', 'order_id']);
 
@@ -268,18 +303,85 @@ test('missing snapshot schema fails closed before any checkout mutations', funct
 });
 
 test('production snap accepts only the production authority', function () {
-    SiteSetting::query()->create(['key' => 'midtrans_environment', 'value' => 'production']);
+    config(['services.midtrans.is_production' => true]);
+    SiteSetting::query()->create(['key' => 'midtrans_environment', 'value' => 'sandbox']);
     $service = app(MidtransService::class);
     expect($service->isValidSnapRedirect('https://app.midtrans.com/snap/test'))->toBeTrue()
         ->and($service->isValidSnapRedirect('https://app.sandbox.midtrans.com/snap/test'))->toBeFalse();
 });
 
+test('production checkout and status use production endpoints', function () {
+    [$user, $address] = paymentMethodCheckout();
+    config(['services.midtrans.is_production' => true]);
+    $payload = paymentMethodPayload($this, $user, $address);
+    paymentMethodFake([
+        'https://app.midtrans.com/snap/v1/transactions' => Http::response(['token' => 'production-token', 'redirect_url' => 'https://app.midtrans.com/snap/test'], 201),
+        'https://api.midtrans.com/v2/*/status' => Http::response(['status_code' => '404'], 200),
+    ]);
+    $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful()->assertJsonPath('redirect_url', 'https://app.midtrans.com/snap/test');
+    expect(app(MidtransService::class)->findTransactionStatus(Order::query()->sole()->order_number))->toBeNull();
+    Http::assertSentCount(3);
+});
+
+test('definitive snap rejection rolls back checkout and allows the same key to retry', function (int $status, array $response) {
+    [$user, $address, $stock, $cart] = paymentMethodCheckout();
+    $payload = paymentMethodPayload($this, $user, $address);
+    $voucher = Voucher::query()->create(['code' => 'COFFEE10', 'name' => 'Test', 'discount_type' => 'fixed', 'discount_value' => 10000, 'is_active' => true]);
+    $this->postJson(route('checkout.voucher.apply'), ['voucher_code' => $voucher->code])->assertSuccessful();
+    paymentMethodFake(['*/snap/v1/transactions' => Http::response($response, $status)]);
+    $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment')->assertJsonMissingValidationErrors('order_id');
+    foreach (['orders', 'order_items', 'order_addresses', 'payments', 'shipments', 'order_item_stock_movements', 'order_status_histories'] as $table) {
+        $this->assertDatabaseCount($table, 0);
+    }
+    expect($stock->fresh()->quantity)->toBe(10)->and($voucher->fresh()->used_count)->toBe(0)->and($cart->items()->count())->toBe(1);
+    expect(CheckoutAttempt::query()->sole()->status)->toBe('rejected');
+    paymentMethodFake(['*/snap/v1/transactions' => Http::response(['token' => 'retry-token', 'redirect_url' => 'https://app.sandbox.midtrans.com/snap/retry'], 201)]);
+    $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful();
+    expect(Order::query()->count())->toBe(1)->and($stock->fresh()->quantity)->toBe(9)->and($voucher->fresh()->used_count)->toBe(1)->and($cart->items()->count())->toBe(0);
+})->with([
+    'unauthorized without error_messages' => [401, ['message' => 'Unauthorized']],
+    'forbidden without JSON message' => [403, []],
+    'invalid checkout' => [422, ['error_messages' => ['Invalid data']]],
+]);
+
+test('valid snap survives a rolled back order and is reused without another post', function () {
+    [$user, $address, $stock, $cart] = paymentMethodCheckout();
+    $payload = paymentMethodPayload($this, $user, $address);
+    $voucher = Voucher::query()->create(['code' => 'COFFEE10', 'name' => 'Test', 'discount_type' => 'fixed', 'discount_value' => 10000, 'is_active' => true]);
+    $this->postJson(route('checkout.voucher.apply'), ['voucher_code' => $voucher->code])->assertSuccessful();
+    $failSave = true;
+    Payment::updating(function (Payment $payment) use (&$failSave): void {
+        if ($failSave && $payment->isDirty('midtrans_snap_token')) {
+            throw new RuntimeException('Synthetic database write failure');
+        }
+    });
+    try {
+        paymentMethodFake(['*/snap/v1/transactions' => Http::response(['token' => 'saved-token', 'redirect_url' => 'https://app.sandbox.midtrans.com/snap/saved'], 201)]);
+        $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonMissingValidationErrors('order_id');
+        expect(Order::query()->count())->toBe(0)->and($stock->fresh()->quantity)->toBe(10)->and($cart->items()->count())->toBe(1);
+        $attempt = CheckoutAttempt::query()->sole();
+        expect($attempt->status)->toBe('ready')->and($attempt->snap_response['token'])->toBe('saved-token');
+        expect(DB::table('checkout_attempts')->value('snap_response'))->not->toContain('saved-token');
+        $failSave = false;
+        paymentMethodFake();
+        $this->postJson(route('checkout.place-order'), [...$payload, 'notes' => 'Changed'])->assertUnprocessable();
+        $voucher->update(['discount_value' => 20000]);
+        $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable();
+        $voucher->update(['discount_value' => 10000]);
+        $this->postJson(route('checkout.place-order'), $payload)->assertSuccessful()->assertJsonPath('redirect_url', 'https://app.sandbox.midtrans.com/snap/saved');
+        expect(Order::query()->sole()->order_number)->toBe($attempt->midtrans_order_id)->and($stock->fresh()->quantity)->toBe(9);
+        expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/'))->count())->toBe(0);
+    } finally {
+        $failSave = false;
+    }
+});
+
 test('checkout options follow the backend merchant catalog and local logos', function () {
     [$user] = paymentMethodCheckout();
-    config(['services.midtrans.enabled_payments' => ['bca_va', 'other_qris', 'unknown']]);
+    config(['services.midtrans.enabled_payments' => ['gopay', 'bni_va', 'unknown']]);
     $this->actingAs($user)->get(route('checkout'))->assertSuccessful()->assertInertia(fn (Assert $page) => $page
         ->component('customer/checkout/checkout')->has('paymentMethods', 2)
-        ->where('paymentMethods.0.id', 'bca_va')->where('paymentMethods.1.id', 'other_qris'));
+        ->where('paymentMethods.0.id', 'gopay')->where('paymentMethods.1.id', 'bni_va'));
     foreach (CheckoutPaymentMethod::options() as $method) {
         expect(is_file(public_path($method['logo'])))->toBeTrue();
     }
@@ -299,7 +401,7 @@ test('server reconciliation keeps the requested method separate from the provide
     $this->actingAs($user)->get(route('payments.midtrans.finish', ['order_id' => $payment->midtrans_order_id, 'transaction_status' => 'failure']))->assertRedirect(route('my-order'));
     expect($payment->fresh()->requested_payment_method)->toBe($requested)->and($payment->fresh()->payment_method)->toBe($confirmed)
         ->and($payment->order->fresh()->payment_status)->toBe('paid')->and($stock->fresh()->quantity)->toBe(9);
-})->with([['bca_va', 'bank_transfer'], ['gopay', 'qris']]);
+})->with([['bni_va', 'bank_transfer'], ['gopay', 'qris']]);
 
 test('browser settlement parameters cannot mark an unpaid order paid', function () {
     [$user, $address] = paymentMethodCheckout();

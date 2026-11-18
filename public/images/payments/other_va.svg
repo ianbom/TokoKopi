@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="40" viewBox="0 0 128 40">
+  <g fill="none" stroke="#17212b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m4 14 14-8 14 8v3H4zM8 21v9m10-9v9m10-9v9M4 34h28"/>
+  </g>
+  <text x="42" y="26" fill="#17212b" font-family="Arial, sans-serif" font-size="18" font-weight="600">Other VA</text>
+</svg>

@@ -52,9 +52,10 @@ return [
     ],
 
     'midtrans' => [
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
-        'enabled_payments' => ['bca_va', 'bni_va', 'bri_va', 'echannel', 'permata_va', 'other_qris', 'gopay', 'shopeepay'],
+        'enabled_payments' => ['gopay', 'echannel', 'bni_va', 'bri_va', 'permata_va', 'cimb_va', 'bsi_va', 'other_va'],
     ],
 
     'checkout' => [

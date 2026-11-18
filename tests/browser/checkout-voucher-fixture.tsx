@@ -40,7 +40,7 @@ function Probe() {
             >
                 Select
             </button>
-            <button onClick={() => checkout.selectPaymentMethod('bca_va')}>
+            <button onClick={() => checkout.selectPaymentMethod('bni_va')}>
                 Select payment
             </button>
             <button onClick={() => void checkout.placeOrder('', true)}>
@@ -79,9 +79,9 @@ export function mount(rate: ShippingRate | null) {
             defaultAddressId={1}
             paymentMethods={[
                 {
-                    id: 'bca_va',
-                    name: 'BCA Virtual Account',
-                    logo: '/images/payments/bca_va.png',
+                    id: 'bni_va',
+                    name: 'BNI VA',
+                    logo: '/images/payments/bni_va.png',
                 },
             ]}
             selectedShippingRate={rate}

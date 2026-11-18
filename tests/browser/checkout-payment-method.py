@@ -72,9 +72,9 @@ try:
             })()""", target_id=target)
             assert initial['checked'] == 0 and initial['disabled']
             assert initial['columns'] == 3 and initial['before'] and not initial['overflow'], (width, initial)
-            assert initial['names'] == ['BCA Virtual Account', 'BNI Virtual Account', 'BRI Virtual Account', 'Mandiri Bill Payment', 'Permata Virtual Account', 'QRIS', 'GoPay', 'ShopeePay']
+            assert initial['names'] == ['GoPay', 'Mandiri VA', 'BNI VA', 'BRI VA', 'Permata VA', 'CIMB Niaga VA', 'BSI VA', 'Other VA']
             eventually("Array.from(document.querySelectorAll('fieldset img')).every(i=>i.complete&&i.naturalWidth>0)", target)
-            js("document.querySelector('input[value=bca_va]').click();document.querySelector('input[value=bca_va]').focus()", target_id=target)
+            js("document.querySelector('input[value=echannel]').click();document.querySelector('input[value=echannel]').focus()", target_id=target)
             cdp('Input.dispatchKeyEvent', session_id=session, type='keyDown', key='ArrowRight', code='ArrowRight', windowsVirtualKeyCode=39)
             cdp('Input.dispatchKeyEvent', session_id=session, type='keyUp', key='ArrowRight', code='ArrowRight', windowsVirtualKeyCode=39)
             eventually("document.querySelector('input[value=bni_va]').checked", target)

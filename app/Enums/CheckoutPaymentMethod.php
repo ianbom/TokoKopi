@@ -6,23 +6,29 @@ use Illuminate\Validation\Rule;
 
 enum CheckoutPaymentMethod: string
 {
-    case Bca = 'bca_va';
+    case Gopay = 'gopay';
+    case Mandiri = 'echannel';
     case Bni = 'bni_va';
     case Bri = 'bri_va';
-    case Mandiri = 'echannel';
     case Permata = 'permata_va';
+    case Cimb = 'cimb_va';
+    case Bsi = 'bsi_va';
+    case Other = 'other_va';
+    case Bca = 'bca_va';
     case Qris = 'other_qris';
-    case Gopay = 'gopay';
     case Shopeepay = 'shopeepay';
 
     public function label(): string
     {
         return match ($this) {
             self::Bca => 'BCA Virtual Account',
-            self::Bni => 'BNI Virtual Account',
-            self::Bri => 'BRI Virtual Account',
-            self::Mandiri => 'Mandiri Bill Payment',
-            self::Permata => 'Permata Virtual Account',
+            self::Bni => 'BNI VA',
+            self::Bri => 'BRI VA',
+            self::Mandiri => 'Mandiri VA',
+            self::Permata => 'Permata VA',
+            self::Cimb => 'CIMB Niaga VA',
+            self::Bsi => 'BSI VA',
+            self::Other => 'Other VA',
             self::Qris => 'QRIS',
             self::Gopay => 'GoPay',
             self::Shopeepay => 'ShopeePay',
@@ -39,7 +45,11 @@ enum CheckoutPaymentMethod: string
         return array_map(fn (self $method): array => [
             'id' => $method->value,
             'name' => $method->label(),
-            'logo' => '/images/payments/'.$method->value.($method === self::Gopay ? '.webp' : '.png'),
+            'logo' => '/images/payments/'.$method->value.match ($method) {
+                self::Gopay => '.webp',
+                self::Other => '.svg',
+                default => '.png',
+            },
         ], self::enabled());
     }
 

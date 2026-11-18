@@ -10,13 +10,14 @@ use App\Services\Settings\SiteSettingService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class MidtransService
 {
     public function __construct(private readonly SiteSettingService $settings) {}
 
-    public function createSnapTransaction(Order $order): array
+    public function snapPayload(Order $order): array
     {
         $order->load(['items', 'address', 'payment']);
         $payment = $order->payment;
@@ -28,42 +29,52 @@ class MidtransService
             throw ValidationException::withMessages(['payment' => 'Metode pembayaran tersimpan tidak valid.']);
         }
 
+        return [
+            ...($method !== null ? ['enabled_payments' => [$method]] : []),
+            'transaction_details' => [
+                'order_id' => $order->order_number,
+                'gross_amount' => (int) round((float) $order->grand_total),
+            ],
+            'customer_details' => [
+                'first_name' => $order->customer_name,
+                'email' => $order->customer_email,
+                'phone' => $order->customer_phone,
+                'shipping_address' => [
+                    'first_name' => $order->address?->recipient_name,
+                    'phone' => $order->address?->recipient_phone,
+                    'address' => $order->address?->full_address,
+                    'city' => $order->address?->city,
+                    'postal_code' => $order->address?->postal_code,
+                    'country_code' => 'IDN',
+                ],
+            ],
+            'item_details' => $this->itemDetails($order),
+            'expiry' => [
+                'unit' => 'minutes',
+                'duration' => (int) ($this->settings->first(['payment_expiry_duration'], '1440') ?: 1440),
+            ],
+            'callbacks' => [
+                'finish' => $this->finishRedirectUrl(),
+            ],
+        ];
+    }
+
+    public function createSnapTransaction(Order $order): array
+    {
+        $payload = $this->snapPayload($order);
         $client = $this->snapClient();
         try {
-            $response = $client->post('/snap/v1/transactions', [
-                ...($method !== null ? ['enabled_payments' => [$method]] : []),
-                'transaction_details' => [
-                    'order_id' => $order->order_number,
-                    'gross_amount' => (int) round((float) $order->grand_total),
-                ],
-                'customer_details' => [
-                    'first_name' => $order->customer_name,
-                    'email' => $order->customer_email,
-                    'phone' => $order->customer_phone,
-                    'shipping_address' => [
-                        'first_name' => $order->address?->recipient_name,
-                        'phone' => $order->address?->recipient_phone,
-                        'address' => $order->address?->full_address,
-                        'city' => $order->address?->city,
-                        'postal_code' => $order->address?->postal_code,
-                        'country_code' => 'IDN',
-                    ],
-                ],
-                'item_details' => $this->itemDetails($order),
-                'expiry' => [
-                    'unit' => 'minutes',
-                    'duration' => (int) ($this->settings->first(['payment_expiry_duration'], '1440') ?: 1440),
-                ],
-                'callbacks' => [
-                    'finish' => $this->finishRedirectUrl(),
-                ],
-            ]);
+            $response = $client->post('/snap/v1/transactions', $payload);
 
         } catch (ConnectionException $exception) {
             throw new UncertainSnapCreationException('Hasil pembuatan pembayaran belum dapat dipastikan.', 0, $exception);
         }
         $message = $response->json('error_messages.0');
         if (! $response->successful()) {
+            Log::warning('midtrans_snap_rejected', ['midtrans_order_id' => $order->order_number, 'http_status' => $response->status(), 'is_production' => config('services.midtrans.is_production')]);
+            if (in_array($response->status(), [401, 403], true)) {
+                throw ValidationException::withMessages(['payment' => 'Autentikasi Midtrans ditolak. Periksa kredensial dan mode pembayaran.']);
+            }
             if ($response->clientError() && ! in_array($response->status(), [408, 409, 429], true)
                 && is_string($message) && trim($message) !== '' && ! preg_match('/duplicate|already|used|taken/i', $message)) {
                 throw ValidationException::withMessages(['payment' => 'Midtrans menolak pembuatan pembayaran. Periksa data checkout lalu coba lagi.']);
@@ -203,7 +214,7 @@ class MidtransService
     private function itemDetails(Order $order): array
     {
         $items = $order->items->map(fn ($item): array => [
-            'id' => (string) ($item->variant_sku ?? $item->product_sku ?? $item->id),
+            'id' => (string) ($item->variant_sku ?? $item->product_sku ?? $item->product_variant_id ?? $item->id),
             'price' => (int) round((float) $item->price),
             'quantity' => $item->quantity,
             'name' => mb_substr($item->product_name, 0, 50),
@@ -243,6 +254,7 @@ class MidtransService
     private function client(string $baseUrl): PendingRequest
     {
         return Http::baseUrl($baseUrl)
+            ->connectTimeout(5)
             ->timeout(20)
             ->acceptJson()
             ->withBasicAuth($this->serverKey(), '');
@@ -250,18 +262,14 @@ class MidtransService
 
     private function snapBaseUrl(): string
     {
-        $environment = $this->settings->first(['midtrans_environment', 'payment_midtrans_env'], 'sandbox');
-
-        return $environment === 'production'
+        return config('services.midtrans.is_production')
             ? 'https://app.midtrans.com'
             : 'https://app.sandbox.midtrans.com';
     }
 
     private function apiBaseUrl(): string
     {
-        $environment = $this->settings->first(['midtrans_environment', 'payment_midtrans_env'], 'sandbox');
-
-        return $environment === 'production'
+        return config('services.midtrans.is_production')
             ? 'https://api.midtrans.com'
             : 'https://api.sandbox.midtrans.com';
     }
@@ -273,7 +281,7 @@ class MidtransService
 
     private function serverKey(): string
     {
-        $serverKey = config('services.midtrans.server_key') ?: env('MIDTRANS_SERVER_KEY');
+        $serverKey = config('services.midtrans.server_key');
 
         if (! filled($serverKey)) {
             throw ValidationException::withMessages(['midtrans' => 'MIDTRANS_SERVER_KEY belum dikonfigurasi.']);

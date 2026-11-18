@@ -46,5 +46,22 @@
     "source_page": "https://gopay.co.id",
     "source_url": "https://gopay-website.al-gp-id-p.cdn.gtflabs.io/assets/img/homepage/gopay.webp",
     "sha256": "1338bc2bca8e949af5cd0f347565af11cf1b757e3f8736656649c1fb3bef9434"
+  },
+  {
+    "file": "cimb_va.png",
+    "source_page": "https://midtrans.com/payments",
+    "source_url": "https://midtrans-website.al-mp-id-p.cdn.gtflabs.io/uploads/2023/08/edd9f22258760cc127712d1292f8a10a_e4b59ee9f4466d7d808dc89f031da7a6_compressed.png",
+    "sha256": "1197f7264a6239a24b34d8d71f10c438f26065503a493df492552ea2b5fb31c8"
+  },
+  {
+    "file": "bsi_va.png",
+    "source_page": "https://midtrans.com/payments",
+    "source_url": "https://midtrans-website.al-mp-id-p.cdn.gtflabs.io/uploads/2026/01/e532a2a311c008bd57860e0d2421a1b1_9cef30936521d99ed6cfc577a02a98bd_compressed.png",
+    "sha256": "240b3bf8ba826228c24131ea144da681304e908ed0b9f1648750b71e44c77e8e"
+  },
+  {
+    "file": "other_va.svg",
+    "source": "Local generic bank symbol and Other VA label; no bank branding",
+    "sha256": "5e4b6856319366e322577749ac2006552b37dbe34fab9e11db3af47488089021"
   }
 ]

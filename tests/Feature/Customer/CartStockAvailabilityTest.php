@@ -10,8 +10,8 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\Integrations\BiteshipService;
-use App\Services\Integrations\MidtransService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Mockery\MockInterface;
@@ -120,12 +120,12 @@ it('preserves shipping selection through voucher changes and order placement', f
     $this->mock(BiteshipService::class, function (MockInterface $mock) use ($rate): void {
         $mock->shouldReceive('shippingRates')->twice()->andReturn([$rate]);
     });
-    $this->mock(MidtransService::class, function (MockInterface $mock): void {
-        $mock->shouldReceive('createSnapTransaction')->once()->andReturn([
-            'token' => 'checkout-token',
-            'redirect_url' => 'https://app.sandbox.midtrans.com/snap/test',
-        ]);
-    });
+    config(['services.midtrans.server_key' => 'synthetic-key', 'inertia.ssr.enabled' => false]);
+    Http::preventStrayRequests();
+    Http::fake(['*/snap/v1/transactions' => Http::response([
+        'token' => 'checkout-token',
+        'redirect_url' => 'https://app.sandbox.midtrans.com/snap/test',
+    ], 201)]);
     $this->actingAs($user);
     $addressPayload = ['customer_address_id' => $address->id];
     $ratePayload = ['shipping_rate_id' => $rate['id']];
@@ -164,7 +164,7 @@ it('preserves shipping selection through voucher changes and order placement', f
         'customer_address_id' => $address->id,
         'shipping_rate_id' => $rate['id'],
         'idempotency_key' => (string) Str::uuid(),
-        'payment_method' => 'bca_va',
+        'payment_method' => 'bni_va',
         'no_return_refund_agreed' => true,
     ])->assertSuccessful();
     $this->assertDatabaseHas('orders', [

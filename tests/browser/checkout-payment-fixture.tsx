@@ -110,41 +110,41 @@ export async function mount() {
     };
     const props: ComponentProps<typeof Checkout> = {
         paymentMethods: [
+            { id: 'gopay', name: 'GoPay', logo: '/images/payments/gopay.webp' },
             {
-                id: 'bca_va',
-                name: 'BCA Virtual Account',
-                logo: '/images/payments/bca_va.png',
+                id: 'echannel',
+                name: 'Mandiri VA',
+                logo: '/images/payments/echannel.png',
             },
             {
                 id: 'bni_va',
-                name: 'BNI Virtual Account',
+                name: 'BNI VA',
                 logo: '/images/payments/bni_va.png',
             },
             {
                 id: 'bri_va',
-                name: 'BRI Virtual Account',
+                name: 'BRI VA',
                 logo: '/images/payments/bri_va.png',
             },
             {
-                id: 'echannel',
-                name: 'Mandiri Bill Payment',
-                logo: '/images/payments/echannel.png',
-            },
-            {
                 id: 'permata_va',
-                name: 'Permata Virtual Account',
+                name: 'Permata VA',
                 logo: '/images/payments/permata_va.png',
             },
             {
-                id: 'other_qris',
-                name: 'QRIS',
-                logo: '/images/payments/other_qris.png',
+                id: 'cimb_va',
+                name: 'CIMB Niaga VA',
+                logo: '/images/payments/cimb_va.png',
             },
-            { id: 'gopay', name: 'GoPay', logo: '/images/payments/gopay.webp' },
             {
-                id: 'shopeepay',
-                name: 'ShopeePay',
-                logo: '/images/payments/shopeepay.png',
+                id: 'bsi_va',
+                name: 'BSI VA',
+                logo: '/images/payments/bsi_va.png',
+            },
+            {
+                id: 'other_va',
+                name: 'Other VA',
+                logo: '/images/payments/other_va.svg',
             },
         ],
         addresses: [

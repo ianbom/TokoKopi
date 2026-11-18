@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\ProductVariantRequest;
 use App\Models\BiteshipWebhookLog;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\CheckoutAttempt;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Payment;
@@ -67,7 +68,7 @@ function recoveryCheckoutPayload($test, User $user, CustomerAddress $address): a
     $rateId = $test->postJson(route('checkout.shipping-rates'), ['customer_address_id' => $address->id])->assertSuccessful()->json('rates.0.id');
     $test->postJson(route('checkout.shipping-rate'), ['shipping_rate_id' => $rateId])->assertSuccessful()->assertJsonPath('summary.total', 3);
 
-    return ['customer_address_id' => $address->id, 'shipping_rate_id' => $rateId, 'idempotency_key' => (string) Str::uuid(), 'payment_method' => 'bca_va', 'no_return_refund_agreed' => true];
+    return ['customer_address_id' => $address->id, 'shipping_rate_id' => $rateId, 'idempotency_key' => (string) Str::uuid(), 'payment_method' => 'bni_va', 'no_return_refund_agreed' => true];
 }
 
 function recoveryPayment(array $attributes = []): Payment
@@ -299,29 +300,28 @@ test('uncertain checkout keeps cart voucher and idempotency without creating ano
     [$user, $address, $voucher, $variant] = recoveryCheckout($snap, $status);
     $payload = recoveryCheckoutPayload($this, $user, $address);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment');
-    $order = Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->firstOrFail();
-    expect($order->payment_status)->toBe('manual_review')
-        ->and($order->payment->raw_response['snap_creation_uncertain'])->toBeTrue()
-        ->and($voucher->refresh()->used_count)->toBe(1);
+    expect(Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->exists())->toBeFalse()
+        ->and(CheckoutAttempt::query()->sole()->status)->toBe('uncertain')
+        ->and($voucher->refresh()->used_count)->toBe(0);
     $this->assertDatabaseCount('cart_items', 1);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable();
     expect(Http::recorded(fn ($request) => str_contains($request->url(), '/snap/v1/transactions'))->count())->toBe(1);
-    expect($variant->stock->refresh()->quantity)->toBe(8);
+    expect($variant->stock->refresh()->quantity)->toBe(10);
 })->with([
     'malformed success' => [[], 201],
     'server error' => [['error_messages' => ['Unavailable']], 500],
     'duplicate' => [['error_messages' => ['Order ID already used']], 409],
 ]);
 
-test('confirmed snap rejection releases voucher but preserves cart', function () {
+test('confirmed snap rejection rolls back the order and preserves cart', function () {
     [$user, $address, $voucher, $variant] = recoveryCheckout(['error_messages' => ['Invalid data']], 422);
     $payload = recoveryCheckoutPayload($this, $user, $address);
     $this->postJson(route('checkout.place-order'), $payload)->assertUnprocessable()->assertJsonValidationErrors('payment');
-    expect(Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->firstOrFail()->payment_status)->toBe('failed')
+    expect(Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->exists())->toBeFalse()
         ->and($voucher->refresh()->used_count)->toBe(0);
     $this->assertDatabaseCount('cart_items', 1);
     expect($variant->stock->refresh()->quantity)->toBe(10);
-    $this->assertDatabaseHas('order_item_stock_movements', ['movement_type' => 'release', 'quantity' => 2]);
+    $this->assertDatabaseCount('order_item_stock_movements', 0);
 });
 
 test('closed unpaid checkout restores only its deducted stock once', function (string $status) {
@@ -387,11 +387,13 @@ test('expiry cancellation failure holds stock until a successful retry', functio
     $response = $this->postJson(route('checkout.place-order'), recoveryCheckoutPayload($this, $user, $address))->assertSuccessful();
     $order = Order::query()->findOrFail($response->json('order_id'));
     $order->payment->update(['expires_at' => now()->subMinute()]);
-    Http::fake(['*/status' => Http::response(['status_code' => '404'], 404), '*/cancel' => Http::response([], 500)]);
+    Http::fake([
+        '*/status' => Http::response(['status_code' => '404'], 404),
+        '*/cancel' => Http::sequence()->push([], 500)->push(['canceled_at' => now()->toISOString()]),
+    ]);
     expect(app(SyncExpiredMidtransPaymentsAction::class)->execute()['failed'])->toBe(1);
     expect($variant->stock->refresh()->quantity)->toBe(8)
         ->and($order->refresh()->payment_status)->toBe('pending');
-    Http::fake(['*/status' => Http::response(['status_code' => '404'], 404), '*/cancel' => Http::response(['canceled_at' => now()->toISOString()])]);
     expect(app(SyncExpiredMidtransPaymentsAction::class)->execute()['synced'])->toBe(1);
     expect($variant->stock->refresh()->quantity)->toBe(10);
 });
@@ -502,7 +504,7 @@ test('valid signed webhook logs only safe acknowledgement metadata', function ()
     $this->postJson(route('payments.midtrans.notification'), $payload)->assertForbidden();
 });
 
-test('snap completion cannot overwrite concurrent final payment metadata', function (int $responseStatus) {
+test('snap success preserves final payment metadata and failure rolls back the order', function (int $responseStatus) {
     [$user, $address] = recoveryCheckout();
     $payload = recoveryCheckoutPayload($this, $user, $address);
     Http::swap(new Factory);
@@ -516,6 +518,11 @@ test('snap completion cannot overwrite concurrent final payment metadata', funct
             return Http::response(['token' => 'late-token', 'redirect_url' => 'https://app.sandbox.midtrans.com/snap/late', 'error_messages' => ['Invalid transaction']], $responseStatus);
         }]);
     $this->postJson(route('checkout.place-order'), $payload)->assertStatus($responseStatus === 201 ? 200 : 422);
+    if ($responseStatus !== 201) {
+        expect(Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->exists())->toBeFalse();
+
+        return;
+    }
     $order = Order::query()->where('checkout_idempotency_key', $payload['idempotency_key'])->firstOrFail();
     expect($order->payment_status)->toBe('refunded')
         ->and($order->payment->transaction_status)->toBe('refund')
